@@ -1,0 +1,17 @@
+networks:
+  mori-network:
+    driver: bridge
+
+services:
+  db:
+    image: mysql:8.0 # 사용할 MySQL 이미지
+    container_name: ${MYSQL_DATABASE}
+    restart: always
+    ports:
+      - "3307:3306"
+    env_file:
+      - .env
+    volumes:
+      - db_data:/var/lib/mysql
+volumes:
+  db_data:
