@@ -34,4 +34,7 @@ public class User extends BaseTimeEntity{
     @Column(name = "deleated_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "is_notification_enabled")
+    private Boolean isNotificationEnabled = false;
+
 }
