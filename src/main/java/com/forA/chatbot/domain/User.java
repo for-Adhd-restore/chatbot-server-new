@@ -13,6 +13,7 @@ public class User extends BaseTimeEntity{
 
     @Column(length = 10, nullable = false)
     private String gender = "UNKNOWN";
+
     @Column(name = "birth_year")
     private Integer birthYear;
 

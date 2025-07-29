@@ -7,7 +7,6 @@ import jakarta.persistence.*;
 public class Disorder extends BaseTimeEntity{
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "disorder_code", length = 50, nullable = false)
