@@ -3,8 +3,8 @@ package com.forA.chatbot.domain;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "user_disorders")
-public class UserDisorder extends BaseTimeEntity{
+@Table(name = "user_jobs")
+public class UserJob extends BaseTimeEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,6 +15,7 @@ public class UserDisorder extends BaseTimeEntity{
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "disorder_id", nullable = false)
-    private Disorder disorder;
+    @JoinColumn(name = "job_id", nullable = false)
+    private Job job;
+
 }
