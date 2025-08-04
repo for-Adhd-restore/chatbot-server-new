@@ -38,5 +38,11 @@ public class Subscription extends BaseTimeEntity{
     @Column(nullable = false)
     private SubscriptionStatus status;
 
+    @Column(name = "is_auto_renew", nullable = false)
+    private Boolean isAutoRenew;
+
+    @Column(name = "is_trial", nullable = false)
+    private Boolean isTrial;
+
 }
 
