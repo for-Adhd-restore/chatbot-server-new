@@ -27,5 +27,5 @@ public class MedicationLog extends BaseTimeEntity{
     private Time takenAt;
 
     @Column(length = 50)
-    private String condition;
+    private String medCondition;
 }
