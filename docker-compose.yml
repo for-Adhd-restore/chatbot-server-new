@@ -10,7 +10,7 @@ services:
     ports:
       - "3307:3306"
     env_file:
-      - .env
+      - src/main/resources/keys/.env
     volumes:
       - db_data:/var/lib/mysql
   mongo:
@@ -20,7 +20,7 @@ services:
     ports:
       - "27017:27017" # MongoDB 기본 포트
     env_file:
-      - .env
+      - src/main/resources/keys/.env
     volumes:
       - mongo_data:/data/db # MongoDB 데이터 저장 경로
     networks:
