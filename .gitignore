@@ -172,4 +172,6 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/intellij,java,gradle
 HELP.md
 .env
-AuthKey_63US4DFHP8.p8
+
+# 키 관련 데이터
+/src/main/resources/keys/
