@@ -1,15 +1,29 @@
 package com.forA.chatbot.domain;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor // Builder를 위한 전체 필드 생성자 추가
+@Builder // Builder 패턴 사용
 public class User extends BaseTimeEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Getter
     private Long id;
+
+    // --- Apple 로그인으로 추가될 필드 ---
+    @Column(nullable = false, unique = true)
+    private String email; // 이메일 필드 추가
+
+    @Getter
+    @Column(unique = true)
+    private String appleUniqueId;
 
     @Column(length = 10, nullable = false)
     private String gender = "UNKNOWN";
@@ -37,5 +51,4 @@ public class User extends BaseTimeEntity{
 
     @Column(name = "is_notification_enabled")
     private Boolean isNotificationEnabled = false;
-
 }

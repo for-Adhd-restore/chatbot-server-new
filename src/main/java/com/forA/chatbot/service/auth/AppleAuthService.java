@@ -1,0 +1,81 @@
+package com.forA.chatbot.service.auth;
+
+import com.forA.chatbot.auth.jwt.JwtUtil;
+import com.forA.chatbot.domain.User;
+import com.forA.chatbot.dto.auth.AppleLoginRequest;
+import com.forA.chatbot.dto.auth.AuthResponse;
+import com.forA.chatbot.repository.UserRepository;
+import io.jsonwebtoken.Claims;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class AppleAuthService {
+
+    private final AppleTokenValidator appleTokenValidator;
+    private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+
+    @Transactional
+    public AuthResponse authenticateWithApple(AppleLoginRequest request) {
+        // 1. Apple Identity Token 검증
+        Claims claims = appleTokenValidator.validateToken(request.getIdentityToken());
+
+        // 2. 애플 사용자 정보 추출
+        String appleUniqueId = claims.getSubject();
+        String email = claims.get("email", String.class);
+
+        // 3. 기존 사용자 조회 또는 신규 생성
+        Optional<User> existingUser = userRepository.findByAppleUniqueId(appleUniqueId);
+        User user;
+        boolean isNewUser = false;
+        if (existingUser.isPresent()) {
+            log.info("기존 사용자 가입 : {}", appleUniqueId);
+            user = existingUser.get();
+        } else {
+            log.info("신규 사용자 가입 : {}", appleUniqueId);
+            isNewUser = true;
+
+            user = User.builder()
+                    .appleUniqueId(appleUniqueId)
+                    .email(email)
+                    .fullName(buildFullName(request.getFirstName(), request.getLastName()))
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .build();
+
+            user = userRepository.save(user);
+        }
+
+        // 4. JWT 토큰 생성
+        String accessToken = jwtUtil.createAccessToken(String.valueOf(user.getId()));
+
+        // 5. 응답 생성
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .tokenType("Bearer")
+                .expiresIn(3600L)
+                .userId(user.getId())
+                .isNewUser(isNewUser)
+                .build();
+    }
+
+    private String buildFullName(String firstName, String
+            lastName) {
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        } else if (firstName != null) {
+            return firstName;
+        } else if (lastName != null) {
+            return lastName;
+        }
+        return "Apple User"; // 기본값
+    }
+
+}
