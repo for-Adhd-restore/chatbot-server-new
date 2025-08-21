@@ -1,9 +1,11 @@
 package com.forA.chatbot.service.auth;
 
 import com.forA.chatbot.auth.jwt.JwtUtil;
+import com.forA.chatbot.domain.RefreshToken;
 import com.forA.chatbot.domain.User;
 import com.forA.chatbot.dto.auth.AppleLoginRequest;
 import com.forA.chatbot.dto.auth.AuthResponse;
+import com.forA.chatbot.repository.RefreshTokenRepository;
 import com.forA.chatbot.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -21,7 +24,7 @@ public class AppleAuthService {
     private final AppleTokenValidator appleTokenValidator;
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-
+    private final RefreshTokenRepository refreshTokenRepository;
     @Transactional
     public AuthResponse authenticateWithApple(AppleLoginRequest request) {
         // 1. Apple Identity Token 검증
@@ -52,18 +55,34 @@ public class AppleAuthService {
 
             user = userRepository.save(user);
         }
-
         // 4. JWT 토큰 생성
         String accessToken = jwtUtil.createAccessToken(String.valueOf(user.getId()));
-
+        String refreshToken = createRefreshToken(user.getId());
         // 5. 응답 생성
         return AuthResponse.builder()
                 .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .expiresIn(3600L)
                 .userId(user.getId())
                 .isNewUser(isNewUser)
                 .build();
+    }
+    public String createRefreshToken(Long userId) {
+        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByUserId(userId);
+        if (refreshToken.isPresent()) {
+            refreshTokenRepository.deleteByUserId(userId);
+        }
+        String createRefreshToken = jwtUtil.createRefreshToken();
+        // refreshToken 생성
+        refreshTokenRepository.save(
+                RefreshToken.builder()
+                        .token(createRefreshToken)
+                        .userId(userId)
+                        .expiresAt(LocalDateTime.now().plusMonths(3))
+                        .build()
+        );
+        return createRefreshToken;
     }
 
     private String buildFullName(String firstName, String

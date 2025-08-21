@@ -1,5 +1,6 @@
 package com.forA.chatbot.auth.jwt;
 
+import com.forA.chatbot.repository.RefreshTokenRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtUtil {
@@ -35,4 +37,11 @@ public class JwtUtil {
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
+    /*
+    * RefreshToken 생성,
+    */
+    public String createRefreshToken() {
+        return "rt_" + UUID.randomUUID().toString().replace("-", "");
+    }
+
 }
