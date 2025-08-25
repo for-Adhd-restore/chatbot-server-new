@@ -5,8 +5,8 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_responses")
-public class UserResponse extends BaseTimeEntity{
+@Table(name = "chat_messages")
+public class ChatMessage extends BaseTimeEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,14 +16,16 @@ public class UserResponse extends BaseTimeEntity{
     @JoinColumn(name = "chat_session_id", nullable = false)
     private ChatSession chatSession;
 
+    @Column(length = 10, nullable = false)
+    private String sender;
+
     @Column(length = 50, nullable = false)
     private String step;
 
-    @Column(name = "response_value", nullable = false)
-    private String responseValue;
-
     @Column(nullable = false)
-    private LocalDateTime respondedAt;
+    private String message;
 
+    @Column(name = "sended_at", nullable = false)
+    private LocalDateTime sendedAt;
 
 }

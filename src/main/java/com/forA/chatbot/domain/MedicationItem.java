@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "medication_items")
 public class MedicationItem extends BaseTimeEntity{
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

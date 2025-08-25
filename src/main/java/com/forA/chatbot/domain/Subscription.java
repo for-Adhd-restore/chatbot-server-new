@@ -1,6 +1,7 @@
 package com.forA.chatbot.domain;
 
 import com.forA.chatbot.domain.enums.SubscriptionStatus;
+
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;

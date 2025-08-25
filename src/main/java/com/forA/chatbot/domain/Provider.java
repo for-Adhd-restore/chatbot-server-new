@@ -1,6 +1,8 @@
 package com.forA.chatbot.domain;
 
+
 import com.forA.chatbot.domain.enums.ProviderType;
+
 import jakarta.persistence.*;
 
 @Entity

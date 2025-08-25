@@ -1,6 +1,7 @@
 package com.forA.chatbot.domain;
 
 import com.forA.chatbot.domain.enums.Gender;
+
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -13,7 +14,9 @@ public class User extends BaseTimeEntity{
     private Long id;
 
     @Column(length = 10, nullable = false)
+
     private Gender gender =  Gender.UNKNOWN;
+
 
     @Column(name = "birth_year")
     private Integer birthYear;
@@ -38,7 +41,4 @@ public class User extends BaseTimeEntity{
 
     @Column(name = "is_notification_enabled")
     private Boolean isNotificationEnabled = false;
-
-
-
 }

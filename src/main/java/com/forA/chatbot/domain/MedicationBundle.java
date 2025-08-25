@@ -7,6 +7,7 @@ import java.sql.Time;
 @Entity
 @Table(name = "medication_bundles")
 public class MedicationBundle extends BaseTimeEntity{
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

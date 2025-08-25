@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "user_symptoms")
 public class UserSymptom extends BaseTimeEntity{
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
