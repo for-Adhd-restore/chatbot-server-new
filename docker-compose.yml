@@ -14,7 +14,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
   mongo:
-    image: mongo:latest
+    image: mongo:8.0
     container_name: ${MONGO_DATABASE}
     restart: always
     ports:

@@ -171,4 +171,17 @@ gradle-app.setting
 
 # End of https://www.toptal.com/developers/gitignore/api/intellij,java,gradle
 HELP.md
+
+#환경설정파일
 .env
+
+# Terraform
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/.terraform.lock.hcl
+terraform/terraform.tfplan
+
+# AWS 관련
+.aws/
+*.pem
