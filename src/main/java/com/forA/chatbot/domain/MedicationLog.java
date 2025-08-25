@@ -8,7 +8,6 @@ import java.sql.Time;
 @Entity
 @Table(name = "medication_logs")
 public class MedicationLog extends BaseTimeEntity{
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

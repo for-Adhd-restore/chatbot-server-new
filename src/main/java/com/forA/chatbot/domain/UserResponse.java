@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "user_responses")
 public class UserResponse extends BaseTimeEntity{
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

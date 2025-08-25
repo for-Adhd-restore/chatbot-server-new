@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 @Entity
 @Table(name = "selected_emotions")
 public class SelectedEmotion extends BaseTimeEntity{
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -1,4 +1,4 @@
-package com.forA.chatbot.domain;
+package com.forA.chatbot.domain.enums;
 
 public enum SubscriptionStatus {
     ACTIVE, EXPIRED, CANCELLED
