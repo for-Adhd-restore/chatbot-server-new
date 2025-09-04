@@ -17,7 +17,6 @@ public class User extends BaseTimeEntity{
 
     private Gender gender =  Gender.UNKNOWN;
 
-
     @Column(name = "birth_year")
     private Integer birthYear;
 
@@ -32,6 +31,10 @@ public class User extends BaseTimeEntity{
 
     @Column(name = "full_name", length = 50, nullable = false)
     private String fullName;
+
+    private Integer job;
+    private Integer disorder;
+    private Integer symptom;
 
     @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
