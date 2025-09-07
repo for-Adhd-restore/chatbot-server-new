@@ -3,6 +3,19 @@ networks:
     driver: bridge
 
 services:
+  app:
+    build: .
+    container_name: mori-app
+    restart: always
+    depends_on:
+      - db
+      - mongo
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    networks:
+      - mori-network
   db:
     image: mysql:8.0 # 사용할 MySQL 이미지
     container_name: ${MYSQL_DATABASE}
@@ -13,8 +26,10 @@ services:
       - src/main/resources/keys/.env
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - mori-network
   mongo:
-    image: mongo:latest
+    image: mongo:8.0
     container_name: ${MONGO_DATABASE}
     restart: always
     ports:

@@ -169,9 +169,27 @@ gradle-app.setting
 # Java heap dump
 *.hprof
 
+# 키 관련 데이터 제거
+/src/main/resources/keys/
+
 # End of https://www.toptal.com/developers/gitignore/api/intellij,java,gradle
 HELP.md
 src/main/resources/keys/.env
-.env
+
 # 키 관련 데이터
 /src/main/resources/keys/
+
+
+#환경설정파일
+.env
+
+# Terraform
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/.terraform.lock.hcl
+terraform/terraform.tfplan
+
+# AWS 관련
+.aws/
+*.pem
