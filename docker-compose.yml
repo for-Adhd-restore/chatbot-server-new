@@ -4,7 +4,7 @@ networks:
 
 services:
   app:
-    build: .
+    image: foradhd2024/mori:latest
     container_name: mori-app
     restart: always
     depends_on:
