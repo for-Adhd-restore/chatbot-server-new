@@ -1,15 +1,22 @@
 name: google-java-format # 워크플로우의 이름
 on:
-  pull_request: # pull request가 발생했을 때만 실행
+  pull_request: # pull request가 발생했을 때 실행
     branches: [ develop ] # develop 브랜치로 PR이 올라올 때만
 
 jobs:
   formatting:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2 # 깃허브 저장소를 체크아웃 하는 액션
+        with:
+          # PR의 원본 브랜치(feat)를 체크아웃
+          ref: ${{ github.event.pull_request.head.ref }}
+          # 이 토큰이 푸시 권한을 부여해줍니다
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run google-java-format
+      - name: Run google-java-format and push changes
         uses: axel-op/googlejavaformat-action@v3
         with:
-          args: "--set-exit-if-changed" # 포맷팅이 필요한 파일이 있으면 워크플로우 실패
+          args: "--replace" # 파일을 수정
+          commit-message: "Style: google-java-format"
+          # 이 액션이 자동으로 커밋하고 푸시까지 처리합니다.
