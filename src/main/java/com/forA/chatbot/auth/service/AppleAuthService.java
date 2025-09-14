@@ -1,20 +1,19 @@
 package com.forA.chatbot.auth.service;
 
-import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.domain.RefreshToken;
-import com.forA.chatbot.user.User;
 import com.forA.chatbot.auth.dto.AppleLoginRequest;
 import com.forA.chatbot.auth.dto.AuthResponse;
+import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
+import com.forA.chatbot.user.User;
 import io.jsonwebtoken.Claims;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -46,13 +45,14 @@ public class AppleAuthService {
       log.info("신규 사용자 가입 : {}", appleUniqueId);
       isNewUser = true;
 
-      user = User.builder()
-          .appleUniqueId(appleUniqueId)
-          .email(email)
-          .fullName(buildFullName(request.getFirstName(), request.getLastName()))
-          .firstName(request.getFirstName())
-          .lastName(request.getLastName())
-          .build();
+      user =
+          User.builder()
+              .appleUniqueId(appleUniqueId)
+              .email(email)
+              .fullName(buildFullName(request.getFirstName(), request.getLastName()))
+              .firstName(request.getFirstName())
+              .lastName(request.getLastName())
+              .build();
 
       user = userRepository.save(user);
     }
@@ -82,13 +82,11 @@ public class AppleAuthService {
             .token(createRefreshToken)
             .userId(userId)
             .expiresAt(LocalDateTime.now().plusMonths(3))
-            .build()
-    );
+            .build());
     return createRefreshToken;
   }
 
-  private String buildFullName(String firstName, String
-      lastName) {
+  private String buildFullName(String firstName, String lastName) {
     if (firstName != null && lastName != null) {
       return firstName + " " + lastName;
     } else if (firstName != null) {
@@ -98,5 +96,4 @@ public class AppleAuthService {
     }
     return "Apple User"; // 기본값
   }
-
 }

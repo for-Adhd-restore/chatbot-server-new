@@ -7,12 +7,6 @@ import com.forA.chatbot.auth.dto.ApplePublicKey;
 import com.forA.chatbot.auth.dto.ApplePublicKeyResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -21,6 +15,11 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 import java.util.List;
+import javax.crypto.SecretKey;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -61,8 +60,6 @@ public class AppleTokenValidator {
       log.error("Apple token validation failed", e);
       throw new AuthHandler(ErrorStatus.APPLE_TOKEN_INVALID);
     }
-
-
   }
 
   private String extractKidFromHeader(String header) { // 키 ID 추출

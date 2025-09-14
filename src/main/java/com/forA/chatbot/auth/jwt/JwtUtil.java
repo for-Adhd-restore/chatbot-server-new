@@ -3,13 +3,12 @@ package com.forA.chatbot.auth.jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
@@ -17,8 +16,8 @@ public class JwtUtil {
   private final Key secretKey;
   private final long accessTokenValidityInMilliseconds;
 
-  public JwtUtil(@Value("${jwt.secret}") String secret,
-      @Value("${jwt.expiration_time}") long expirationTime) {
+  public JwtUtil(
+      @Value("${jwt.secret}") String secret, @Value("${jwt.expiration_time}") long expirationTime) {
     this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     this.accessTokenValidityInMilliseconds = expirationTime;
   }
@@ -44,5 +43,4 @@ public class JwtUtil {
   public String createRefreshToken() {
     return "rt_" + UUID.randomUUID().toString().replace("-", "");
   }
-
 }

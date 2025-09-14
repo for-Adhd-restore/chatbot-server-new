@@ -19,11 +19,7 @@ public enum SuccessStatus implements BaseCode {
 
   @Override
   public ReasonDTO getReason() {
-    return ReasonDTO.builder()
-        .message(message)
-        .code(code)
-        .isSuccess(true)
-        .build();
+    return ReasonDTO.builder().message(message).code(code).isSuccess(true).build();
   }
 
   @Override
@@ -33,7 +29,6 @@ public enum SuccessStatus implements BaseCode {
         .code(code)
         .isSuccess(true)
         .httpStatus(httpStatus)
-        .build()
-        ;
+        .build();
   }
 }

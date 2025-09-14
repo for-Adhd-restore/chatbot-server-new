@@ -3,7 +3,6 @@ package com.forA.chatbot.medicationLogs;
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.medicationBundles.MedicationBundle;
 import jakarta.persistence.*;
-
 import java.sql.Date;
 import java.sql.Time;
 

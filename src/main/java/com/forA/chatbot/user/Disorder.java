@@ -7,8 +7,7 @@ import jakarta.persistence.*;
 @Table(name = "disorders")
 public class Disorder extends BaseTimeEntity {
 
-  @Id
-  private Long id;
+  @Id private Long id;
 
   @Column(name = "disorder_code", length = 50, nullable = false)
   private String disorderCode;

@@ -1,11 +1,9 @@
 package com.forA.chatbot.subscriptions;
 
 import com.forA.chatbot.enums.SubscriptionStatus;
-
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.User;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -47,6 +45,4 @@ public class Subscription extends BaseTimeEntity {
 
   @Column(name = "is_trial", nullable = false)
   private Boolean isTrial;
-
 }
-

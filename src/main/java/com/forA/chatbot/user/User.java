@@ -1,18 +1,13 @@
 package com.forA.chatbot.user;
 
 import com.forA.chatbot.enums.Gender;
-
 import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
-
-import lombok.*;
-
-
 import jakarta.validation.constraints.Size;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.*;
 
 @Entity
 @Table(name = "users")
@@ -35,7 +30,6 @@ public class User extends BaseTimeEntity {
   private String appleUniqueId;
 
   @Column(length = 10, nullable = false)
-
   private Gender gender = Gender.UNKNOWN;
 
   @Column(name = "birth_year")
@@ -60,6 +54,7 @@ public class User extends BaseTimeEntity {
   @Column(columnDefinition = "JSON")
   @Size(max = 2, message = "최대 2개의 disorder만 선택할 수 있습니다")
   private List<Integer> disorder = new ArrayList<>();
+
   @Column(columnDefinition = "JSON")
   @Size(max = 2, message = "최대 2개의 symptom만 선택할 수 있습니다")
   private List<Integer> symptom = new ArrayList<>();

@@ -26,15 +26,12 @@ public class AuthController {
     try {
       log.info("Apple 로그인 요청 수신");
       AuthResponse response = appleAuthService.authenticateWithApple(request);
-      log.info("Apple 로그인 성공: userId={}, isNewUser={}",
-          response.getUserId(),
-          response.isNewUser());
+      log.info("Apple 로그인 성공: userId={}, isNewUser={}", response.getUserId(), response.isNewUser());
 
       return ApiResponse.onSuccess(response);
     } catch (Exception e) {
       log.error("Apple 로그인 실패", e);
       throw new AuthHandler(ErrorStatus.APPLE_TOKEN_INVALID);
     }
-
   }
 }

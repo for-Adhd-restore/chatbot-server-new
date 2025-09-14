@@ -2,9 +2,8 @@ package com.forA.chatbot.auth.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.Builder;
-
 import java.time.LocalDateTime;
+import lombok.Builder;
 
 @Entity
 @Table(name = "refresh_tokens")

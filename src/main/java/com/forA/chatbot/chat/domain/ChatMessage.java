@@ -2,7 +2,6 @@ package com.forA.chatbot.chat.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -28,5 +27,4 @@ public class ChatMessage extends BaseTimeEntity {
 
   @Column(name = "sended_at", nullable = false)
   private LocalDateTime sendedAt;
-
 }

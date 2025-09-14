@@ -1,6 +1,5 @@
 package com.forA.chatbot.global;
 
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,8 +22,8 @@ public class TestController {
   @GetMapping("/")
   @Operation(summary = "테스트용 API", description = "스웨거 동작 테스트용 API")
   @ApiResponses({
-      @ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
-      @ApiResponse(responseCode = "TEST500", description = "테스트를 실패하였습니다.")
+    @ApiResponse(responseCode = "COMMON200", description = "OK, 성공"),
+    @ApiResponse(responseCode = "TEST500", description = "테스트를 실패하였습니다.")
   })
   public String test() {
     return "테스트 성공, OK";

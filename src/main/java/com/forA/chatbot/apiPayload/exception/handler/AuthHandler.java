@@ -4,7 +4,7 @@ import com.forA.chatbot.apiPayload.code.BaseErrorCode;
 import com.forA.chatbot.apiPayload.exception.GeneralException;
 
 public class AuthHandler extends GeneralException {
-    public AuthHandler(BaseErrorCode code) {
-        super(code);
-    }
+  public AuthHandler(BaseErrorCode code) {
+    super(code);
+  }
 }

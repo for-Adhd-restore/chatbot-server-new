@@ -3,7 +3,6 @@ package com.forA.chatbot.user;
 import com.forA.chatbot.chat.domain.ChatSession;
 import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,6 +25,4 @@ public class UserResponse extends BaseTimeEntity {
 
   @Column(nullable = false)
   private LocalDateTime respondedAt;
-
-
 }

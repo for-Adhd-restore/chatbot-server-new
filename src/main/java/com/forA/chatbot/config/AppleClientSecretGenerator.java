@@ -2,33 +2,32 @@ package com.forA.chatbot.config;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-
-import org.bouncycastle.util.io.pem.PemObject;
-import org.bouncycastle.util.io.pem.PemReader;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
-
-
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemReader;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
 
 @Component
 public class AppleClientSecretGenerator { // apple 공식 요구사항에 맞게 ClientSecret(=JWT) 생성
 
   @Value("${apple.team-id}")
   private String teamId;
+
   @Value("${apple.key-id}")
   private String keyId;
+
   @Value("${apple.client-id}")
   private String clientId;
+
   @Value("${apple.key.path}")
   private String keyPath;
 
@@ -59,7 +58,5 @@ public class AppleClientSecretGenerator { // apple 공식 요구사항에 맞게
     } catch (Exception e) {
       throw new RuntimeException("Apple Client Secret 생성 중 오류 발생", e);
     }
-
   }
-
 }

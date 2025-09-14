@@ -3,7 +3,6 @@ package com.forA.chatbot.medicationBundles;
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.User;
 import jakarta.persistence.*;
-
 import java.sql.Time;
 
 @Entity
@@ -32,6 +31,4 @@ public class MedicationBundle extends BaseTimeEntity {
 
   @Column(name = "alarm_time")
   private Time alarmTime;
-
-
 }

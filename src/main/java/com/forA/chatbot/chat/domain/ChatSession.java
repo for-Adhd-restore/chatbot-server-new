@@ -3,7 +3,6 @@ package com.forA.chatbot.chat.domain;
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.User;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity

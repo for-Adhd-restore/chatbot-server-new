@@ -18,5 +18,4 @@ public class MedicationItem extends BaseTimeEntity {
 
   @Column(name = "medication_name", nullable = false, length = 50)
   private String medicationName;
-
 }
