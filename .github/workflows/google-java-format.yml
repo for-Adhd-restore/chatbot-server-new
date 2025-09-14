@@ -8,4 +8,4 @@ jobs:
       - uses: axel-op/googlejavaformat-action@v3 # 본격적인 google-java-format 실행
         with:
           args: "--replace" # --replace (파일을 수정한다)
-          commit-message: "style: google-java-format"
+          commit-message: "Style: google-java-format"

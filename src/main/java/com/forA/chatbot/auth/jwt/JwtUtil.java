@@ -1,6 +1,5 @@
 package com.forA.chatbot.auth.jwt;
 
-import com.forA.chatbot.repository.RefreshTokenRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
