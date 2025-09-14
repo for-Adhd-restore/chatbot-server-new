@@ -7,17 +7,17 @@ import jakarta.persistence.*;
 @Table(name = "action_feedbacks")
 public class ActionFeedback extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "chat_session_id", nullable = false)
-    private ChatSession chatSession;
+  @ManyToOne
+  @JoinColumn(name = "chat_session_id", nullable = false)
+  private ChatSession chatSession;
 
-    @Column(name = "did_perform", nullable = false)
-    private Boolean didPerform;
+  @Column(name = "did_perform", nullable = false)
+  private Boolean didPerform;
 
-    @Column(name = "emotion_score")
-    private Integer emotionScore;
+  @Column(name = "emotion_score")
+  private Integer emotionScore;
 }

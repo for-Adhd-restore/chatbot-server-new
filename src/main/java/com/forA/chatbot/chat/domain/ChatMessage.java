@@ -9,24 +9,24 @@ import java.time.LocalDateTime;
 @Table(name = "chat_messages")
 public class ChatMessage extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "chat_session_id", nullable = false)
-    private ChatSession chatSession;
+  @ManyToOne
+  @JoinColumn(name = "chat_session_id", nullable = false)
+  private ChatSession chatSession;
 
-    @Column(length = 10, nullable = false)
-    private String sender;
+  @Column(length = 10, nullable = false)
+  private String sender;
 
-    @Column(length = 50, nullable = false)
-    private String step;
+  @Column(length = 50, nullable = false)
+  private String step;
 
-    @Column(nullable = false)
-    private String message;
+  @Column(nullable = false)
+  private String message;
 
-    @Column(name = "sended_at", nullable = false)
-    private LocalDateTime sendedAt;
+  @Column(name = "sended_at", nullable = false)
+  private LocalDateTime sendedAt;
 
 }

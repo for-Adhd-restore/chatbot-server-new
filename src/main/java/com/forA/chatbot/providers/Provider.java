@@ -11,17 +11,17 @@ import jakarta.persistence.*;
 @Table(name = "providers")
 public class Provider extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+  @ManyToOne
+  @JoinColumn(name = "user_id")
+  private User user;
 
-    @Column(name = "provider_type", length = 10, nullable = false)
-    private ProviderType providerType;
+  @Column(name = "provider_type", length = 10, nullable = false)
+  private ProviderType providerType;
 
-    @Column(name = "provider_user_id", length = 100, nullable = false)
-    private String providerUserId;
+  @Column(name = "provider_user_id", length = 100, nullable = false)
+  private String providerUserId;
 }

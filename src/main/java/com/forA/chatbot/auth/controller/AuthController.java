@@ -19,22 +19,22 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class AuthController {
 
-    private final AppleAuthService appleAuthService;
+  private final AppleAuthService appleAuthService;
 
-    @PostMapping("/apple")
-    public ApiResponse<AuthResponse> appleLogin(@RequestBody AppleLoginRequest request) {
-        try {
-            log.info("Apple 로그인 요청 수신");
-            AuthResponse response = appleAuthService.authenticateWithApple(request);
-            log.info("Apple 로그인 성공: userId={}, isNewUser={}",
-                    response.getUserId(),
-                    response.isNewUser());
+  @PostMapping("/apple")
+  public ApiResponse<AuthResponse> appleLogin(@RequestBody AppleLoginRequest request) {
+    try {
+      log.info("Apple 로그인 요청 수신");
+      AuthResponse response = appleAuthService.authenticateWithApple(request);
+      log.info("Apple 로그인 성공: userId={}, isNewUser={}",
+          response.getUserId(),
+          response.isNewUser());
 
-            return ApiResponse.onSuccess(response);
-        } catch (Exception e) {
-            log.error("Apple 로그인 실패", e);
-            throw new AuthHandler(ErrorStatus.APPLE_TOKEN_INVALID);
-        }
-
+      return ApiResponse.onSuccess(response);
+    } catch (Exception e) {
+      log.error("Apple 로그인 실패", e);
+      throw new AuthHandler(ErrorStatus.APPLE_TOKEN_INVALID);
     }
+
+  }
 }

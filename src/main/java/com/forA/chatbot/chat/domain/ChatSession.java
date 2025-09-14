@@ -10,23 +10,23 @@ import java.time.LocalDateTime;
 @Table(name = "chat_sessions")
 public class ChatSession extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+  @ManyToOne
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-    @Column(length = 50, nullable = false)
-    private String step;
+  @Column(length = 50, nullable = false)
+  private String step;
 
-    @Column(name = "final_step", length = 50)
-    private String finalStep;
+  @Column(name = "final_step", length = 50)
+  private String finalStep;
 
-    @Column(name = "started_at")
-    private LocalDateTime startedAt;
+  @Column(name = "started_at")
+  private LocalDateTime startedAt;
 
-    @Column(name = "ended_at")
-    private LocalDateTime endedAt;
+  @Column(name = "ended_at")
+  private LocalDateTime endedAt;
 }

@@ -2,7 +2,7 @@ package com.forA.chatbot.apiPayload.code;
 
 public interface BaseCode {
 
-    ReasonDTO getReason();
+  ReasonDTO getReason();
 
-    ReasonDTO getReasonHttpStatus();
+  ReasonDTO getReasonHttpStatus();
 }

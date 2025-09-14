@@ -21,55 +21,55 @@ import java.util.List;
 @Builder // Builder 패턴 사용
 public class User extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Getter
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Getter
+  private Long id;
 
-    // --- Apple 로그인으로 추가될 필드 ---
-    @Column(nullable = false, unique = true)
-    private String email; // 이메일 필드 추가
+  // --- Apple 로그인으로 추가될 필드 ---
+  @Column(nullable = false, unique = true)
+  private String email; // 이메일 필드 추가
 
-    @Getter
-    @Column(unique = true)
-    private String appleUniqueId;
+  @Getter
+  @Column(unique = true)
+  private String appleUniqueId;
 
-    @Column(length = 10, nullable = false)
+  @Column(length = 10, nullable = false)
 
-    private Gender gender =  Gender.UNKNOWN;
+  private Gender gender = Gender.UNKNOWN;
 
-    @Column(name = "birth_year")
-    private Integer birthYear;
+  @Column(name = "birth_year")
+  private Integer birthYear;
 
-    @Column(length = 20)
-    private String nickname;
+  @Column(length = 20)
+  private String nickname;
 
-    @Column(name = "last_name", length = 20)
-    private String lastName;
+  @Column(name = "last_name", length = 20)
+  private String lastName;
 
-    @Column(name = "first_name", length = 30)
-    private String firstName;
+  @Column(name = "first_name", length = 30)
+  private String firstName;
 
-    @Column(name = "full_name", length = 50, nullable = false)
-    private String fullName;
+  @Column(name = "full_name", length = 50, nullable = false)
+  private String fullName;
 
-    @Column(columnDefinition = "JSON")
-    @Size(max = 2, message = "최대 2개의 job만 선택할 수 있습니다")
-    private List<Integer> job = new ArrayList<>();
+  @Column(columnDefinition = "JSON")
+  @Size(max = 2, message = "최대 2개의 job만 선택할 수 있습니다")
+  private List<Integer> job = new ArrayList<>();
 
-    @Column(columnDefinition = "JSON")
-    @Size(max = 2, message = "최대 2개의 disorder만 선택할 수 있습니다")
-    private List<Integer> disorder = new ArrayList<>();
-    @Column(columnDefinition = "JSON")
-    @Size(max = 2, message = "최대 2개의 symptom만 선택할 수 있습니다")
-    private List<Integer> symptom =  new ArrayList<>();
+  @Column(columnDefinition = "JSON")
+  @Size(max = 2, message = "최대 2개의 disorder만 선택할 수 있습니다")
+  private List<Integer> disorder = new ArrayList<>();
+  @Column(columnDefinition = "JSON")
+  @Size(max = 2, message = "최대 2개의 symptom만 선택할 수 있습니다")
+  private List<Integer> symptom = new ArrayList<>();
 
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
+  @Column(name = "is_deleted", nullable = false)
+  private Boolean isDeleted = false;
 
-    @Column(name = "deleated_at")
-    private LocalDateTime deletedAt;
+  @Column(name = "deleated_at")
+  private LocalDateTime deletedAt;
 
-    @Column(name = "is_notification_enabled")
-    private Boolean isNotificationEnabled = false;
+  @Column(name = "is_notification_enabled")
+  private Boolean isNotificationEnabled = false;
 }

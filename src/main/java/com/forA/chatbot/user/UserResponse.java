@@ -10,22 +10,22 @@ import java.time.LocalDateTime;
 @Table(name = "user_responses")
 public class UserResponse extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "chat_session_id", nullable = false)
-    private ChatSession chatSession;
+  @ManyToOne
+  @JoinColumn(name = "chat_session_id", nullable = false)
+  private ChatSession chatSession;
 
-    @Column(length = 50, nullable = false)
-    private String step;
+  @Column(length = 50, nullable = false)
+  private String step;
 
-    @Column(name = "response_value", nullable = false)
-    private String responseValue;
+  @Column(name = "response_value", nullable = false)
+  private String responseValue;
 
-    @Column(nullable = false)
-    private LocalDateTime respondedAt;
+  @Column(nullable = false)
+  private LocalDateTime respondedAt;
 
 
 }

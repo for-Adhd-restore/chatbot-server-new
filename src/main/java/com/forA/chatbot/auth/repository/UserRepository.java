@@ -8,5 +8,6 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByAppleUniqueId(String appleUniqueId);
+
+  Optional<User> findByAppleUniqueId(String appleUniqueId);
 }
