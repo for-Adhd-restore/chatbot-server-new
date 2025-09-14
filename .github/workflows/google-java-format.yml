@@ -1,11 +1,15 @@
 name: google-java-format # 워크플로우의 이름
-on: [ push, pull_request ] # 깃 저장소의 push, pull_request 이벤트에 의해 트리거된다.
+on:
+  pull_request: # pull request가 발생했을 때만 실행
+    branches: [ develop ] # develop 브랜치로 PR이 올라올 때만
+
 jobs:
   formatting:
-    runs-on: ubuntu-latest # 워크플로우의 이름
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2 # 깃허브 저장소를 체크아웃 하는 액션
-      - uses: axel-op/googlejavaformat-action@v3 # 본격적인 google-java-format 실행
+      - uses: actions/checkout@v2
+
+      - name: Run google-java-format
+        uses: axel-op/googlejavaformat-action@v3
         with:
-          args: "--replace" # --replace (파일을 수정한다)
-          commit-message: "Style: google-java-format"
+          args: "--set-exit-if-changed" # 포맷팅이 필요한 파일이 있으면 워크플로우 실패
