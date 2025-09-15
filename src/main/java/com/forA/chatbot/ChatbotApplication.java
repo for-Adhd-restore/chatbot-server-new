@@ -10,8 +10,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableCaching
 public class ChatbotApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ChatbotApplication.class, args);
-	}
-
+  public static void main(String[] args) {
+    SpringApplication.run(ChatbotApplication.class, args);
+  }
 }
