@@ -3,6 +3,7 @@ package com.forA.chatbot.auth.service;
 import com.forA.chatbot.auth.domain.RefreshToken;
 import com.forA.chatbot.auth.dto.AuthResponse;
 import com.forA.chatbot.auth.dto.TempLoginRequest;
+import com.forA.chatbot.auth.dto.TempRefreshTokenRequest;
 import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.jwt.TempJwtTokenValidator;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
@@ -67,7 +68,44 @@ public class TempAuthService {
         .build();
   }
 
+  @Transactional
+  public AuthResponse refreshAccessToken(TempRefreshTokenRequest request) {
+    String refreshTokenValue = request.getRefreshToken();
 
+    // 1. RefreshToken 유효성 검증
+    Optional<RefreshToken> refreshTokenOpt = refreshTokenRepository.findByToken(refreshTokenValue);
+    if (refreshTokenOpt.isEmpty()) {
+      throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다");
+    }
+
+    RefreshToken refreshToken = refreshTokenOpt.get();
+
+    // 2. 만료 확인
+    if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+      refreshTokenRepository.delete(refreshToken);
+      throw new IllegalArgumentException("만료된 리프레시 토큰입니다");
+    }
+
+    // 3. 새로운 Access Token 생성
+    String newAccessToken = jwtUtil.createAccessToken(String.valueOf(refreshToken.getUserId()));
+
+    log.info("Access Token 갱신 완료: userId={}", refreshToken.getUserId());
+
+    return AuthResponse.builder()
+        .accessToken(newAccessToken)
+        .refreshToken(refreshTokenValue) // 기존 RefreshToken 재사용
+        .tokenType("Bearer")
+        .expiresIn(3600L)
+        .userId(refreshToken.getUserId())
+        .isNewUser(false)
+        .build();
+  }
+
+  @Transactional
+  public void logout(Long userId) {
+    log.info("로그아웃: userId={}", userId);
+    refreshTokenRepository.deleteByUserId(userId);
+  }
 
   // 기존 createRefreshToken 메서드 그대로 활용
   private String createRefreshToken(Long userId) {
