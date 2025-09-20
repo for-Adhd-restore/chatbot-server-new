@@ -25,7 +25,10 @@ public enum ErrorStatus implements BaseErrorCode {
   APPLE_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "Apple 로그인에 실패했습니다."),
   APPLE_PUBLIC_KEY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH5001", "Apple 공개키 조회에 실패했습니다."),
 
-  TEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TEST500", "테스트를 실패하였습니다");
+  TEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TEST500", "테스트를 실패하였습니다"),
+  TEMP_LOGIN_FAILED(HttpStatus.BAD_REQUEST,"AUTH4003" ,"임시 로그인에 실패했씁니다." ),
+  USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH_4004", "존재하지 않는 사용자입니다.");
+
   private final HttpStatus httpStatus;
   private final String code;
   private final String message;

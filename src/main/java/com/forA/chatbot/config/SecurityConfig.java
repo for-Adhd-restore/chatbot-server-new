@@ -15,7 +15,11 @@ public class SecurityConfig {
     http.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/", "/test/**", "/api/v1/auth/apple")
+                auth.requestMatchers("/", "/test/**", "/api/v1/auth/apple","/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/webjars/**",
+                        "api/v1/auth/temp-login")
                     .permitAll()
                     .anyRequest()
                     .authenticated());
