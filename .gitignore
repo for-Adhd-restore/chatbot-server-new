@@ -193,3 +193,7 @@ terraform/terraform.tfplan
 # AWS 관련
 .aws/
 *.pem
+
+#로컬 테스트용 파일
+docker-compose.override.yml
+application-dev.properties
