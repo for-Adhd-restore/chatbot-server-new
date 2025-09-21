@@ -4,7 +4,12 @@ import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
 import java.sql.Date;
 import java.sql.Time;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Getter
+@NoArgsConstructor
 @Entity
 @Table(name = "medication_logs")
 public class  MedicationLog extends BaseTimeEntity {
@@ -28,4 +33,14 @@ public class  MedicationLog extends BaseTimeEntity {
 
   @Column(length = 50, name = "med_condition")
   private String medCondition;
+
+  @Builder
+  public MedicationLog(MedicationBundle medicationBundle, Date date, Boolean isTaken, Time takenAt, String medCondition) {
+    this.medicationBundle = medicationBundle;
+    this.date = date;
+    this.isTaken = isTaken;
+    this.takenAt = takenAt;
+    this.medCondition = medCondition;
+
+  }
 }

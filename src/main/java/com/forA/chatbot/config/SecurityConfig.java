@@ -19,7 +19,8 @@ public class SecurityConfig {
                         "/v3/api-docs/**",
                         "/swagger-resources/**",
                         "/webjars/**",
-                        "api/v1/auth/temp-login")
+                        "api/v1/auth/temp-login",
+                        "api/v1/medications")
                     .permitAll()
                     .anyRequest()
                     .authenticated());
