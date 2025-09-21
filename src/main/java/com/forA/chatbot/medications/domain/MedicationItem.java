@@ -1,7 +1,6 @@
-package com.forA.chatbot.medicationItems;
+package com.forA.chatbot.medications.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
-import com.forA.chatbot.medicationBundles.MedicationBundle;
 import jakarta.persistence.*;
 
 @Entity

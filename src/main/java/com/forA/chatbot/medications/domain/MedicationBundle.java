@@ -1,4 +1,4 @@
-package com.forA.chatbot.medicationBundles;
+package com.forA.chatbot.medications.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.User;

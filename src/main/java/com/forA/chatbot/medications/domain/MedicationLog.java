@@ -1,7 +1,6 @@
-package com.forA.chatbot.medicationLogs;
+package com.forA.chatbot.medications.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
-import com.forA.chatbot.medicationBundles.MedicationBundle;
 import jakarta.persistence.*;
 import java.sql.Date;
 import java.sql.Time;
