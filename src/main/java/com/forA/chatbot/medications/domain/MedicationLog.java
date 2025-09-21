@@ -26,6 +26,6 @@ public class  MedicationLog extends BaseTimeEntity {
   @Column(name = "taken_at")
   private Time takenAt;
 
-  @Column(length = 50)
+  @Column(length = 50, name = "med_condition")
   private String medCondition;
 }
