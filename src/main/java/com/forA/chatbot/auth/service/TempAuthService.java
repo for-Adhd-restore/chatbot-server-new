@@ -5,7 +5,6 @@ import com.forA.chatbot.auth.dto.AuthResponse;
 import com.forA.chatbot.auth.dto.TempLoginRequest;
 import com.forA.chatbot.auth.dto.TempRefreshTokenRequest;
 import com.forA.chatbot.auth.jwt.JwtUtil;
-import com.forA.chatbot.auth.jwt.TempJwtTokenValidator;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.user.User;
@@ -23,7 +22,6 @@ public class TempAuthService {
 
   private final UserRepository userRepository;
   private final JwtUtil jwtUtil;
-  private final TempJwtTokenValidator jwtTokenValidator;
   private final RefreshTokenRepository refreshTokenRepository;
 
   @Transactional

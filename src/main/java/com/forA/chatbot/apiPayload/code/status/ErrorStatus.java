@@ -39,7 +39,8 @@ public enum ErrorStatus implements BaseErrorCode {
   MEDICATION_INVALID_DAY_OF_WEEK(HttpStatus.BAD_REQUEST, "MEDICATION4008", "올바르지 않은 요일 형식입니다."),
   MEDICATION_TYPE_TAGS_EMPTY(HttpStatus.BAD_REQUEST, "MEDICATION4009", "약 종류 태그는 최소 1개 이상 필요합니다."),
   MEDICATION_TAKE_DAYS_EMPTY(HttpStatus.BAD_REQUEST, "MEDICATION4010", "복용할 요일은 최소 1개 이상 선택해야 합니다."),
-
+  MEDICATION_CONDITION_REQUIRED(HttpStatus.BAD_REQUEST, "MEDICATION4011", "컨디션을 입력해주세요."),
+  MEDICATION_INVALID_DATE_FORMAT(HttpStatus.BAD_REQUEST, "MEDICATION4012", "날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요."),
 
   TEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TEST500", "테스트를 실패하였습니다");
 

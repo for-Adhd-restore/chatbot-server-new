@@ -4,13 +4,19 @@ import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.GeneralException;
 import com.forA.chatbot.medications.domain.MedicationBundle;
 import com.forA.chatbot.medications.domain.MedicationItem;
+import com.forA.chatbot.medications.domain.MedicationLog;
+import com.forA.chatbot.medications.dto.MedicationLogRequestDto;
+import com.forA.chatbot.medications.dto.MedicationLogResponseDto;
 import com.forA.chatbot.medications.dto.MedicationRequestDto;
 import com.forA.chatbot.medications.dto.MedicationResponseDto;
 import com.forA.chatbot.medications.dto.NotificationDto;
 import com.forA.chatbot.medications.repository.MedicationBundleRepository;
 import com.forA.chatbot.medications.repository.MedicationItemRepository;
+import com.forA.chatbot.medications.repository.MedicationLogRepository;
 import com.forA.chatbot.user.User;
 import com.forA.chatbot.auth.repository.UserRepository;
+import java.sql.Date;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +39,7 @@ public class MedicationService {
   private final MedicationBundleRepository medicationBundleRepository;
   private final MedicationItemRepository medicationItemRepository;
   private final UserRepository userRepository;
+  private final MedicationLogRepository medicationLogRepository;
 
   public MedicationResponseDto createMedicationPlan(Long userId, MedicationRequestDto requestDto) {
     log.info("약 복용 계획 생성 시작 - 사용자 ID: {}, 약 이름: {}", userId, requestDto.getName());
@@ -82,6 +89,44 @@ public class MedicationService {
     return responseDto;
   }
 
+  public MedicationLogResponseDto createLog(Long userId, MedicationLogRequestDto requestDto) {
+    log.info("약 복용 기록 생성 시작 - 사용자 ID: {}, medicationId: {}", userId, requestDto.getMedicationId());
+
+    // 1. 약 번들 조회
+    MedicationBundle bundle = medicationBundleRepository.findById(requestDto.getMedicationId())
+        .orElseThrow(() -> {
+          log.error("MedicationBundle을 찾을 수 없음 - ID: {}", requestDto.getMedicationId());
+          return new GeneralException(ErrorStatus.MEDICATION_PLAN_NOT_FOUND);
+        });
+
+    // 2. 상태 검증
+    boolean isTaken = "TAKEN".equalsIgnoreCase(requestDto.getStatus());
+    if (isTaken && requestDto.getConditionLevel() == null) {
+      throw new GeneralException(ErrorStatus.MEDICATION_CONDITION_REQUIRED);
+    }
+
+    // 3. 날짜 변환
+    Date sqlDate = parseDate(requestDto.getDate());
+
+    // 4. 시간 변환 (nullable)
+    Time takenTime = parseTime(requestDto.getTakenAt());
+
+    // 5. MedicationLog 생성 및 저장
+    MedicationLog logEntity = MedicationLog.builder()
+        .medicationBundle(bundle)
+        .date(sqlDate)
+        .isTaken(isTaken)
+        .takenAt(takenTime)
+        .medCondition(requestDto.getConditionLevel())
+        .build();
+
+    MedicationLog saved = medicationLogRepository.save(logEntity);
+    log.info("MedicationLog 저장 완료 - historyId: {}", saved.getId());
+
+    // 6. Response 변환
+    return MedicationLogResponseDto.from(saved);
+  }
+
   private User findUserById(Long userId) {
     return userRepository.findById(userId)
         .orElseThrow(() -> {
@@ -106,6 +151,15 @@ public class MedicationService {
     } catch (DateTimeParseException e) {
       log.error("시간 파싱 실패 - 입력값: {}", timeStr, e);
       throw new GeneralException(ErrorStatus.MEDICATION_INVALID_TIME_FORMAT);
+    }
+  }
+
+  private Date parseDate(String dateStr) {
+    try {
+      return Date.valueOf(LocalDate.parse(dateStr));
+    } catch (DateTimeParseException e) {
+      log.error("날짜 파싱 실패 - 입력값: {}", dateStr, e);
+      throw new GeneralException(ErrorStatus.MEDICATION_INVALID_DATE_FORMAT);
     }
   }
 }

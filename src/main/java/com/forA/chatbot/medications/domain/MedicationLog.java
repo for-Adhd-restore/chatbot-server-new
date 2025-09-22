@@ -32,10 +32,10 @@ public class  MedicationLog extends BaseTimeEntity {
   private Time takenAt;
 
   @Column(length = 50, name = "med_condition")
-  private String medCondition;
+  private Integer medCondition;
 
   @Builder
-  public MedicationLog(MedicationBundle medicationBundle, Date date, Boolean isTaken, Time takenAt, String medCondition) {
+  public MedicationLog(MedicationBundle medicationBundle, Date date, Boolean isTaken, Time takenAt, Integer medCondition) {
     this.medicationBundle = medicationBundle;
     this.date = date;
     this.isTaken = isTaken;

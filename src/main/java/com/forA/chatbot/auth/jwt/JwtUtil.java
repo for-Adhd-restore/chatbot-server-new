@@ -31,39 +31,33 @@ public class JwtUtil {
   private final long accessTokenValidityInMilliseconds;
 
   public JwtUtil(
-      @Value("${jwt.secret}") String secret, @Value("${jwt.expiration_time}") long expirationTime) {
+      @Value("${jwt.secret}") String secret,
+      @Value("${jwt.expiration_time}") long expirationTime
+  ) {
     this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     this.accessTokenValidityInMilliseconds = expirationTime;
   }
 
   /**
-   * 사용자 ID를 받아 Access Token을 생성합니다. (최신 방법)
+   * 사용자 ID 기반 Access Token 생성
    */
   public String createAccessToken(String userId) {
     Instant now = Instant.now();
     Instant expiration = now.plus(accessTokenValidityInMilliseconds, ChronoUnit.MILLIS);
 
     return Jwts.builder()
-        .subject(userId)                    // setSubject → subject
-        .issuedAt(Date.from(now))          // setIssuedAt → issuedAt
-        .expiration(Date.from(expiration)) // setExpiration → expiration
-        .signWith(secretKey)               // signWith 간소화 (알고리즘 자동 선택)
+        .subject(userId)
+        .issuedAt(Date.from(now))
+        .expiration(Date.from(expiration))
+        .signWith(secretKey)
         .compact();
   }
 
-  /*
-   * RefreshToken 생성,
+  /**
+   * RefreshToken 생성
    */
   public String createRefreshToken() {
     return "rt_" + UUID.randomUUID().toString().replace("-", "");
-  }
-
-  /**
-   * HttpServletRequest에서 Bearer 토큰을 추출하고 사용자 ID를 반환
-   */
-  public Long getUserIdFromRequest(HttpServletRequest request) {
-    String token = extractTokenFromRequest(request);
-    return getUserIdFromToken(token);
   }
 
   /**
@@ -76,40 +70,63 @@ public class JwtUtil {
       return bearerToken.substring(7);
     }
 
-    log.error("Authorization 헤더가 없거나 올바르지 않습니다");
-    throw new GeneralException(ErrorStatus._UNAUTHORIZED);
+    log.warn("Authorization 헤더가 없거나 올바르지 않습니다");
+    return null; // 필터에서 null 체크 가능하도록 수정
   }
 
   /**
-   * JWT 토큰에서 사용자 ID 추출 (최신 방법)
+   * JWT 토큰에서 사용자 ID 추출
    */
   public Long getUserIdFromToken(String token) {
     try {
-      Claims claims = Jwts.parser()              // parserBuilder() → parser()
-          .verifyWith(secretKey)             // setSigningKey → verifyWith
+      Claims claims = Jwts.parser()
+          .verifyWith(secretKey)
           .build()
-          .parseSignedClaims(token)          // parseClaimsJws → parseSignedClaims
-          .getPayload();                     // getBody() → getPayload()
+          .parseSignedClaims(token)
+          .getPayload();
 
       return Long.valueOf(claims.getSubject());
 
-    } catch (SecurityException | MalformedJwtException e) {
-      log.error("잘못된 JWT 서명입니다", e);
-      throw new GeneralException(ErrorStatus._UNAUTHORIZED);
     } catch (ExpiredJwtException e) {
-      log.error("만료된 JWT 토큰입니다", e);
+      log.error("만료된 JWT 토큰", e);
       throw new GeneralException(ErrorStatus._UNAUTHORIZED);
-    } catch (UnsupportedJwtException e) {
-      log.error("지원되지 않는 JWT 토큰입니다", e);
-      throw new GeneralException(ErrorStatus._UNAUTHORIZED);
-    } catch (IllegalArgumentException e) {
-      log.error("JWT 토큰이 잘못되었습니다", e);
+    } catch (JwtException | IllegalArgumentException e) {
+      log.error("JWT 토큰 파싱 실패", e);
       throw new GeneralException(ErrorStatus._UNAUTHORIZED);
     }
   }
 
   /**
-   * JWT 토큰 유효성 검증 (최신 방법)
+   * 토큰 만료 여부
+   */
+  public boolean isTokenExpired(String token) {
+    try {
+      Claims claims = Jwts.parser()
+          .verifyWith(secretKey)
+          .build()
+          .parseSignedClaims(token)
+          .getPayload();
+
+      return claims.getExpiration().before(new Date());
+    } catch (JwtException | IllegalArgumentException e) {
+      return true;
+    }
+  }
+
+  /**
+   * 토큰 발급 시간
+   */
+  public Date getIssuedAtFromToken(String token) {
+    Claims claims = Jwts.parser()
+        .verifyWith(secretKey)
+        .build()
+        .parseSignedClaims(token)
+        .getPayload();
+    return claims.getIssuedAt();
+  }
+
+  /**
+   * 토큰 유효성 검증
    */
   public boolean validateToken(String token) {
     try {
@@ -118,11 +135,9 @@ public class JwtUtil {
           .build()
           .parseSignedClaims(token);
 
-      log.debug("JWT 토큰 검증 성공");
       return true;
-
     } catch (JwtException | IllegalArgumentException e) {
-      log.debug("JWT 토큰 검증 실패: {}", e.getMessage());
+      log.debug("JWT 검증 실패: {}", e.getMessage());
       return false;
     }
   }
