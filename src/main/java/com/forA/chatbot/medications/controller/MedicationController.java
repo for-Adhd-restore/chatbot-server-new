@@ -1,16 +1,12 @@
 package com.forA.chatbot.medications.controller;
 
-import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.apiPayload.ApiResponse;
-import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.code.status.SuccessStatus;
-import com.forA.chatbot.apiPayload.exception.GeneralException;
 import com.forA.chatbot.medications.dto.MedicationLogRequestDto;
 import com.forA.chatbot.medications.dto.MedicationLogResponseDto;
 import com.forA.chatbot.medications.dto.MedicationRequestDto;
 import com.forA.chatbot.medications.dto.MedicationResponseDto;
 import com.forA.chatbot.medications.service.MedicationService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
