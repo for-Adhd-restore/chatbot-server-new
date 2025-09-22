@@ -2,6 +2,7 @@ package com.forA.chatbot.medications.controller;
 
 import com.forA.chatbot.apiPayload.ApiResponse;
 import com.forA.chatbot.apiPayload.code.status.SuccessStatus;
+import com.forA.chatbot.auth.jwt.CustomUserDetails;
 import com.forA.chatbot.medications.dto.MedicationLogRequestDto;
 import com.forA.chatbot.medications.dto.MedicationLogResponseDto;
 import com.forA.chatbot.medications.dto.MedicationRequestDto;
@@ -27,8 +28,10 @@ public class MedicationController {
   @PostMapping("/plan")
   public ApiResponse<MedicationResponseDto> createMedicationPlan(
       @Valid @RequestBody MedicationRequestDto requestDto,
-      @AuthenticationPrincipal Long userId
+      @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
+    log.info("userDetails: {}", userDetails);
+    Long userId = userDetails.getUserId();
     log.info("약 복용 계획 생성 요청 - 사용자 ID: {}, 약 이름: {}", userId, requestDto.getName());
 
     MedicationResponseDto responseDto = medicationService.createMedicationPlan(userId, requestDto);
@@ -44,8 +47,9 @@ public class MedicationController {
   @PostMapping("/log")
   public ApiResponse<MedicationLogResponseDto> createMedicationLog(
       @Valid @RequestBody MedicationLogRequestDto requestDto,
-      @AuthenticationPrincipal Long userId
+      @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
+    Long userId = userDetails.getUserId();
     log.info("약 복용 기록 요청 수신 - 사용자 ID: {}, medicationId: {}", userId, requestDto.getMedicationId());
 
     MedicationLogResponseDto responseDto = medicationService.createLog(userId, requestDto);

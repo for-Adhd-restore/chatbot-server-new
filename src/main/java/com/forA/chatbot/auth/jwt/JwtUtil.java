@@ -134,11 +134,13 @@ public class JwtUtil {
           .verifyWith(secretKey)
           .build()
           .parseSignedClaims(token);
-
+      log.info("✅ JWT 토큰 유효함");
       return true;
+    } catch (ExpiredJwtException e) {
+      log.warn("⛔ 만료된 JWT 토큰");
     } catch (JwtException | IllegalArgumentException e) {
-      log.debug("JWT 검증 실패: {}", e.getMessage());
-      return false;
+      log.warn("⛔ 유효하지 않은 JWT 토큰: {}", e.getMessage());
     }
+    return false;
   }
 }
