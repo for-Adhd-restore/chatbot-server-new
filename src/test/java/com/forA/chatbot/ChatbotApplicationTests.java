@@ -9,6 +9,5 @@ import org.springframework.test.context.ActiveProfiles;
 class ChatbotApplicationTests {
 
   @Test
-  void contextLoads() {
-  }
+  void contextLoads() {}
 }
