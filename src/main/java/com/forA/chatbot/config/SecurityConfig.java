@@ -20,7 +20,9 @@ public class SecurityConfig {
                         "/test/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
-                        "/api/v1/auth/apple")
+                        "/api/v1/auth/apple",
+                        "/swagger-resources/**",
+                        "/webjars/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated());
