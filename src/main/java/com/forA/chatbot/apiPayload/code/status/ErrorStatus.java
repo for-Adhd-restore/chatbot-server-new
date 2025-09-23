@@ -24,6 +24,9 @@ public enum ErrorStatus implements BaseErrorCode {
   APPLE_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH4002", "Apple 토큰이 만료되었습니다."),
   APPLE_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "Apple 로그인에 실패했습니다."),
   APPLE_PUBLIC_KEY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH5001", "Apple 공개키 조회에 실패했습니다."),
+  TOKEN_REFRESH_FAILED(HttpStatus.BAD_REQUEST, "AUTH4004", "토큰 재발급에 실패했습니다."),
+  EXPIRED_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "AUTH4005", "REFRESH TOKEN이 만료되었습니다"),
+
   // TEMP LOGIN
   TEMP_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "임시 로그인에 실패했습니다."),
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH4004", "존재하지 않는 사용자입니다."),

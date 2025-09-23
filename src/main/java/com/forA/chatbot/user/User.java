@@ -14,6 +14,7 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor // Builder를 위한 전체 필드 생성자 추가
 @Builder // Builder 패턴 사용
+@Getter
 public class User extends BaseTimeEntity {
 
   @Id
