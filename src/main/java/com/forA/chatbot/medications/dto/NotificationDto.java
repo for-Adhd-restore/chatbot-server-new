@@ -21,5 +21,4 @@ public class NotificationDto {
     this.isOn = isOn;
     this.time = time;
   }
-
 }

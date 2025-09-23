@@ -15,7 +15,8 @@ public class MedicationLogDto {
   private String takenAt;
 
   @Builder
-  public MedicationLogDto(Long medicationId, String date, String status, Integer conditionLevel, String takenAt) {
+  public MedicationLogDto(
+      Long medicationId, String date, String status, Integer conditionLevel, String takenAt) {
     this.medicationId = medicationId;
     this.date = date;
     this.status = status;
@@ -23,16 +24,13 @@ public class MedicationLogDto {
     this.takenAt = takenAt;
   }
 
-  /**
-   * Entity → DTO 변환 정적 메서드
-   */
+  /** Entity → DTO 변환 정적 메서드 */
   public static MedicationLogDto from(MedicationLog entity) {
     return new MedicationLogDto(
         entity.getMedicationBundle().getId(),
         entity.getDate().toString(),
         Boolean.TRUE.equals(entity.getIsTaken()) ? "TAKEN" : "SKIPPED",
         entity.getMedCondition(),
-        entity.getTakenAt() != null ? entity.getTakenAt().toString() : null
-    );
+        entity.getTakenAt() != null ? entity.getTakenAt().toString() : null);
   }
 }

@@ -1,10 +1,10 @@
 package com.forA.chatbot.medications.dto;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -19,8 +19,14 @@ public class MedicationResponseDto {
   private LocalDateTime createdAt;
 
   @Builder
-  public MedicationResponseDto(Long id, String name, List<String> typeTags, List<String> takeDays,
-      String takeTime, NotificationDto notification, LocalDateTime createdAt) {
+  public MedicationResponseDto(
+      Long id,
+      String name,
+      List<String> typeTags,
+      List<String> takeDays,
+      String takeTime,
+      NotificationDto notification,
+      LocalDateTime createdAt) {
     this.id = id;
     this.name = name;
     this.typeTags = typeTags;
@@ -31,7 +37,8 @@ public class MedicationResponseDto {
   }
 
   // Request에서 Response로 변환하는 정적 메서드
-  public static MedicationResponseDto from(MedicationRequestDto request, Long id, LocalDateTime createdAt) {
+  public static MedicationResponseDto from(
+      MedicationRequestDto request, Long id, LocalDateTime createdAt) {
     return MedicationResponseDto.builder()
         .id(id)
         .name(request.getName())

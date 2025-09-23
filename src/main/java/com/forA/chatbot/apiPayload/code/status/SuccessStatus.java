@@ -18,7 +18,6 @@ public enum SuccessStatus implements BaseCode {
   MEDICATION_CREATED(HttpStatus.CREATED, "MEDICATION2001", "약 복용 계획이 성공적으로 생성되었습니다."),
   MEDICATION_LOG_CREATED(HttpStatus.CREATED, "MEDICATION2002", "약 복용 기록이 성공적으로 생성되었습니다.");
 
-
   private final HttpStatus httpStatus;
   private final String code;
   private final String message;

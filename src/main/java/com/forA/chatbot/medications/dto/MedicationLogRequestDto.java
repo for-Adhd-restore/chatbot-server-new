@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-
 @Getter
 @NoArgsConstructor
 public class MedicationLogRequestDto {
@@ -29,15 +28,12 @@ public class MedicationLogRequestDto {
   @Max(value = 2, message = "conditionLevel은 2 이하이어야 합니다")
   private Integer conditionLevel; // status=TAKEN일 때만 필수
 
-  @Pattern(
-      regexp = "^([01]\\d|2[0-3]):[0-5]\\d$",
-      message = "시간 형식이 올바르지 않습니다 (HH:mm)"
-  )
+  @Pattern(regexp = "^([01]\\d|2[0-3]):[0-5]\\d$", message = "시간 형식이 올바르지 않습니다 (HH:mm)")
   private String takenAt;
 
   @Builder
-  public MedicationLogRequestDto(Long medicationId, String date, String status,
-      Integer conditionLevel, String takenAt) {
+  public MedicationLogRequestDto(
+      Long medicationId, String date, String status, Integer conditionLevel, String takenAt) {
     this.medicationId = medicationId;
     this.date = date;
     this.status = status;

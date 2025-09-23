@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "refresh_tokens")
 @Builder
-@NoArgsConstructor   // JPA를 위한 기본 생성자
-@AllArgsConstructor  // @Builder를 위한 모든 필드 생성자
+@NoArgsConstructor // JPA를 위한 기본 생성자
+@AllArgsConstructor // @Builder를 위한 모든 필드 생성자
 @Data
 public class RefreshToken extends BaseTimeEntity {
 

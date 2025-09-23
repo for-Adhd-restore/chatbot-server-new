@@ -27,7 +27,7 @@ public class TempAuthService {
   @Transactional
   public AuthResponse tempLogin(TempLoginRequest request) {
     log.info("임시 로그인 시도: {}", request.getEmail());
-    System.out.println("임시 로그인 시도: "+request.getEmail());
+    System.out.println("임시 로그인 시도: " + request.getEmail());
     // 1. 기존 사용자 조회 또는 신규 생성 (개발용이므로 간단하게)
     Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
     User user;
@@ -41,12 +41,13 @@ public class TempAuthService {
       isNewUser = true;
 
       // 간단한 임시 사용자 생성
-      user = User.builder()
-          .email(request.getEmail())
-          .fullName("김눈송") // 기본값
-          .firstName("눈송")
-          .lastName("김")
-          .build();
+      user =
+          User.builder()
+              .email(request.getEmail())
+              .fullName("김눈송") // 기본값
+              .firstName("눈송")
+              .lastName("김")
+              .build();
 
       user = userRepository.save(user);
     }
@@ -120,8 +121,7 @@ public class TempAuthService {
             .token(createRefreshToken)
             .userId(userId)
             .expiresAt(LocalDateTime.now().plusMonths(3))
-            .build()
-    );
+            .build());
 
     return createRefreshToken;
   }

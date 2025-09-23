@@ -32,14 +32,16 @@ public class MedicationRequestDto {
   private NotificationDto notification;
 
   @Builder
-  public MedicationRequestDto(String name, List<String> typeTags, List<String> takeDays, String takeTime, NotificationDto notification) {
+  public MedicationRequestDto(
+      String name,
+      List<String> typeTags,
+      List<String> takeDays,
+      String takeTime,
+      NotificationDto notification) {
     this.name = name;
     this.typeTags = typeTags;
     this.takeDays = takeDays;
     this.takeTime = takeTime;
     this.notification = notification;
   }
-
-
-
 }

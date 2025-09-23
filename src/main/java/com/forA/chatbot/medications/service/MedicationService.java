@@ -2,6 +2,7 @@ package com.forA.chatbot.medications.service;
 
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.GeneralException;
+import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.medications.domain.MedicationBundle;
 import com.forA.chatbot.medications.domain.MedicationItem;
 import com.forA.chatbot.medications.domain.MedicationLog;
@@ -14,21 +15,19 @@ import com.forA.chatbot.medications.repository.MedicationBundleRepository;
 import com.forA.chatbot.medications.repository.MedicationItemRepository;
 import com.forA.chatbot.medications.repository.MedicationLogRepository;
 import com.forA.chatbot.user.User;
-import com.forA.chatbot.auth.repository.UserRepository;
 import java.sql.Date;
-import java.time.LocalDate;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.sql.Time;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -55,35 +54,36 @@ public class MedicationService {
     String dayOfWeekStr = String.join(",", requestDto.getTakeDays());
 
     // 4. MedicationBundle 생성 및 저장
-    MedicationBundle medicationBundle = MedicationBundle.builder()
-        .user(user)
-        .bundleName(requestDto.getName())
-        .dayOfWeek(dayOfWeekStr)
-        .scheduledTime(scheduledTime)
-        .alarmEnabled(requestDto.getNotification().getIsOn())
-        .alarmTime(alarmTime)
-        .build();
+    MedicationBundle medicationBundle =
+        MedicationBundle.builder()
+            .user(user)
+            .bundleName(requestDto.getName())
+            .dayOfWeek(dayOfWeekStr)
+            .scheduledTime(scheduledTime)
+            .alarmEnabled(requestDto.getNotification().getIsOn())
+            .alarmTime(alarmTime)
+            .build();
 
     MedicationBundle savedMedicationBundle = medicationBundleRepository.save(medicationBundle);
     log.info("MedicationBundle 저장 완료 - ID: {}", savedMedicationBundle.getId());
 
     // 5. MedicationItem들 생성 및 저장
-    List<MedicationItem> medicationItems = requestDto.getTypeTags().stream()
-        .map(typeTag -> MedicationItem.builder()
-            .medicationBundle(savedMedicationBundle)
-            .medicationName(typeTag)
-            .build())
-        .collect(Collectors.toList());
+    List<MedicationItem> medicationItems =
+        requestDto.getTypeTags().stream()
+            .map(
+                typeTag ->
+                    MedicationItem.builder()
+                        .medicationBundle(savedMedicationBundle)
+                        .medicationName(typeTag)
+                        .build())
+            .collect(Collectors.toList());
 
     medicationItemRepository.saveAll(medicationItems);
     log.info("MedicationItem {} 개 저장 완료", medicationItems.size());
 
     // 6. 응답 DTO 생성
-    MedicationResponseDto responseDto = MedicationResponseDto.from(
-        requestDto,
-        savedMedicationBundle.getId(),
-        LocalDateTime.now()
-    );
+    MedicationResponseDto responseDto =
+        MedicationResponseDto.from(requestDto, savedMedicationBundle.getId(), LocalDateTime.now());
 
     log.info("약 복용 계획 생성 완료 - ID: {}", savedMedicationBundle.getId());
     return responseDto;
@@ -93,11 +93,14 @@ public class MedicationService {
     log.info("약 복용 기록 생성 시작 - 사용자 ID: {}, medicationId: {}", userId, requestDto.getMedicationId());
 
     // 1. 약 번들 조회
-    MedicationBundle bundle = medicationBundleRepository.findById(requestDto.getMedicationId())
-        .orElseThrow(() -> {
-          log.error("MedicationBundle을 찾을 수 없음 - ID: {}", requestDto.getMedicationId());
-          return new GeneralException(ErrorStatus.MEDICATION_PLAN_NOT_FOUND);
-        });
+    MedicationBundle bundle =
+        medicationBundleRepository
+            .findById(requestDto.getMedicationId())
+            .orElseThrow(
+                () -> {
+                  log.error("MedicationBundle을 찾을 수 없음 - ID: {}", requestDto.getMedicationId());
+                  return new GeneralException(ErrorStatus.MEDICATION_PLAN_NOT_FOUND);
+                });
 
     // 2. 상태 검증
     boolean isTaken = "TAKEN".equalsIgnoreCase(requestDto.getStatus());
@@ -112,13 +115,14 @@ public class MedicationService {
     Time takenTime = parseTime(requestDto.getTakenAt());
 
     // 5. MedicationLog 생성 및 저장
-    MedicationLog logEntity = MedicationLog.builder()
-        .medicationBundle(bundle)
-        .date(sqlDate)
-        .isTaken(isTaken)
-        .takenAt(takenTime)
-        .medCondition(requestDto.getConditionLevel())
-        .build();
+    MedicationLog logEntity =
+        MedicationLog.builder()
+            .medicationBundle(bundle)
+            .date(sqlDate)
+            .isTaken(isTaken)
+            .takenAt(takenTime)
+            .medCondition(requestDto.getConditionLevel())
+            .build();
 
     MedicationLog saved = medicationLogRepository.save(logEntity);
     log.info("MedicationLog 저장 완료 - historyId: {}", saved.getId());
@@ -128,17 +132,19 @@ public class MedicationService {
   }
 
   private User findUserById(Long userId) {
-    return userRepository.findById(userId)
-        .orElseThrow(() -> {
-          log.error("사용자를 찾을 수 없습니다 - ID: {}", userId);
-          return new GeneralException(ErrorStatus.MEDICATION_USER_NOT_FOUND);
-        });
+    return userRepository
+        .findById(userId)
+        .orElseThrow(
+            () -> {
+              log.error("사용자를 찾을 수 없습니다 - ID: {}", userId);
+              return new GeneralException(ErrorStatus.MEDICATION_USER_NOT_FOUND);
+            });
   }
 
   private Time parseAlarmTime(NotificationDto notification) {
-    if (Boolean.TRUE.equals(notification.getIsOn()) &&
-        notification.getTime() != null &&
-        !notification.getTime().trim().isEmpty()) {
+    if (Boolean.TRUE.equals(notification.getIsOn())
+        && notification.getTime() != null
+        && !notification.getTime().trim().isEmpty()) {
       return parseTime(notification.getTime());
     }
     return null;

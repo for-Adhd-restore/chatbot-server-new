@@ -10,6 +10,8 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ValidNotification {
   String message() default "MEDICATION_NOTIFICATION_TIME_REQUIRED"; // ErrorStatus의 enum 이름
+
   Class<?>[] groups() default {};
+
   Class<? extends Payload>[] payload() default {};
 }

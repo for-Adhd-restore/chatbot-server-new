@@ -6,13 +6,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,9 +22,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   private final JwtUtil jwtUtil;
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request,
-      HttpServletResponse response,
-      FilterChain filterChain)
+  protected void doFilterInternal(
+      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
     log.info("🔥 JwtAuthenticationFilter 진입 - URI: {}", request.getRequestURI());
     String token = jwtUtil.extractTokenFromRequest(request);
@@ -38,10 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       log.info("토큰에서 꺼낸 userId: {}", userId);
       Authentication authentication =
           new UsernamePasswordAuthenticationToken(
-              new CustomUserDetails(userId),
-              null,
-              Collections.emptyList()
-          );
+              new CustomUserDetails(userId), null, Collections.emptyList());
 
       SecurityContextHolder.getContext().setAuthentication(authentication);
       log.info("JWT 인증 성공 - userId: {}", userId);

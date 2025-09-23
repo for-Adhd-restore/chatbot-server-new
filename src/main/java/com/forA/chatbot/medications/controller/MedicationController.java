@@ -22,14 +22,11 @@ public class MedicationController {
 
   private final MedicationService medicationService;
 
-  /**
-      * 약 복용 계획 생성
-      */
+  /** 약 복용 계획 생성 */
   @PostMapping("/plan")
   public ApiResponse<MedicationResponseDto> createMedicationPlan(
       @Valid @RequestBody MedicationRequestDto requestDto,
-      @AuthenticationPrincipal CustomUserDetails userDetails
-  ) {
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
     log.info("userDetails: {}", userDetails);
     Long userId = userDetails.getUserId();
     log.info("약 복용 계획 생성 요청 - 사용자 ID: {}, 약 이름: {}", userId, requestDto.getName());
@@ -41,14 +38,11 @@ public class MedicationController {
     return ApiResponse.of(SuccessStatus.MEDICATION_CREATED, responseDto);
   }
 
-  /**
-   * 약 복용 기록 생성
-   */
+  /** 약 복용 기록 생성 */
   @PostMapping("/log")
   public ApiResponse<MedicationLogResponseDto> createMedicationLog(
       @Valid @RequestBody MedicationLogRequestDto requestDto,
-      @AuthenticationPrincipal CustomUserDetails userDetails
-  ) {
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
     Long userId = userDetails.getUserId();
     log.info("약 복용 기록 요청 수신 - 사용자 ID: {}, medicationId: {}", userId, requestDto.getMedicationId());
 

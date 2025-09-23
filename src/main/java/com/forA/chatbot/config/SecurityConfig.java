@@ -19,21 +19,23 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(auth -> auth
-            // 인증 불필요 (permitAll)
-            .requestMatchers(
-                "/",
-                "/test/**",
-                "/api/v1/auth/**",        // 로그인, 애플 로그인, 임시 로그인 포함
-                "/swagger-ui/**",
-                "/v3/api-docs/**",
-                "/swagger-resources/**",
-                "/webjars/**"
-            ).permitAll()
+        .authorizeHttpRequests(
+            auth ->
+                auth
+                    // 인증 불필요 (permitAll)
+                    .requestMatchers(
+                        "/",
+                        "/test/**",
+                        "/api/v1/auth/**", // 로그인, 애플 로그인, 임시 로그인 포함
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/swagger-resources/**",
+                        "/webjars/**")
+                    .permitAll()
 
-            // 그 외 모든 요청은 인증 필요
-            .anyRequest().authenticated()
-        )
+                    // 그 외 모든 요청은 인증 필요
+                    .anyRequest()
+                    .authenticated())
         // JWT 인증 필터 등록
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

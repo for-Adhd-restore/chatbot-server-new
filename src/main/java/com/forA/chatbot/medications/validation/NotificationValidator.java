@@ -5,7 +5,8 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.ValidationException;
 
-public class NotificationValidator implements ConstraintValidator<ValidNotification, NotificationDto> {
+public class NotificationValidator
+    implements ConstraintValidator<ValidNotification, NotificationDto> {
 
   @Override
   public void initialize(ValidNotification constraintAnnotation) {

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "medication_logs")
-public class  MedicationLog extends BaseTimeEntity {
+public class MedicationLog extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,12 +35,16 @@ public class  MedicationLog extends BaseTimeEntity {
   private Integer medCondition;
 
   @Builder
-  public MedicationLog(MedicationBundle medicationBundle, Date date, Boolean isTaken, Time takenAt, Integer medCondition) {
+  public MedicationLog(
+      MedicationBundle medicationBundle,
+      Date date,
+      Boolean isTaken,
+      Time takenAt,
+      Integer medCondition) {
     this.medicationBundle = medicationBundle;
     this.date = date;
     this.isTaken = isTaken;
     this.takenAt = takenAt;
     this.medCondition = medCondition;
-
   }
 }

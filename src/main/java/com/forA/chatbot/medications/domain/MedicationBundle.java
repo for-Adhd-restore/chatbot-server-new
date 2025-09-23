@@ -38,7 +38,13 @@ public class MedicationBundle extends BaseTimeEntity {
   private Time alarmTime;
 
   @Builder
-  public MedicationBundle(User user, String bundleName, String dayOfWeek, Time scheduledTime, Boolean alarmEnabled, Time alarmTime) {
+  public MedicationBundle(
+      User user,
+      String bundleName,
+      String dayOfWeek,
+      Time scheduledTime,
+      Boolean alarmEnabled,
+      Time alarmTime) {
     this.user = user;
     this.bundleName = bundleName;
     this.dayOfWeek = dayOfWeek;
