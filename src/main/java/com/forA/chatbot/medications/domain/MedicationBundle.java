@@ -1,10 +1,15 @@
-package com.forA.chatbot.medicationBundles;
+package com.forA.chatbot.medications.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.User;
 import jakarta.persistence.*;
 import java.sql.Time;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Getter
+@NoArgsConstructor
 @Entity
 @Table(name = "medication_bundles")
 public class MedicationBundle extends BaseTimeEntity {
@@ -31,4 +36,20 @@ public class MedicationBundle extends BaseTimeEntity {
 
   @Column(name = "alarm_time")
   private Time alarmTime;
+
+  @Builder
+  public MedicationBundle(
+      User user,
+      String bundleName,
+      String dayOfWeek,
+      Time scheduledTime,
+      Boolean alarmEnabled,
+      Time alarmTime) {
+    this.user = user;
+    this.bundleName = bundleName;
+    this.dayOfWeek = dayOfWeek;
+    this.scheduledTime = scheduledTime;
+    this.alarmEnabled = alarmEnabled;
+    this.alarmTime = alarmTime;
+  }
 }

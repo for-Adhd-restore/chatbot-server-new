@@ -11,7 +11,12 @@ import org.springframework.http.HttpStatus;
 public enum SuccessStatus implements BaseCode {
 
   // 일반적인 응답
-  _OK(HttpStatus.OK, "COMMON200", "성공입니다.");
+  _OK(HttpStatus.OK, "COMMON200", "성공입니다."),
+  _CREATED(HttpStatus.CREATED, "COMMON201", "생성에 성공했습니다."),
+
+  // MEDICATION 관련
+  MEDICATION_CREATED(HttpStatus.CREATED, "MEDICATION2001", "약 복용 계획이 성공적으로 생성되었습니다."),
+  MEDICATION_LOG_CREATED(HttpStatus.CREATED, "MEDICATION2002", "약 복용 기록이 성공적으로 생성되었습니다.");
 
   private final HttpStatus httpStatus;
   private final String code;

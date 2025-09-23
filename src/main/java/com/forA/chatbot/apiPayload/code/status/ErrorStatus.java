@@ -24,8 +24,31 @@ public enum ErrorStatus implements BaseErrorCode {
   APPLE_TOKEN_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH4002", "Apple 토큰이 만료되었습니다."),
   APPLE_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "Apple 로그인에 실패했습니다."),
   APPLE_PUBLIC_KEY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH5001", "Apple 공개키 조회에 실패했습니다."),
+  // TEMP LOGIN
+  TEMP_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "임시 로그인에 실패했습니다."),
+  USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH4004", "존재하지 않는 사용자입니다."),
+
+  // MEDICATION - 약물 관련 에러 코드들
+  MEDICATION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEDICATION4001", "사용자를 찾을 수 없습니다."),
+  MEDICATION_INVALID_TIME_FORMAT(
+      HttpStatus.BAD_REQUEST, "MEDICATION4002", "시간 형식이 올바르지 않습니다. HH:mm 형식으로 입력해주세요."),
+  MEDICATION_NOTIFICATION_TIME_REQUIRED(
+      HttpStatus.BAD_REQUEST, "MEDICATION4003", "알림이 활성화된 경우 알림 시간은 필수입니다."),
+  MEDICATION_INVALID_TIME_RANGE(
+      HttpStatus.BAD_REQUEST, "MEDICATION4004", "시간은 00:00 ~ 23:59 범위 내에서 입력해주세요."),
+  MEDICATION_NAME_TOO_LONG(HttpStatus.BAD_REQUEST, "MEDICATION4005", "약 이름은 최대 20자까지 입력 가능합니다."),
+  MEDICATION_PLAN_NOT_FOUND(HttpStatus.NOT_FOUND, "MEDICATION4006", "약 복용 계획을 찾을 수 없습니다."),
+  MEDICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "MEDICATION4007", "해당 약 복용 계획에 대한 접근 권한이 없습니다."),
+  MEDICATION_INVALID_DAY_OF_WEEK(HttpStatus.BAD_REQUEST, "MEDICATION4008", "올바르지 않은 요일 형식입니다."),
+  MEDICATION_TYPE_TAGS_EMPTY(HttpStatus.BAD_REQUEST, "MEDICATION4009", "약 종류 태그는 최소 1개 이상 필요합니다."),
+  MEDICATION_TAKE_DAYS_EMPTY(
+      HttpStatus.BAD_REQUEST, "MEDICATION4010", "복용할 요일은 최소 1개 이상 선택해야 합니다."),
+  MEDICATION_CONDITION_REQUIRED(HttpStatus.BAD_REQUEST, "MEDICATION4011", "컨디션을 입력해주세요."),
+  MEDICATION_INVALID_DATE_FORMAT(
+      HttpStatus.BAD_REQUEST, "MEDICATION4012", "날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요."),
 
   TEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TEST500", "테스트를 실패하였습니다");
+
   private final HttpStatus httpStatus;
   private final String code;
   private final String message;

@@ -1,11 +1,15 @@
-package com.forA.chatbot.medicationLogs;
+package com.forA.chatbot.medications.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
-import com.forA.chatbot.medicationBundles.MedicationBundle;
 import jakarta.persistence.*;
 import java.sql.Date;
 import java.sql.Time;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Getter
+@NoArgsConstructor
 @Entity
 @Table(name = "medication_logs")
 public class MedicationLog extends BaseTimeEntity {
@@ -27,6 +31,20 @@ public class MedicationLog extends BaseTimeEntity {
   @Column(name = "taken_at")
   private Time takenAt;
 
-  @Column(length = 50)
-  private String medCondition;
+  @Column(length = 50, name = "med_condition")
+  private Integer medCondition;
+
+  @Builder
+  public MedicationLog(
+      MedicationBundle medicationBundle,
+      Date date,
+      Boolean isTaken,
+      Time takenAt,
+      Integer medCondition) {
+    this.medicationBundle = medicationBundle;
+    this.date = date;
+    this.isTaken = isTaken;
+    this.takenAt = takenAt;
+    this.medCondition = medCondition;
+  }
 }

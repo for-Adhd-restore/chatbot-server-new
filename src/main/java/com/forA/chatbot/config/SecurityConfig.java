@@ -1,31 +1,44 @@
 package com.forA.chatbot.config;
 
+import com.forA.chatbot.auth.jwt.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableWebSecurity // spring security 활성
+@EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers(
+                auth
+                    // 인증 불필요 (permitAll)
+                    .requestMatchers(
                         "/",
                         "/test/**",
+                        "/api/v1/auth/**", // 로그인, 애플 로그인, 임시 로그인 포함
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
-                        "/api/v1/auth/apple",
                         "/swagger-resources/**",
                         "/webjars/**")
                     .permitAll()
+
+                    // 그 외 모든 요청은 인증 필요
                     .anyRequest()
-                    .authenticated());
+                    .authenticated())
+        // JWT 인증 필터 등록
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
     return http.build();
   }
 }
