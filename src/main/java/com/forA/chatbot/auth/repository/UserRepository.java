@@ -1,6 +1,6 @@
 package com.forA.chatbot.auth.repository;
 
-import com.forA.chatbot.user.User;
+import com.forA.chatbot.user.domain.User;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

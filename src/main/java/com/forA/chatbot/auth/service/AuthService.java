@@ -8,11 +8,12 @@ import com.forA.chatbot.auth.dto.RefreshTokenResponse;
 import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
-import com.forA.chatbot.user.User;
+import com.forA.chatbot.user.domain.User;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -55,4 +56,9 @@ public class AuthService {
         .build();
   }
 
+  @Transactional
+  public void logout(Long userId) {
+    refreshTokenRepository.findByUserId(userId).ifPresent(refreshTokenRepository::delete);
+    log.info("로그아웃 처리 완료: userId={}", userId);
+  }
 }

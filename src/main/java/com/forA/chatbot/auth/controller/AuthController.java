@@ -5,13 +5,16 @@ import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.AuthHandler;
 import com.forA.chatbot.auth.dto.AppleLoginRequest;
 import com.forA.chatbot.auth.dto.AuthResponse;
+import com.forA.chatbot.auth.dto.LogoutResponse;
 import com.forA.chatbot.auth.dto.RefreshTokenRequest;
 import com.forA.chatbot.auth.dto.RefreshTokenResponse;
+import com.forA.chatbot.auth.jwt.CustomUserDetails;
 import com.forA.chatbot.auth.service.AppleAuthService;
 import com.forA.chatbot.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,6 +57,14 @@ public class AuthController {
       throw new AuthHandler(ErrorStatus.TOKEN_REFRESH_FAILED);
     }
   }
-
+  @PostMapping("/logout")
+  public ApiResponse<LogoutResponse> logout(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  )
+  {
+    log.info("로그아웃 요청 수신: userId={}", userDetails.getUserId());
+    authService.logout(userDetails.getUserId());
+    return ApiResponse.onSuccess(new LogoutResponse("Successfully logged out"));
+  }
 
 }

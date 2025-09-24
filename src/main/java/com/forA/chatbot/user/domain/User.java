@@ -1,4 +1,4 @@
-package com.forA.chatbot.user;
+package com.forA.chatbot.user.domain;
 
 import com.forA.chatbot.enums.Gender;
 import com.forA.chatbot.global.BaseTimeEntity;

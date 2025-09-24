@@ -1,7 +1,7 @@
 package com.forA.chatbot.medications.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
-import com.forA.chatbot.user.User;
+import com.forA.chatbot.user.domain.User;
 import jakarta.persistence.*;
 import java.sql.Time;
 import lombok.Builder;

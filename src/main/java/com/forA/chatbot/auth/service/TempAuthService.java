@@ -7,7 +7,7 @@ import com.forA.chatbot.auth.dto.TempRefreshTokenRequest;
 import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
-import com.forA.chatbot.user.User;
+import com.forA.chatbot.user.domain.User;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
