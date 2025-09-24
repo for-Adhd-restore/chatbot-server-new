@@ -51,7 +51,7 @@ public class AppleTokenValidator {
 
       // 4. JWT 토큰 검증
       return Jwts.parser()
-          .verifyWith((SecretKey) publicKey)
+          .verifyWith(publicKey)
           .build()
           .parseSignedClaims(identityToken)
           .getPayload();
