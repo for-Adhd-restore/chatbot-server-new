@@ -1,6 +1,7 @@
 package com.forA.chatbot.user.service;
 
 import com.forA.chatbot.auth.repository.UserRepository;
+import com.forA.chatbot.medications.repository.MedicationLogRepository;
 import com.forA.chatbot.user.domain.User;
 import com.forA.chatbot.user.domain.enums.DisorderType;
 import com.forA.chatbot.user.domain.enums.JobType;
@@ -8,6 +9,7 @@ import com.forA.chatbot.user.domain.enums.SymptomType;
 import com.forA.chatbot.user.dto.NicknameResponse;
 import com.forA.chatbot.user.dto.UserProfileResponse;
 import com.forA.chatbot.user.dto.UserProfileUpdateRequest;
+import com.forA.chatbot.user.dto.UserResetResponse;
 import com.forA.chatbot.user.util.EnumConverterUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ import java.util.Set;
 public class UserService {
 
   private final UserRepository userRepository;
+  private final MedicationLogRepository medicationLogRepository;
 
   @Transactional
   public NicknameResponse updateNickname(Long userId, String nickname) {
@@ -75,5 +78,30 @@ public class UserService {
     userRepository.save(user);
 
     return new UserProfileResponse(user);
+  }
+
+  @Transactional(readOnly = true)
+  public UserProfileResponse getUserProfile(Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    
+    return new UserProfileResponse(user);
+  }
+
+  @Transactional
+  public UserResetResponse resetUserData(Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+    // 1. 복약 기록 삭제
+    medicationLogRepository.deleteByUserId(userId);
+
+    // 2. 사용자 프로필 데이터 초기화 (로그인 정보는 유지)
+    user.resetUserData();
+    userRepository.save(user);
+
+    log.info("User data reset completed for userId: {}", userId);
+
+    return UserResetResponse.success();
   }
 }

@@ -6,11 +6,13 @@ import com.forA.chatbot.user.dto.NicknameRequest;
 import com.forA.chatbot.user.dto.NicknameResponse;
 import com.forA.chatbot.user.dto.UserProfileResponse;
 import com.forA.chatbot.user.dto.UserProfileUpdateRequest;
+import com.forA.chatbot.user.dto.UserResetResponse;
 import com.forA.chatbot.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/api/v1/user")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {
@@ -47,11 +49,26 @@ public class UserController {
     return ApiResponse.onSuccess(response);
   }
 
+  @GetMapping("/me")
+  public ApiResponse<UserProfileResponse> getUserProfile(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    UserProfileResponse response = userService.getUserProfile(userId);
+    
+    return ApiResponse.onSuccess(response);
+  }
+
+  @PostMapping("/me/reset")
+  public ApiResponse<UserResetResponse> resetUserData(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    UserResetResponse response = userService.resetUserData(userId);
+    
+    return ApiResponse.onSuccess(response);
+  }
+
   /*TODO : 회원 탈퇴*/
-
-  /*TODO: 사용자 정보 조회*/
-
-
-  /*TODO: 회원 정보 초기화*/
 
 }

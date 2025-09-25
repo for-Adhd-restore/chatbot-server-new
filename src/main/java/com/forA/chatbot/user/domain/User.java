@@ -102,4 +102,13 @@ public class User extends BaseTimeEntity {
   public void updateSymptoms(Set<SymptomType> symptoms) {
     this.symptoms = symptoms != null ? symptoms : new HashSet<>();
   }
+
+  public void resetUserData() {
+    this.nickname = null;
+    this.gender = Gender.UNKNOWN;
+    this.birthYear = null;
+    this.jobs = new HashSet<>();
+    this.disorders = new HashSet<>();
+    this.symptoms = new HashSet<>();
+  }
 }
