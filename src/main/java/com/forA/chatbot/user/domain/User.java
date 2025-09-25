@@ -1,18 +1,17 @@
 package com.forA.chatbot.user.domain;
 
 import com.forA.chatbot.enums.Gender;
-import com.forA.chatbot.user.domain.enums.JobType;
-import com.forA.chatbot.user.domain.enums.DisorderType;
-import com.forA.chatbot.user.domain.enums.SymptomType;
 import com.forA.chatbot.global.BaseTimeEntity;
-import com.forA.chatbot.user.converter.JobSetConverter;
 import com.forA.chatbot.user.converter.DisorderSetConverter;
+import com.forA.chatbot.user.converter.JobSetConverter;
 import com.forA.chatbot.user.converter.SymptomSetConverter;
+import com.forA.chatbot.user.domain.enums.DisorderType;
+import com.forA.chatbot.user.domain.enums.JobType;
+import com.forA.chatbot.user.domain.enums.SymptomType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import lombok.*;
 

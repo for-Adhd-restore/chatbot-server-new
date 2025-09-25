@@ -10,17 +10,16 @@ import com.forA.chatbot.user.domain.enums.DisorderType;
 import com.forA.chatbot.user.domain.enums.JobType;
 import com.forA.chatbot.user.domain.enums.SymptomType;
 import com.forA.chatbot.user.dto.NicknameResponse;
+import com.forA.chatbot.user.dto.UserDeleteResponse;
 import com.forA.chatbot.user.dto.UserProfileResponse;
 import com.forA.chatbot.user.dto.UserProfileUpdateRequest;
 import com.forA.chatbot.user.dto.UserResetResponse;
-import com.forA.chatbot.user.dto.UserDeleteResponse;
 import com.forA.chatbot.user.util.EnumConverterUtil;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -35,8 +34,10 @@ public class UserService {
 
   @Transactional
   public NicknameResponse updateNickname(Long userId, String nickname) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
     user.updateNickname(nickname);
     userRepository.save(user);
@@ -46,8 +47,10 @@ public class UserService {
 
   @Transactional
   public UserProfileResponse updateUserProfile(Long userId, UserProfileUpdateRequest request) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
     // 닉네임 업데이트
     if (request.getNickname() != null) {
@@ -72,7 +75,8 @@ public class UserService {
 
     // 질환 업데이트
     if (request.getDisorders() != null) {
-      Set<DisorderType> disorders = EnumConverterUtil.convertDisordersToEnum(request.getDisorders());
+      Set<DisorderType> disorders =
+          EnumConverterUtil.convertDisordersToEnum(request.getDisorders());
       user.updateDisorders(disorders);
     }
 
@@ -89,16 +93,20 @@ public class UserService {
 
   @Transactional(readOnly = true)
   public UserProfileResponse getUserProfile(Long userId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-    
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
     return new UserProfileResponse(user);
   }
 
   @Transactional
   public UserResetResponse resetUserData(Long userId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
     // 1. 복약 기록 삭제
     medicationLogRepository.deleteByUserId(userId);
@@ -114,8 +122,10 @@ public class UserService {
 
   @Transactional
   public UserDeleteResponse deactivateUser(Long userId) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
     // 이미 탈퇴 처리된 계정인지 확인
     if (user.isDeactivated()) {
@@ -129,7 +139,10 @@ public class UserService {
     user.deactivateAccount();
     userRepository.save(user);
 
-    log.info("User account deactivated and related data deleted for userId: {}. Account will be permanently deleted after 30 days.", userId);
+    log.info(
+        "User account deactivated and related data deleted for userId: {}. Account will be"
+            + " permanently deleted after 30 days.",
+        userId);
 
     return UserDeleteResponse.success();
   }

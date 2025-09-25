@@ -103,7 +103,9 @@ public class JwtUtil {
   public LocalDateTime getExpirationFromToken(String token) {
     Claims claims =
         Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
-    return claims.getExpiration().toInstant()
+    return claims
+        .getExpiration()
+        .toInstant()
         .atZone(java.time.ZoneId.systemDefault())
         .toLocalDateTime();
   }

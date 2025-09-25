@@ -59,19 +59,16 @@ public class AuthController {
       throw new AuthHandler(ErrorStatus.TOKEN_REFRESH_FAILED);
     }
   }
+
   @PostMapping("/logout")
   public ApiResponse<LogoutResponse> logout(
-      @AuthenticationPrincipal CustomUserDetails userDetails,
-      HttpServletRequest request
-  )
-  {
+      @AuthenticationPrincipal CustomUserDetails userDetails, HttpServletRequest request) {
     log.info("로그아웃 요청 수신: userId={}", userDetails.getUserId());
-    
+
     // 현재 사용중인 AccessToken 추출
     String accessToken = jwtUtil.extractTokenFromRequest(request);
-    
+
     authService.logout(userDetails.getUserId(), accessToken);
     return ApiResponse.onSuccess(new LogoutResponse("Successfully logged out"));
   }
-
 }

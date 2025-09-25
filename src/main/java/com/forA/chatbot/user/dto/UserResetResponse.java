@@ -7,9 +7,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public class UserResetResponse {
 
-    private String message;
+  private String message;
 
-    public static UserResetResponse success() {
-        return new UserResetResponse("User data has been successfully reset.");
-    }
+  public static UserResetResponse success() {
+    return new UserResetResponse("User data has been successfully reset.");
+  }
 }

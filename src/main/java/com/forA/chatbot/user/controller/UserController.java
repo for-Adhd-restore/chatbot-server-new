@@ -4,10 +4,10 @@ import com.forA.chatbot.apiPayload.ApiResponse;
 import com.forA.chatbot.auth.jwt.CustomUserDetails;
 import com.forA.chatbot.user.dto.NicknameRequest;
 import com.forA.chatbot.user.dto.NicknameResponse;
+import com.forA.chatbot.user.dto.UserDeleteResponse;
 import com.forA.chatbot.user.dto.UserProfileResponse;
 import com.forA.chatbot.user.dto.UserProfileUpdateRequest;
 import com.forA.chatbot.user.dto.UserResetResponse;
-import com.forA.chatbot.user.dto.UserDeleteResponse;
 import com.forA.chatbot.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,52 +32,47 @@ public class UserController {
   @PostMapping("/nickname")
   public ApiResponse<NicknameResponse> createNickname(
       @AuthenticationPrincipal CustomUserDetails userDetails,
-      @Valid @RequestBody NicknameRequest request
-  ) {
+      @Valid @RequestBody NicknameRequest request) {
     Long userId = userDetails.getUserId();
     NicknameResponse response = userService.updateNickname(userId, request.getNickname());
-    
+
     return ApiResponse.onSuccess(response);
   }
 
   @PatchMapping("/me")
   public ApiResponse<UserProfileResponse> updateUserProfile(
       @AuthenticationPrincipal CustomUserDetails userDetails,
-      @Valid @RequestBody UserProfileUpdateRequest request
-  ) {
+      @Valid @RequestBody UserProfileUpdateRequest request) {
     Long userId = userDetails.getUserId();
     UserProfileResponse response = userService.updateUserProfile(userId, request);
-    
+
     return ApiResponse.onSuccess(response);
   }
 
   @GetMapping("/me")
   public ApiResponse<UserProfileResponse> getUserProfile(
-      @AuthenticationPrincipal CustomUserDetails userDetails
-  ) {
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
     Long userId = userDetails.getUserId();
     UserProfileResponse response = userService.getUserProfile(userId);
-    
+
     return ApiResponse.onSuccess(response);
   }
 
   @PostMapping("/me/reset")
   public ApiResponse<UserResetResponse> resetUserData(
-      @AuthenticationPrincipal CustomUserDetails userDetails
-  ) {
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
     Long userId = userDetails.getUserId();
     UserResetResponse response = userService.resetUserData(userId);
-    
+
     return ApiResponse.onSuccess(response);
   }
 
   @DeleteMapping("/me")
   public ApiResponse<UserDeleteResponse> deactivateUser(
-      @AuthenticationPrincipal CustomUserDetails userDetails
-  ) {
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
     Long userId = userDetails.getUserId();
     UserDeleteResponse response = userService.deactivateUser(userId);
-    
+
     return ApiResponse.onSuccess(response);
   }
 }

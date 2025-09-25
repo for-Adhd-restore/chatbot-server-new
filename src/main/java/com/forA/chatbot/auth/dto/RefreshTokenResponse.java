@@ -1,6 +1,5 @@
 package com.forA.chatbot.auth.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,5 +15,4 @@ public class RefreshTokenResponse {
   private String refreshToken;
   private boolean hasNickname;
   private String nickname;
-
 }

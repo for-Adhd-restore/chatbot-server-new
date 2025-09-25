@@ -7,5 +7,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class NicknameResponse {
 
-    private String nickname;
+  private String nickname;
 }

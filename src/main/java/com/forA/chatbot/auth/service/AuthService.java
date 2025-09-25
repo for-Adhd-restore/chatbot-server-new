@@ -27,10 +27,11 @@ public class AuthService {
   public RefreshTokenResponse refreshAccessToken(RefreshTokenRequest request) {
     String refreshTokenValue = request.getRefreshToken();
 
-
     // 1. RefreshToken 유효성 검증
-    RefreshToken refreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
-        .orElseThrow(() -> new AuthHandler(ErrorStatus.TOKEN_REFRESH_FAILED));
+    RefreshToken refreshToken =
+        refreshTokenRepository
+            .findByToken(refreshTokenValue)
+            .orElseThrow(() -> new AuthHandler(ErrorStatus.TOKEN_REFRESH_FAILED));
 
     // 2. 만료 확인
     if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
@@ -39,8 +40,10 @@ public class AuthService {
     }
 
     // 3. 사용자 정보 조회
-    User user = userRepository.findById(refreshToken.getUserId())
-        .orElseThrow(() -> new AuthHandler(ErrorStatus.USER_NOT_FOUND));
+    User user =
+        userRepository
+            .findById(refreshToken.getUserId())
+            .orElseThrow(() -> new AuthHandler(ErrorStatus.USER_NOT_FOUND));
 
     // 4. 새로운 Access Token 생성
     String newAccessToken = jwtUtil.createAccessToken(String.valueOf(refreshToken.getUserId()));
@@ -62,7 +65,7 @@ public class AuthService {
     // 1. AccessToken을 블랙리스트에 추가
     LocalDateTime tokenExpiration = getTokenExpiration(accessToken);
     blacklistService.addToBlacklist(accessToken, tokenExpiration, userId);
-    
+
     // 2. RefreshToken 삭제
     refreshTokenRepository.findByUserId(userId).ifPresent(refreshTokenRepository::delete);
     log.info("로그아웃 처리 완료: userId={}", userId);

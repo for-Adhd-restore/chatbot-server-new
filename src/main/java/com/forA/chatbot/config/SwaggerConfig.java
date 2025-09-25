@@ -17,12 +17,13 @@ public class SwaggerConfig {
     Info info = new Info().title("Mori API").description("Mori API 명세서").version("1.0.0");
 
     // JWT 보안 스키마 정의
-    SecurityScheme bearerAuth = new SecurityScheme()
-        .type(SecurityScheme.Type.HTTP)
-        .scheme("bearer")
-        .bearerFormat("JWT")
-        .in(SecurityScheme.In.HEADER)
-        .name("Authorization");
+    SecurityScheme bearerAuth =
+        new SecurityScheme()
+            .type(SecurityScheme.Type.HTTP)
+            .scheme("bearer")
+            .bearerFormat("JWT")
+            .in(SecurityScheme.In.HEADER)
+            .name("Authorization");
 
     // 보안 요구사항 정의
     SecurityRequirement securityRequirement = new SecurityRequirement().addList("bearerAuth");

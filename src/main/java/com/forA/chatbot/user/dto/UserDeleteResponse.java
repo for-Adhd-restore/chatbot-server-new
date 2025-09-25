@@ -7,9 +7,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public class UserDeleteResponse {
 
-    private String message;
+  private String message;
 
-    public static UserDeleteResponse success() {
-        return new UserDeleteResponse("Your account has been deactivated. It will be permanently deleted in 30 days.");
-    }
+  public static UserDeleteResponse success() {
+    return new UserDeleteResponse(
+        "Your account has been deactivated. It will be permanently deleted in 30 days.");
+  }
 }

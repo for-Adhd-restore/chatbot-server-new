@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class NicknameRequest {
 
-    @NotBlank(message = "닉네임은 필수입니다")
-    @Size(max = 20, message = "닉네임은 20자 이하여야 합니다")
-    private String nickname;
+  @NotBlank(message = "닉네임은 필수입니다")
+  @Size(max = 20, message = "닉네임은 20자 이하여야 합니다")
+  private String nickname;
 }

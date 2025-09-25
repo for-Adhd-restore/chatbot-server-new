@@ -10,9 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface MedicationLogRepository extends JpaRepository<MedicationLog, Long> {
-    
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM MedicationLog ml WHERE ml.medicationBundle.user.id = :userId")
-    void deleteByUserId(@Param("userId") Long userId);
+
+  @Modifying
+  @Transactional
+  @Query("DELETE FROM MedicationLog ml WHERE ml.medicationBundle.user.id = :userId")
+  void deleteByUserId(@Param("userId") Long userId);
 }

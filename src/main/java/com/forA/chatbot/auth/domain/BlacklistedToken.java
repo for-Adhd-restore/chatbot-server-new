@@ -2,11 +2,10 @@ package com.forA.chatbot.auth.domain;
 
 import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "blacklisted_tokens")

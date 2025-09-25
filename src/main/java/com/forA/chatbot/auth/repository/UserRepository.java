@@ -16,6 +16,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
   Optional<User> findByEmail(String email);
 
-  @Query("SELECT u FROM User u WHERE u.isDeleted = true AND u.deletedAt IS NOT NULL AND u.deletedAt < :cutoffDate")
+  @Query(
+      "SELECT u FROM User u WHERE u.isDeleted = true AND u.deletedAt IS NOT NULL AND u.deletedAt <"
+          + " :cutoffDate")
   List<User> findUsersToBeDeleted(@Param("cutoffDate") LocalDateTime cutoffDate);
 }
