@@ -1,12 +1,19 @@
 package com.forA.chatbot.user.domain;
 
 import com.forA.chatbot.enums.Gender;
+import com.forA.chatbot.user.domain.enums.JobType;
+import com.forA.chatbot.user.domain.enums.DisorderType;
+import com.forA.chatbot.user.domain.enums.SymptomType;
 import com.forA.chatbot.global.BaseTimeEntity;
+import com.forA.chatbot.user.converter.JobSetConverter;
+import com.forA.chatbot.user.converter.DisorderSetConverter;
+import com.forA.chatbot.user.converter.SymptomSetConverter;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.*;
 
 @Entity
@@ -48,17 +55,20 @@ public class User extends BaseTimeEntity {
   @Column(name = "full_name", length = 50, nullable = false)
   private String fullName;
 
+  @Convert(converter = JobSetConverter.class)
   @Column(columnDefinition = "JSON")
   @Size(max = 2, message = "최대 2개의 job만 선택할 수 있습니다")
-  private List<Integer> job = new ArrayList<>();
+  private Set<JobType> jobs = new HashSet<>();
 
+  @Convert(converter = DisorderSetConverter.class)
   @Column(columnDefinition = "JSON")
   @Size(max = 2, message = "최대 2개의 disorder만 선택할 수 있습니다")
-  private List<Integer> disorder = new ArrayList<>();
+  private Set<DisorderType> disorders = new HashSet<>();
 
+  @Convert(converter = SymptomSetConverter.class)
   @Column(columnDefinition = "JSON")
   @Size(max = 2, message = "최대 2개의 symptom만 선택할 수 있습니다")
-  private List<Integer> symptom = new ArrayList<>();
+  private Set<SymptomType> symptoms = new HashSet<>();
 
   @Column(name = "is_deleted", nullable = false)
   private Boolean isDeleted = false;
@@ -68,4 +78,28 @@ public class User extends BaseTimeEntity {
 
   @Column(name = "is_notification_enabled")
   private Boolean isNotificationEnabled = false;
+
+  public void updateNickname(String nickname) {
+    this.nickname = nickname;
+  }
+
+  public void updateGender(Gender gender) {
+    this.gender = gender;
+  }
+
+  public void updateBirthYear(Integer birthYear) {
+    this.birthYear = birthYear;
+  }
+
+  public void updateJobs(Set<JobType> jobs) {
+    this.jobs = jobs != null ? jobs : new HashSet<>();
+  }
+
+  public void updateDisorders(Set<DisorderType> disorders) {
+    this.disorders = disorders != null ? disorders : new HashSet<>();
+  }
+
+  public void updateSymptoms(Set<SymptomType> symptoms) {
+    this.symptoms = symptoms != null ? symptoms : new HashSet<>();
+  }
 }

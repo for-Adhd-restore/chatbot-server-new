@@ -53,7 +53,6 @@ public class AuthController {
       return ApiResponse.onSuccess(response);
     } catch (IllegalArgumentException e) {
       log.error("토큰 재발급 실패: {}", e.getMessage());
-      // Note: This requires TOKEN_REFRESH_FAILED to be defined in ErrorStatus
       throw new AuthHandler(ErrorStatus.TOKEN_REFRESH_FAILED);
     }
   }
