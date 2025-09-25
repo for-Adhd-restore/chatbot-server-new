@@ -1,6 +1,9 @@
 package com.forA.chatbot.user.service;
 
+import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
+import com.forA.chatbot.auth.service.BlacklistService;
+import com.forA.chatbot.medications.repository.MedicationBundleRepository;
 import com.forA.chatbot.medications.repository.MedicationLogRepository;
 import com.forA.chatbot.user.domain.User;
 import com.forA.chatbot.user.domain.enums.DisorderType;
@@ -26,6 +29,9 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final MedicationLogRepository medicationLogRepository;
+  private final MedicationBundleRepository medicationBundleRepository;
+  private final RefreshTokenRepository refreshTokenRepository;
+  private final BlacklistService blacklistService;
 
   @Transactional
   public NicknameResponse updateNickname(Long userId, String nickname) {
@@ -116,12 +122,46 @@ public class UserService {
       throw new IllegalStateException("이미 탈퇴 처리된 계정입니다.");
     }
 
-    // 계정 비활성화 (30일 유예 기간)
+    // 1. 사용자 연관 데이터 즉시 삭제
+    deleteUserRelatedData(userId);
+
+    // 2. 계정 비활성화 (30일 유예 기간)
     user.deactivateAccount();
     userRepository.save(user);
 
-    log.info("User account deactivated for userId: {}. Will be permanently deleted after 30 days.", userId);
+    log.info("User account deactivated and related data deleted for userId: {}. Account will be permanently deleted after 30 days.", userId);
 
     return UserDeleteResponse.success();
+  }
+
+  @Transactional
+  public void deleteUserRelatedData(Long userId) {
+    log.info("사용자 연관 데이터 삭제 시작: userId={}", userId);
+
+    try {
+      // 1. RefreshToken 삭제
+      refreshTokenRepository.deleteByUserId(userId);
+      log.info("RefreshToken 삭제 완료: userId={}", userId);
+
+      // 2. BlacklistedToken 삭제
+      blacklistService.removeUserTokens(userId);
+      log.info("BlacklistedToken 삭제 완료: userId={}", userId);
+
+      // 3. MedicationLog 삭제 (MedicationBundle을 통한 연관 삭제)
+      medicationLogRepository.deleteByUserId(userId);
+      log.info("MedicationLog 삭제 완료: userId={}", userId);
+
+      // 4. MedicationBundle 삭제
+      medicationBundleRepository.deleteByUserId(userId);
+      log.info("MedicationBundle 삭제 완료: userId={}", userId);
+
+      // TODO: ChatSession 및 관련 채팅 데이터 삭제 (Repository가 필요하면 추가)
+      // deleteChatRelatedData(userId);
+
+      log.info("사용자 연관 데이터 삭제 완료: userId={}", userId);
+    } catch (Exception e) {
+      log.error("사용자 연관 데이터 삭제 중 오류 발생: userId={}", userId, e);
+      throw new RuntimeException("연관 데이터 삭제 중 오류가 발생했습니다.", e);
+    }
   }
 }

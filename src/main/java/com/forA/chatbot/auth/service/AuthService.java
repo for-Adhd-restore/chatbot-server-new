@@ -22,6 +22,7 @@ public class AuthService {
   private final UserRepository userRepository;
   private final JwtUtil jwtUtil;
   private final RefreshTokenRepository refreshTokenRepository;
+  private final BlacklistService blacklistService;
 
   public RefreshTokenResponse refreshAccessToken(RefreshTokenRequest request) {
     String refreshTokenValue = request.getRefreshToken();
@@ -57,8 +58,24 @@ public class AuthService {
   }
 
   @Transactional
-  public void logout(Long userId) {
+  public void logout(Long userId, String accessToken) {
+    // 1. AccessToken을 블랙리스트에 추가
+    LocalDateTime tokenExpiration = getTokenExpiration(accessToken);
+    blacklistService.addToBlacklist(accessToken, tokenExpiration, userId);
+    
+    // 2. RefreshToken 삭제
     refreshTokenRepository.findByUserId(userId).ifPresent(refreshTokenRepository::delete);
     log.info("로그아웃 처리 완료: userId={}", userId);
+  }
+
+  private LocalDateTime getTokenExpiration(String accessToken) {
+    try {
+      // JWT에서 만료시간 추출
+      return jwtUtil.getExpirationFromToken(accessToken);
+    } catch (Exception e) {
+      // 만료시간을 추출할 수 없는 경우, 현재시간 + 24시간으로 설정
+      log.warn("토큰 만료시간 추출 실패, 기본값 사용: {}", e.getMessage());
+      return LocalDateTime.now().plusHours(24);
+    }
   }
 }

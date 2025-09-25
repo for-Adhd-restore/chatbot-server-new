@@ -1,8 +1,8 @@
 package com.forA.chatbot.user.scheduler;
 
 import com.forA.chatbot.auth.repository.UserRepository;
-import com.forA.chatbot.medications.repository.MedicationLogRepository;
 import com.forA.chatbot.user.domain.User;
+import com.forA.chatbot.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,7 +18,7 @@ import java.util.List;
 public class UserDeletionScheduler {
 
     private final UserRepository userRepository;
-    private final MedicationLogRepository medicationLogRepository;
+    private final UserService userService;
 
     /**
      * 매일 새벽 2시에 30일이 지난 탈퇴 계정을 완전히 삭제합니다.
@@ -39,13 +39,8 @@ public class UserDeletionScheduler {
         int deletedCount = 0;
         for (User user : usersToDelete) {
             try {
-                // 1. 관련 데이터 삭제
-                medicationLogRepository.deleteByUserId(user.getId());
-                
-                // TODO: 추후 다른 관련 데이터 삭제 로직 추가
-                // chatSessionRepository.deleteByUserId(user.getId());
-                // selectedEmotionRepository.deleteByUserId(user.getId());
-                // actionFeedbackRepository.deleteByUserId(user.getId());
+                // 1. 사용자 연관 데이터 삭제 (UserService 활용)
+                userService.deleteUserRelatedData(user.getId());
 
                 // 2. 사용자 완전 삭제
                 userRepository.delete(user);

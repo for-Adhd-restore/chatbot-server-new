@@ -9,8 +9,10 @@ import com.forA.chatbot.auth.dto.LogoutResponse;
 import com.forA.chatbot.auth.dto.RefreshTokenRequest;
 import com.forA.chatbot.auth.dto.RefreshTokenResponse;
 import com.forA.chatbot.auth.jwt.CustomUserDetails;
+import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.service.AppleAuthService;
 import com.forA.chatbot.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class AuthController {
 
   private final AppleAuthService appleAuthService;
   private final AuthService authService;
+  private final JwtUtil jwtUtil;
 
   @PostMapping("/apple")
   public ApiResponse<AuthResponse> appleLogin(@RequestBody AppleLoginRequest request) {
@@ -58,11 +61,16 @@ public class AuthController {
   }
   @PostMapping("/logout")
   public ApiResponse<LogoutResponse> logout(
-      @AuthenticationPrincipal CustomUserDetails userDetails
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      HttpServletRequest request
   )
   {
     log.info("로그아웃 요청 수신: userId={}", userDetails.getUserId());
-    authService.logout(userDetails.getUserId());
+    
+    // 현재 사용중인 AccessToken 추출
+    String accessToken = jwtUtil.extractTokenFromRequest(request);
+    
+    authService.logout(userDetails.getUserId(), accessToken);
     return ApiResponse.onSuccess(new LogoutResponse("Successfully logged out"));
   }
 
