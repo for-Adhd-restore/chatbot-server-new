@@ -7,11 +7,13 @@ import com.forA.chatbot.user.dto.NicknameResponse;
 import com.forA.chatbot.user.dto.UserProfileResponse;
 import com.forA.chatbot.user.dto.UserProfileUpdateRequest;
 import com.forA.chatbot.user.dto.UserResetResponse;
+import com.forA.chatbot.user.dto.UserDeleteResponse;
 import com.forA.chatbot.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/user")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @Slf4j
 public class UserController {
@@ -69,6 +71,13 @@ public class UserController {
     return ApiResponse.onSuccess(response);
   }
 
-  /*TODO : 회원 탈퇴*/
-
+  @DeleteMapping("/me")
+  public ApiResponse<UserDeleteResponse> deactivateUser(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    UserDeleteResponse response = userService.deactivateUser(userId);
+    
+    return ApiResponse.onSuccess(response);
+  }
 }

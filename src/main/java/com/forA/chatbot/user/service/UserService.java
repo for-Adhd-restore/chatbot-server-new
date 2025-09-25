@@ -10,6 +10,7 @@ import com.forA.chatbot.user.dto.NicknameResponse;
 import com.forA.chatbot.user.dto.UserProfileResponse;
 import com.forA.chatbot.user.dto.UserProfileUpdateRequest;
 import com.forA.chatbot.user.dto.UserResetResponse;
+import com.forA.chatbot.user.dto.UserDeleteResponse;
 import com.forA.chatbot.user.util.EnumConverterUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -103,5 +104,24 @@ public class UserService {
     log.info("User data reset completed for userId: {}", userId);
 
     return UserResetResponse.success();
+  }
+
+  @Transactional
+  public UserDeleteResponse deactivateUser(Long userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+    // 이미 탈퇴 처리된 계정인지 확인
+    if (user.isDeactivated()) {
+      throw new IllegalStateException("이미 탈퇴 처리된 계정입니다.");
+    }
+
+    // 계정 비활성화 (30일 유예 기간)
+    user.deactivateAccount();
+    userRepository.save(user);
+
+    log.info("User account deactivated for userId: {}. Will be permanently deleted after 30 days.", userId);
+
+    return UserDeleteResponse.success();
   }
 }

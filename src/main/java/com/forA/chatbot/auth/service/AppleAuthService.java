@@ -64,7 +64,7 @@ public class AppleAuthService {
         .accessToken(accessToken)
         .refreshToken(refreshToken)
         .tokenType("Bearer")
-        .expiresIn(3600L)
+        .expiresIn(86400L)
         .userId(user.getId())
         .isNewUser(isNewUser)
         .build();
@@ -81,7 +81,7 @@ public class AppleAuthService {
         RefreshToken.builder()
             .token(createRefreshToken)
             .userId(userId)
-            .expiresAt(LocalDateTime.now().plusMonths(3))
+            .expiresAt(LocalDateTime.now().plusMonths(6))
             .build());
     return createRefreshToken;
   }

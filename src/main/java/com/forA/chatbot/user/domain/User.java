@@ -111,4 +111,21 @@ public class User extends BaseTimeEntity {
     this.disorders = new HashSet<>();
     this.symptoms = new HashSet<>();
   }
+
+  public void deactivateAccount() {
+    this.isDeleted = true;
+    this.deletedAt = LocalDateTime.now();
+  }
+
+  public boolean isDeactivated() {
+    return this.isDeleted != null && this.isDeleted;
+  }
+
+  public boolean isPermanentlyDeletable() {
+    if (!isDeactivated() || this.deletedAt == null) {
+      return false;
+    }
+    // 30일 후 완전 삭제 가능
+    return LocalDateTime.now().isAfter(this.deletedAt.plusDays(30));
+  }
 }
