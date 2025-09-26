@@ -25,7 +25,7 @@ public class MedicationBundle extends BaseTimeEntity {
   @Column(name = "bundle_name", nullable = false, length = 50)
   private String bundleName;
 
-  @Column(name = "day_of_week", length = 10)
+  @Column(name = "day_of_week")
   private String dayOfWeek;
 
   @Column(name = "scheduled_time")
