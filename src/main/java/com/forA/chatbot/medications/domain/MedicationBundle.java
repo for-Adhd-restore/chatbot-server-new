@@ -5,6 +5,7 @@ import com.forA.chatbot.user.User;
 import jakarta.persistence.*;
 import java.sql.Time;
 import lombok.Builder;
+import lombok.Cleanup;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -37,6 +38,9 @@ public class MedicationBundle extends BaseTimeEntity {
   @Column(name = "alarm_time")
   private Time alarmTime;
 
+  @Column(name = "is_deleted")
+  private Boolean isDeleted = false;
+
   @Builder
   public MedicationBundle(
       User user,
@@ -51,6 +55,7 @@ public class MedicationBundle extends BaseTimeEntity {
     this.scheduledTime = scheduledTime;
     this.alarmEnabled = alarmEnabled;
     this.alarmTime = alarmTime;
+    this.isDeleted = false;
   }
 
   // 복용 계획 업데이트 메서드
@@ -65,5 +70,9 @@ public class MedicationBundle extends BaseTimeEntity {
     this.scheduledTime = scheduledTime;
     this.alarmEnabled = alarmEnabled;
     this.alarmTime = alarmTime;
+  }
+
+  public void softDelete() {
+    this.isDeleted = true;
   }
 }

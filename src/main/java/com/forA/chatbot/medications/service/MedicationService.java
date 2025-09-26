@@ -233,6 +233,25 @@ public class MedicationService {
     return MedicationLogResponseDto.from(saved);
   }
 
+  @Transactional
+  public void deleteMedicationPlan(Long userId, Long planId) {
+    // 1. 사용자 조회
+    User user = findUserById(userId);
+
+    // 2. 활성 계획 조회 및 권한 확인
+    MedicationBundle existingBundle = medicationBundleRepository.findActiveById(planId)
+        .orElseThrow(() -> new GeneralException(ErrorStatus.MEDICATION_PLAN_NOT_FOUND));
+
+    // 사용자 권한 확인
+    if (!existingBundle.getUser().getId().equals(userId)) {
+      throw new GeneralException(ErrorStatus.MEDICATION_PLAN_ACCESS_DENIED);
+    }
+
+    // 3. 소프트 삭제 수행
+    existingBundle.softDelete();
+    medicationBundleRepository.save(existingBundle);
+  }
+
   public List<TodayMedicationResponseDto> getTodayMedications(Long userId) {
     log.info("오늘의 복약 계획 조회 요청 - 사용자 ID: {}", userId);
 
