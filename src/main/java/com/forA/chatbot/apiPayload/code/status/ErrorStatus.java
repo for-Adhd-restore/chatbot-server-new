@@ -29,6 +29,7 @@ public enum ErrorStatus implements BaseErrorCode {
   USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH4004", "존재하지 않는 사용자입니다."),
 
   // MEDICATION - 약물 관련 에러 코드들
+  MEDICATION_PLAN_ACCESS_DENIED(HttpStatus.FORBIDDEN, "MEDICATION002", "해당 복용 계획에 접근할 권한이 없습니다."),
   MEDICATION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEDICATION4001", "사용자를 찾을 수 없습니다."),
   MEDICATION_INVALID_TIME_FORMAT(
       HttpStatus.BAD_REQUEST, "MEDICATION4002", "시간 형식이 올바르지 않습니다. HH:mm 형식으로 입력해주세요."),

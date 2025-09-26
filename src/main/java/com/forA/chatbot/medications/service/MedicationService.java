@@ -10,6 +10,7 @@ import com.forA.chatbot.medications.dto.MedicationLogRequestDto;
 import com.forA.chatbot.medications.dto.MedicationLogResponseDto;
 import com.forA.chatbot.medications.dto.MedicationRequestDto;
 import com.forA.chatbot.medications.dto.MedicationResponseDto;
+import com.forA.chatbot.medications.dto.MedicationUpdateRequestDto;
 import com.forA.chatbot.medications.dto.NotificationDto;
 import com.forA.chatbot.medications.dto.TodayMedicationResponseDto;
 import com.forA.chatbot.medications.repository.MedicationBundleRepository;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -89,6 +91,103 @@ public class MedicationService {
         MedicationResponseDto.from(requestDto, savedMedicationBundle.getId(), LocalDateTime.now());
 
     log.info("약 복용 계획 생성 완료 - ID: {}", savedMedicationBundle.getId());
+    return responseDto;
+  }
+
+  public MedicationResponseDto updateMedicationPlan(Long userId, Long planId, MedicationUpdateRequestDto requestDto) {
+    log.info("약 복용 계획 수정 시작 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
+
+    // 1. 사용자 조회
+    User user = findUserById(userId);
+
+    // 2. 기존 MedicationBundle 조회 및 권한 확인
+    MedicationBundle existingBundle = medicationBundleRepository.findById(planId)
+        .orElseThrow(() -> new GeneralException(ErrorStatus.MEDICATION_PLAN_NOT_FOUND));
+
+    // 사용자 권한 확인
+    if (!existingBundle.getUser().getId().equals(userId)) {
+      log.warn("권한 없는 접근 시도 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
+      throw new GeneralException(ErrorStatus.MEDICATION_PLAN_ACCESS_DENIED);
+    }
+
+    // 3. 필드별 부분 업데이트
+    String updatedBundleName = requestDto.getName() != null ?
+        requestDto.getName() : existingBundle.getBundleName();
+
+    String updatedDayOfWeek = requestDto.getTakeDays() != null ?
+        String.join(",", requestDto.getTakeDays()) : existingBundle.getDayOfWeek();
+
+    Time updatedScheduledTime = requestDto.getTakeTime() != null ?
+        parseTime(requestDto.getTakeTime()) : existingBundle.getScheduledTime();
+
+    Boolean updatedAlarmEnabled = (requestDto.getNotification() != null && requestDto.getNotification().getIsOn() != null) ?
+        requestDto.getNotification().getIsOn() : existingBundle.getAlarmEnabled();
+
+    Time updatedAlarmTime = (requestDto.getNotification() != null && requestDto.getNotification().getTime() != null) ?
+        parseTime(requestDto.getNotification().getTime()) : existingBundle.getAlarmTime();
+
+    // 4. MedicationBundle 업데이트
+    existingBundle.updateMedicationPlan(
+        updatedBundleName,
+        updatedDayOfWeek,
+        updatedScheduledTime,
+        updatedAlarmEnabled,
+        updatedAlarmTime
+    );
+
+    MedicationBundle updatedBundle = medicationBundleRepository.save(existingBundle);
+    log.info("MedicationBundle 업데이트 완료 - ID: {}", updatedBundle.getId());
+
+    // 5. typeTags가 제공된 경우에만 MedicationItem 업데이트
+    if (requestDto.getTypeTags() != null) {
+      // 기존 MedicationItem들 삭제
+      List<MedicationItem> existingItems = medicationItemRepository.findByMedicationBundleId(planId);
+      if (!existingItems.isEmpty()) {
+        medicationItemRepository.deleteAll(existingItems);
+        log.info("기존 MedicationItem {} 개 삭제 완료", existingItems.size());
+      }
+
+      // 새로운 MedicationItem들 생성 및 저장
+      if (!requestDto.getTypeTags().isEmpty()) {
+        List<MedicationItem> newMedicationItems =
+            requestDto.getTypeTags().stream()
+                .map(
+                    typeTag ->
+                        MedicationItem.builder()
+                            .medicationBundle(updatedBundle)
+                            .medicationName(typeTag)
+                            .build())
+                .collect(Collectors.toList());
+
+        medicationItemRepository.saveAll(newMedicationItems);
+        log.info("새로운 MedicationItem {} 개 저장 완료", newMedicationItems.size());
+      }
+    }
+
+    // 6. 현재 상태로 응답 DTO 생성
+    List<MedicationItem> currentItems = medicationItemRepository.findByMedicationBundleId(planId);
+    List<String> currentTypeTags = currentItems.stream()
+        .map(MedicationItem::getMedicationName)
+        .collect(Collectors.toList());
+
+    List<String> currentTakeDays = Arrays.asList(updatedBundle.getDayOfWeek().split(","));
+
+    NotificationDto notificationDto = NotificationDto.builder()
+        .isOn(updatedBundle.getAlarmEnabled())
+        .time(updatedBundle.getAlarmTime() != null ? updatedBundle.getAlarmTime().toString() : null)
+        .build();
+
+    MedicationResponseDto responseDto = MedicationResponseDto.builder()
+        .id(updatedBundle.getId())
+        .name(updatedBundle.getBundleName())
+        .typeTags(currentTypeTags)
+        .takeDays(currentTakeDays)
+        .takeTime(updatedBundle.getScheduledTime().toString())
+        .notification(notificationDto)
+        .createdAt(updatedBundle.getUpdatedAt())
+        .build();
+
+    log.info("약 복용 계획 수정 완료 - ID: {}", updatedBundle.getId());
     return responseDto;
   }
 

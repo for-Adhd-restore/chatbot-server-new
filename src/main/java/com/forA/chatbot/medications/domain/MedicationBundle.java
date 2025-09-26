@@ -52,4 +52,18 @@ public class MedicationBundle extends BaseTimeEntity {
     this.alarmEnabled = alarmEnabled;
     this.alarmTime = alarmTime;
   }
+
+  // 복용 계획 업데이트 메서드
+  public void updateMedicationPlan(
+      String bundleName,
+      String dayOfWeek,
+      Time scheduledTime,
+      Boolean alarmEnabled,
+      Time alarmTime) {
+    this.bundleName = bundleName;
+    this.dayOfWeek = dayOfWeek;
+    this.scheduledTime = scheduledTime;
+    this.alarmEnabled = alarmEnabled;
+    this.alarmTime = alarmTime;
+  }
 }
