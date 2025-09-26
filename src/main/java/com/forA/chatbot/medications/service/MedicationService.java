@@ -11,18 +11,21 @@ import com.forA.chatbot.medications.dto.MedicationLogResponseDto;
 import com.forA.chatbot.medications.dto.MedicationRequestDto;
 import com.forA.chatbot.medications.dto.MedicationResponseDto;
 import com.forA.chatbot.medications.dto.NotificationDto;
+import com.forA.chatbot.medications.dto.TodayMedicationResponseDto;
 import com.forA.chatbot.medications.repository.MedicationBundleRepository;
 import com.forA.chatbot.medications.repository.MedicationItemRepository;
 import com.forA.chatbot.medications.repository.MedicationLogRepository;
 import com.forA.chatbot.user.User;
 import java.sql.Date;
 import java.sql.Time;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -129,6 +132,70 @@ public class MedicationService {
 
     // 6. Response 변환
     return MedicationLogResponseDto.from(saved);
+  }
+
+  public List<TodayMedicationResponseDto> getTodayMedications(Long userId) {
+    log.info("오늘의 복약 계획 조회 요청 - 사용자 ID: {}", userId);
+
+    // 오늘 요일 계산 (영어)
+    DayOfWeek today = LocalDate.now().getDayOfWeek();
+    String todayDayOfWeek = today.name(); // "MONDAY", "TUESDAY" 등
+    log.info("오늘 요일: "+todayDayOfWeek);
+    // 오늘 날짜
+    Date todayDate = Date.valueOf(LocalDate.now());
+
+    // 오늘 요일에 해당하는 복약 계획들 조회
+    List<MedicationBundle> todayBundles = medicationBundleRepository
+        .findByUserIdAndDayOfWeek(userId, todayDayOfWeek);
+
+    log.info("조회된 복약 계획 수: {}", todayBundles.size());
+
+    // 각 복약 계획에 대해 오늘의 기록 조회 및 응답 생성
+    List<TodayMedicationResponseDto> responses = todayBundles.stream()
+        .map(bundle -> {
+          Optional<MedicationLog> todayLog = medicationLogRepository
+              .findByMedicationBundleAndDate(bundle, todayDate);
+
+          TodayMedicationResponseDto.TodayHistory todayHistory = createTodayHistory(todayLog);
+
+          return TodayMedicationResponseDto.builder()
+              .medicationId(bundle.getId())
+              .name(bundle.getBundleName())
+              .takeTime(bundle.getScheduledTime())
+              .todayHistory(todayHistory)
+              .build();
+        })
+        .collect(Collectors.toList());
+
+    log.info("오늘의 복약 계획 조회 완료 - 사용자 ID: {}, 계획 수: {}", userId, responses.size());
+
+    return responses;
+  }
+
+  private TodayMedicationResponseDto.TodayHistory createTodayHistory(Optional<MedicationLog> logOpt) {
+    if (logOpt.isEmpty()) {
+      // 기록이 없으면 PENDING 상태
+      return TodayMedicationResponseDto.TodayHistory.builder()
+          .status("PENDING")
+          .conditionLevel(null)
+          .build();
+    }
+
+    MedicationLog log = logOpt.get();
+    String status = determineStatus(log);
+
+    return TodayMedicationResponseDto.TodayHistory.builder()
+        .status(status)
+        .conditionLevel(log.getMedCondition())
+        .build();
+  }
+
+  private String determineStatus(MedicationLog log) {
+    if (log.getIsTaken()) {
+      return "TAKEN";
+    } else {
+      return "SKIPPED";
+    }
   }
 
   private User findUserById(Long userId) {
