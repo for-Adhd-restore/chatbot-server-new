@@ -51,7 +51,8 @@ public class MedicationController {
     Long userId = userDetails.getUserId();
     log.info("약 복용 계획 수정 요청 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
 
-    MedicationResponseDto responseDto = medicationService.updateMedicationPlan(userId, planId, requestDto);
+    MedicationResponseDto responseDto =
+        medicationService.updateMedicationPlan(userId, planId, requestDto);
 
     log.info("약 복용 계획 수정 완료 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
 
@@ -61,8 +62,7 @@ public class MedicationController {
   /** 약 복용 계획 삭제 */
   @DeleteMapping("/plan/{planId}")
   public ApiResponse<Void> deleteMedicationPlan(
-      @PathVariable Long planId,
-      @AuthenticationPrincipal CustomUserDetails userDetails) {
+      @PathVariable Long planId, @AuthenticationPrincipal CustomUserDetails userDetails) {
 
     Long userId = userDetails.getUserId();
     log.info("약 복용 계획 삭제 요청 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
@@ -71,7 +71,7 @@ public class MedicationController {
 
     log.info("약 복용 계획 삭제 완료 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
 
-    return ApiResponse.of(SuccessStatus.MEDICATION_DELETED,null);
+    return ApiResponse.of(SuccessStatus.MEDICATION_DELETED, null);
   }
 
   /** 약 복용 기록 생성 */

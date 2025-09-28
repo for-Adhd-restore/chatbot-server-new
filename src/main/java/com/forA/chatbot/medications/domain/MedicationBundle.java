@@ -5,7 +5,6 @@ import com.forA.chatbot.user.User;
 import jakarta.persistence.*;
 import java.sql.Time;
 import lombok.Builder;
-import lombok.Cleanup;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

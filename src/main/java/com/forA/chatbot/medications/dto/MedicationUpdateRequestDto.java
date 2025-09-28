@@ -20,8 +20,7 @@ public class MedicationUpdateRequestDto {
 
   private String takeTime;
 
-  @Valid
-  private NotificationUpdateDto notification;
+  @Valid private NotificationUpdateDto notification;
 
   @Builder
   public MedicationUpdateRequestDto(
@@ -37,4 +36,3 @@ public class MedicationUpdateRequestDto {
     this.notification = notification;
   }
 }
-

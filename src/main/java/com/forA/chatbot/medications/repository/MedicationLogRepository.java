@@ -13,8 +13,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface MedicationLogRepository extends JpaRepository<MedicationLog, Long> {
 
-  Optional<MedicationLog> findByMedicationBundleAndDate(MedicationBundle medicationBundle, Date date);
+  Optional<MedicationLog> findByMedicationBundleAndDate(
+      MedicationBundle medicationBundle, Date date);
 
-  @Query("SELECT ml FROM MedicationLog ml WHERE ml.medicationBundle.user.id = :userId AND ml.date = :date")
+  @Query(
+      "SELECT ml FROM MedicationLog ml WHERE ml.medicationBundle.user.id = :userId AND ml.date ="
+          + " :date")
   List<MedicationLog> findByUserIdAndDate(@Param("userId") Long userId, @Param("date") Date date);
 }
