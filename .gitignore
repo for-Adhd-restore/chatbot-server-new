@@ -202,3 +202,6 @@ src/main/resources/application-local.yml
 # 로컬 MySQL/Mongo 데이터 디렉토리 무시
 db_data_dev/
 mongo_data_dev/
+
+# applekey 값 무시
+/src/main/resources/applekey/*
