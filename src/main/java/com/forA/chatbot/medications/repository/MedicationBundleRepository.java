@@ -18,6 +18,7 @@ public interface MedicationBundleRepository extends JpaRepository<MedicationBund
   @Transactional
   @Query("DELETE FROM MedicationBundle mb WHERE mb.user.id = :userId")
   void deleteByUserId(@Param("userId") Long userId);
+
   /*오늘의 복용 계획 조회*/
   @Query(
       "SELECT mb FROM MedicationBundle mb WHERE mb.user.id = :userId AND mb.isDeleted = false AND "

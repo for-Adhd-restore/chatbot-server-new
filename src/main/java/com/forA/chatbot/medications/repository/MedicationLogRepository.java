@@ -19,6 +19,7 @@ public interface MedicationLogRepository extends JpaRepository<MedicationLog, Lo
   @Transactional
   @Query("DELETE FROM MedicationLog ml WHERE ml.medicationBundle.user.id = :userId")
   void deleteByUserId(@Param("userId") Long userId);
+
   Optional<MedicationLog> findByMedicationBundleAndDate(
       MedicationBundle medicationBundle, Date date);
 
