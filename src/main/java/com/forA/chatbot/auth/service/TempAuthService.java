@@ -7,7 +7,8 @@ import com.forA.chatbot.auth.dto.TempRefreshTokenRequest;
 import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
-import com.forA.chatbot.user.User;
+import com.forA.chatbot.enums.Gender;
+import com.forA.chatbot.user.domain.User;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,9 @@ public class TempAuthService {
               .fullName("김눈송") // 기본값
               .firstName("눈송")
               .lastName("김")
+              .gender(Gender.UNKNOWN)
+              .isDeleted(false)
+              .isNotificationEnabled(false)
               .build();
 
       user = userRepository.save(user);

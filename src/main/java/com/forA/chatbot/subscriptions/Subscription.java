@@ -2,7 +2,7 @@ package com.forA.chatbot.subscriptions;
 
 import com.forA.chatbot.enums.SubscriptionStatus;
 import com.forA.chatbot.global.BaseTimeEntity;
-import com.forA.chatbot.user.User;
+import com.forA.chatbot.user.domain.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 

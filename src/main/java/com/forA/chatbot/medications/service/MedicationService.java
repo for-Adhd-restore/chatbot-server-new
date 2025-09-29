@@ -16,7 +16,7 @@ import com.forA.chatbot.medications.dto.TodayMedicationResponseDto;
 import com.forA.chatbot.medications.repository.MedicationBundleRepository;
 import com.forA.chatbot.medications.repository.MedicationItemRepository;
 import com.forA.chatbot.medications.repository.MedicationLogRepository;
-import com.forA.chatbot.user.User;
+import com.forA.chatbot.user.domain.User;
 import java.sql.Date;
 import java.sql.Time;
 import java.time.DayOfWeek;

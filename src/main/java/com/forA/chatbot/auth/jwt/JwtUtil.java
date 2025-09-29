@@ -10,6 +10,7 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.UUID;
@@ -96,6 +97,17 @@ public class JwtUtil {
     Claims claims =
         Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
     return claims.getIssuedAt();
+  }
+
+  /** 토큰 만료 시간 */
+  public LocalDateTime getExpirationFromToken(String token) {
+    Claims claims =
+        Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload();
+    return claims
+        .getExpiration()
+        .toInstant()
+        .atZone(java.time.ZoneId.systemDefault())
+        .toLocalDateTime();
   }
 
   /** 토큰 유효성 검증 */

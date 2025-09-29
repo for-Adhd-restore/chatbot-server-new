@@ -6,7 +6,7 @@ import com.forA.chatbot.auth.dto.AuthResponse;
 import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
-import com.forA.chatbot.user.User;
+import com.forA.chatbot.user.domain.User;
 import io.jsonwebtoken.Claims;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -64,7 +64,7 @@ public class AppleAuthService {
         .accessToken(accessToken)
         .refreshToken(refreshToken)
         .tokenType("Bearer")
-        .expiresIn(3600L)
+        .expiresIn(86400L)
         .userId(user.getId())
         .isNewUser(isNewUser)
         .build();
@@ -81,7 +81,7 @@ public class AppleAuthService {
         RefreshToken.builder()
             .token(createRefreshToken)
             .userId(userId)
-            .expiresAt(LocalDateTime.now().plusMonths(3))
+            .expiresAt(LocalDateTime.now().plusMonths(6))
             .build());
     return createRefreshToken;
   }
