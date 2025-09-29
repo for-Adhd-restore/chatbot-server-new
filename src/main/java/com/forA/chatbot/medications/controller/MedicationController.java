@@ -7,8 +7,11 @@ import com.forA.chatbot.medications.dto.MedicationLogRequestDto;
 import com.forA.chatbot.medications.dto.MedicationLogResponseDto;
 import com.forA.chatbot.medications.dto.MedicationRequestDto;
 import com.forA.chatbot.medications.dto.MedicationResponseDto;
+import com.forA.chatbot.medications.dto.MedicationUpdateRequestDto;
+import com.forA.chatbot.medications.dto.TodayMedicationResponseDto;
 import com.forA.chatbot.medications.service.MedicationService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,6 +41,39 @@ public class MedicationController {
     return ApiResponse.of(SuccessStatus.MEDICATION_CREATED, responseDto);
   }
 
+  /** 약 복용 계획 수정 */
+  @PatchMapping("/plan/{planId}")
+  public ApiResponse<MedicationResponseDto> updateMedicationPlan(
+      @PathVariable Long planId,
+      @Valid @RequestBody MedicationUpdateRequestDto requestDto,
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+    Long userId = userDetails.getUserId();
+    log.info("약 복용 계획 수정 요청 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
+
+    MedicationResponseDto responseDto =
+        medicationService.updateMedicationPlan(userId, planId, requestDto);
+
+    log.info("약 복용 계획 수정 완료 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
+
+    return ApiResponse.of(SuccessStatus.MEDICATION_UPDATED, responseDto);
+  }
+
+  /** 약 복용 계획 삭제 */
+  @DeleteMapping("/plan/{planId}")
+  public ApiResponse<Void> deleteMedicationPlan(
+      @PathVariable Long planId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+    Long userId = userDetails.getUserId();
+    log.info("약 복용 계획 삭제 요청 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
+
+    medicationService.deleteMedicationPlan(userId, planId);
+
+    log.info("약 복용 계획 삭제 완료 - 사용자 ID: {}, 계획 ID: {}", userId, planId);
+
+    return ApiResponse.of(SuccessStatus.MEDICATION_DELETED, null);
+  }
+
   /** 약 복용 기록 생성 */
   @PostMapping("/log")
   public ApiResponse<MedicationLogResponseDto> createMedicationLog(
@@ -51,5 +87,20 @@ public class MedicationController {
     log.info("약 복용 기록 생성 완료 - historyId: {}", responseDto.getHistoryId());
 
     return ApiResponse.of(SuccessStatus.MEDICATION_LOG_CREATED, responseDto);
+  }
+
+  /** 오늘의 복약 계획 조회 */
+  @GetMapping
+  public ApiResponse<List<TodayMedicationResponseDto>> getTodayMedications(
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+    Long userId = userDetails.getUserId();
+    log.info("오늘의 복약 계획 조회 요청 - 사용자 ID: {}", userId);
+
+    List<TodayMedicationResponseDto> medications = medicationService.getTodayMedications(userId);
+
+    log.info("오늘의 복약 계획 조회 완료 - 사용자 ID: {}, 계획 수: {}", userId, medications.size());
+
+    return ApiResponse.of(SuccessStatus.MEDICATION_LIST_RETRIEVED, medications);
   }
 }

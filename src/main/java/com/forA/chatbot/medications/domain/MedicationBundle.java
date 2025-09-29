@@ -25,7 +25,7 @@ public class MedicationBundle extends BaseTimeEntity {
   @Column(name = "bundle_name", nullable = false, length = 50)
   private String bundleName;
 
-  @Column(name = "day_of_week", length = 10)
+  @Column(name = "day_of_week")
   private String dayOfWeek;
 
   @Column(name = "scheduled_time")
@@ -36,6 +36,9 @@ public class MedicationBundle extends BaseTimeEntity {
 
   @Column(name = "alarm_time")
   private Time alarmTime;
+
+  @Column(name = "is_deleted")
+  private Boolean isDeleted = false;
 
   @Builder
   public MedicationBundle(
@@ -51,5 +54,24 @@ public class MedicationBundle extends BaseTimeEntity {
     this.scheduledTime = scheduledTime;
     this.alarmEnabled = alarmEnabled;
     this.alarmTime = alarmTime;
+    this.isDeleted = false;
+  }
+
+  // 복용 계획 업데이트 메서드
+  public void updateMedicationPlan(
+      String bundleName,
+      String dayOfWeek,
+      Time scheduledTime,
+      Boolean alarmEnabled,
+      Time alarmTime) {
+    this.bundleName = bundleName;
+    this.dayOfWeek = dayOfWeek;
+    this.scheduledTime = scheduledTime;
+    this.alarmEnabled = alarmEnabled;
+    this.alarmTime = alarmTime;
+  }
+
+  public void softDelete() {
+    this.isDeleted = true;
   }
 }
