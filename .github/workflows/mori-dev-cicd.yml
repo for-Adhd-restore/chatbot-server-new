@@ -49,7 +49,7 @@ jobs:
         with:
           context: .
           push: true
-          no-cache: true   # 항상 새로운 이미지 푸시
+#          no-cache: true   # 항상 새로운 이미지 푸시
           tags: |
             ${{ secrets.DOCKER_HUB_USERNAME }}/mori:${{ github.sha }}
             ${{ secrets.DOCKER_HUB_USERNAME }}/mori:latest
@@ -85,7 +85,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_SSH_PORT }}
-          timeout: 60s
+          timeout: 5m
           script: |
             cd ~/mori-app
             echo "${{ secrets.ENV_FILE }}" > .env   # 서버에 .env 파일 생성
