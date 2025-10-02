@@ -6,6 +6,7 @@ import com.forA.chatbot.auth.dto.AuthResponse;
 import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
+import com.forA.chatbot.enums.Gender;
 import com.forA.chatbot.user.domain.User;
 import io.jsonwebtoken.Claims;
 import java.time.LocalDateTime;
@@ -52,9 +53,13 @@ public class AppleAuthService {
               .fullName(buildFullName(request.getFirstName(), request.getLastName()))
               .firstName(request.getFirstName())
               .lastName(request.getLastName())
+              .gender(Gender.UNKNOWN)
+              .isDeleted(false)
+              .isNotificationEnabled(false)
               .build();
 
       user = userRepository.save(user);
+      log.info("신규 사용자 저장 완료 - userId: {}", user.getId());
     }
     // 4. JWT 토큰 생성
     String accessToken = jwtUtil.createAccessToken(String.valueOf(user.getId()));
