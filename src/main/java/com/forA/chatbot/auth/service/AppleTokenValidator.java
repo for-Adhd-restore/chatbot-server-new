@@ -2,9 +2,7 @@ package com.forA.chatbot.auth.service;
 
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.AuthHandler;
-import com.forA.chatbot.auth.client.AppleAuthClient;
 import com.forA.chatbot.auth.dto.ApplePublicKey;
-import com.forA.chatbot.auth.dto.ApplePublicKeyResponse;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import java.math.BigInteger;
@@ -17,7 +15,6 @@ import java.util.Base64;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,6 +23,7 @@ import org.springframework.stereotype.Service;
 public class AppleTokenValidator {
 
   private final ApplePublicKeyService applePublicKeyService;
+
   // Claims: JWT 토큰의 페이로드(Payload) 부분에 담긴 정보
   public Claims validateToken(String identityToken) { // 토큰 검증 로직
     try {
