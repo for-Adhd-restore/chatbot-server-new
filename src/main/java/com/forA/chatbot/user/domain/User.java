@@ -37,6 +37,7 @@ public class User extends BaseTimeEntity {
   private String appleUniqueId;
 
   @Column(length = 10, nullable = false)
+  @Builder.Default
   private Gender gender = Gender.UNKNOWN;
 
   @Column(name = "birth_year")
@@ -57,25 +58,30 @@ public class User extends BaseTimeEntity {
   @Convert(converter = JobSetConverter.class)
   @Column(columnDefinition = "JSON")
   @Size(max = 2, message = "최대 2개의 job만 선택할 수 있습니다")
+  @Builder.Default
   private Set<JobType> jobs = new HashSet<>();
 
   @Convert(converter = DisorderSetConverter.class)
   @Column(columnDefinition = "JSON")
   @Size(max = 2, message = "최대 2개의 disorder만 선택할 수 있습니다")
+  @Builder.Default
   private Set<DisorderType> disorders = new HashSet<>();
 
   @Convert(converter = SymptomSetConverter.class)
   @Column(columnDefinition = "JSON")
   @Size(max = 2, message = "최대 2개의 symptom만 선택할 수 있습니다")
+  @Builder.Default
   private Set<SymptomType> symptoms = new HashSet<>();
 
   @Column(name = "is_deleted", nullable = false)
+  @Builder.Default
   private Boolean isDeleted = false;
 
   @Column(name = "deleated_at")
   private LocalDateTime deletedAt;
 
   @Column(name = "is_notification_enabled")
+  @Builder.Default
   private Boolean isNotificationEnabled = false;
 
   public void updateNickname(String nickname) {

@@ -43,6 +43,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     // 애플 인증 서버에 JWK를 가져올 때 사용
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+
+    // apple 로그인 캐시 설정
+    implementation 'com.github.ben-manes.caffeine:caffeine'
     // JWT 처리를 위한 라이브러리
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'

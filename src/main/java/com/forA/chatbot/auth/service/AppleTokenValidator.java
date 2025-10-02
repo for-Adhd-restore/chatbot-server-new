@@ -25,15 +25,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AppleTokenValidator {
 
-  private final AppleAuthClient appleAuthClient;
-
-  // 공개키를 메모리에 캐싱
-  @Cacheable("applePublicKeys")
-  public List<ApplePublicKey> getApplePublicKeys() { // 애플 서버에서 공개키 목록 조회
-    ApplePublicKeyResponse response = appleAuthClient.getPublicKeys();
-    return response.getKeys();
-  }
-
+  private final ApplePublicKeyService applePublicKeyService;
   // Claims: JWT 토큰의 페이로드(Payload) 부분에 담긴 정보
   public Claims validateToken(String identityToken) { // 토큰 검증 로직
     try {
@@ -69,7 +61,7 @@ public class AppleTokenValidator {
   }
 
   private ApplePublicKey findPublicKeyByKid(String kid) {
-    List<ApplePublicKey> keys = getApplePublicKeys();
+    List<ApplePublicKey> keys = applePublicKeyService.getApplePublicKeys();
     return keys.stream()
         .filter(key -> kid.equals(key.getKid()))
         .findFirst()
