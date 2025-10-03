@@ -21,15 +21,14 @@ public class NotificationController {
   private final NotificationService notificationService;
 
   @PostMapping("/token")
-  public ApiResponse<TokenRefreshResponseDto> refreshToken(@RequestBody TokenRefreshRequestDto requestDto,
+  public ApiResponse<TokenRefreshResponseDto> refreshToken(
+      @RequestBody TokenRefreshRequestDto requestDto,
       @AuthenticationPrincipal CustomUserDetails userDetails) {
     Long userId = userDetails.getUserId();
 
     notificationService.saveOrUpdateToken(userId, requestDto);
-    TokenRefreshResponseDto responseDto = TokenRefreshResponseDto.builder()
-        .refreshedToken(requestDto.getToken())
-        .build();
-
+    TokenRefreshResponseDto responseDto =
+        TokenRefreshResponseDto.builder().refreshedToken(requestDto.getToken()).build();
 
     return ApiResponse.of(SuccessStatus._TOKEN_REFRESH_SUCCESS, responseDto);
   }

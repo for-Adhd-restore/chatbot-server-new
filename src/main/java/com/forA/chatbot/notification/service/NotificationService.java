@@ -26,28 +26,29 @@ public class NotificationService {
 
   @Transactional
   public void saveOrUpdateToken(Long userId, TokenRefreshRequestDto requestDto) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new NotificationHandler(ErrorStatus.USER_NOT_FOUND));
+    User user =
+        userRepository
+            .findById(userId)
+            .orElseThrow(() -> new NotificationHandler(ErrorStatus.USER_NOT_FOUND));
 
-    deviceTokenRepository.findByDeviceToken(requestDto.getToken())
+    deviceTokenRepository
+        .findByDeviceToken(requestDto.getToken())
         .ifPresentOrElse(
-            deviceToken -> log.info("Token already exists for user: {}. Updating timestamp.", userId),
+            deviceToken ->
+                log.info("Token already exists for user: {}. Updating timestamp.", userId),
             () -> {
               log.info("Registering new token for user: {}", userId);
               DeviceToken newDeviceToken = new DeviceToken(user, requestDto.getToken());
               deviceTokenRepository.save(newDeviceToken);
-            }
-        );
+            });
   }
 
   public void sendPushNotification(String targetToken, String title, String body) {
-    Message message = Message.builder()
-        .setToken(targetToken)
-        .setNotification(Notification.builder()
-            .setTitle(title)
-            .setBody(body)
-            .build())
-        .build();
+    Message message =
+        Message.builder()
+            .setToken(targetToken)
+            .setNotification(Notification.builder().setTitle(title).setBody(body).build())
+            .build();
 
     try {
       FirebaseMessaging.getInstance().send(message);
@@ -55,7 +56,8 @@ public class NotificationService {
       String errorCode = e.getMessagingErrorCode().toString();
       if ("UNREGISTERED".equals(errorCode) || "INVALID_ARGUMENT".equals(errorCode)) {
         log.warn("Deleting invalid FCM token: {}", targetToken);
-        deviceTokenRepository.findByDeviceToken(targetToken)
+        deviceTokenRepository
+            .findByDeviceToken(targetToken)
             .ifPresent(deviceTokenRepository::delete);
       } else {
         log.error("FCM message sending failed", e);
