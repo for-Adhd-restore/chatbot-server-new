@@ -28,6 +28,12 @@ jobs:
       - name: Create .env file 
         run: | 
           echo "${{ secrets.ENV_FILE }}" > .env
+
+      - name: Create Firebase Key File
+        run: |
+          echo "Creating firebase key file..."
+          echo "${{ secrets.FIREBASE_KEY_BASE64 }}" | base64 --decode > src/main/resources/mori-firebase-key.json
+          echo "File created successfully."
         
       - name: Grant execute permission for Gradlew
         run: chmod +x ./gradlew
