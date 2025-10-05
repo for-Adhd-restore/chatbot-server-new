@@ -28,9 +28,6 @@ public class MedicationLog extends BaseTimeEntity {
   @Column(name = "is_taken", nullable = false)
   private Boolean isTaken;
 
-  @Column(name = "taken_at")
-  private Time takenAt;
-
   @Column(length = 50, name = "med_condition")
   private Integer medCondition;
 
@@ -39,12 +36,10 @@ public class MedicationLog extends BaseTimeEntity {
       MedicationBundle medicationBundle,
       Date date,
       Boolean isTaken,
-      Time takenAt,
       Integer medCondition) {
     this.medicationBundle = medicationBundle;
     this.date = date;
     this.isTaken = isTaken;
-    this.takenAt = takenAt;
     this.medCondition = medCondition;
   }
 }

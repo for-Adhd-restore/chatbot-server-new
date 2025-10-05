@@ -228,8 +228,6 @@ public class MedicationService {
     // 3. 날짜 변환
     Date sqlDate = parseDate(requestDto.getDate());
 
-    // 4. 시간 변환 (nullable)
-    Time takenTime = parseTime(requestDto.getTakenAt());
 
     // 5. MedicationLog 생성 및 저장
     MedicationLog logEntity =
@@ -237,7 +235,6 @@ public class MedicationService {
             .medicationBundle(bundle)
             .date(sqlDate)
             .isTaken(isTaken)
-            .takenAt(takenTime)
             .medCondition(requestDto.getConditionLevel())
             .build();
 
