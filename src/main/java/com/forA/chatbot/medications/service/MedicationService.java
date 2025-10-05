@@ -293,10 +293,35 @@ public class MedicationService {
                   TodayMedicationResponseDto.TodayHistory todayHistory =
                       createTodayHistory(todayLog);
 
+                  // typeTags 조회
+                  List<String> typeTags =
+                      medicationItemRepository.findByMedicationBundleId(bundle.getId()).stream()
+                          .map(MedicationItem::getMedicationName)
+                          .collect(Collectors.toList());
+
+                  // takeDays 변환
+                  List<String> takeDays = Arrays.asList(bundle.getDayOfWeek().split(","));
+
+                  // NotificationDto 생성
+                  NotificationDto notificationDto =
+                      NotificationDto.builder()
+                          .isOn(bundle.getAlarmEnabled())
+                          .time(
+                              bundle.getAlarmTime() != null
+                                  ? bundle
+                                  .getAlarmTime()
+                                  .toLocalTime()
+                                  .format(DateTimeFormatter.ofPattern("HH:mm"))
+                                  : null)
+                          .build();
+
                   return TodayMedicationResponseDto.builder()
                       .medicationId(bundle.getId())
                       .name(bundle.getBundleName())
                       .takeTime(bundle.getScheduledTime())
+                      .typeTags(typeTags)
+                      .takeDays(takeDays)
+                      .notification(notificationDto)
                       .todayHistory(todayHistory)
                       .build();
                 })
