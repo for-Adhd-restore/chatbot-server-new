@@ -14,8 +14,7 @@ public class MedicationLogDto {
   private Integer conditionLevel;
 
   @Builder
-  public MedicationLogDto(
-      Long medicationId, String date, String status, Integer conditionLevel) {
+  public MedicationLogDto(Long medicationId, String date, String status, Integer conditionLevel) {
     this.medicationId = medicationId;
     this.date = date;
     this.status = status;

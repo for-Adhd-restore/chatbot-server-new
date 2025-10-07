@@ -1,12 +1,11 @@
 package com.forA.chatbot.notification.domain;
 
+import com.forA.chatbot.user.domain.User;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.UpdateTimestamp;
-import jakarta.persistence.*;
-import java.time.LocalDateTime;
-
-import com.forA.chatbot.user.domain.User;
 
 @Entity
 @Getter
@@ -28,7 +27,6 @@ public class DeviceToken {
   @UpdateTimestamp // JPA Dirty Checking에 의해 업데이트 시 자동으로 시간이 기록됨
   @Column(name = "last_updated_at", nullable = false)
   private LocalDateTime lastUpdatedAt;
-
 
   public DeviceToken(User user, String deviceToken) {
     this.user = user;

@@ -26,7 +26,13 @@ public class TodayMedicationResponseDto {
 
   @Builder
   public TodayMedicationResponseDto(
-      Long medicationId, String name, Time takeTime, List<String> typeTags, List<String> takeDays, NotificationDto notification, TodayHistory todayHistory) {
+      Long medicationId,
+      String name,
+      Time takeTime,
+      List<String> typeTags,
+      List<String> takeDays,
+      NotificationDto notification,
+      TodayHistory todayHistory) {
     this.medicationId = medicationId;
     this.name = name;
     this.takeTime = takeTime;

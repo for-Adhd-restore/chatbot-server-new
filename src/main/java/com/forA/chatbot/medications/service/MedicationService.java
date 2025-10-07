@@ -228,7 +228,6 @@ public class MedicationService {
     // 3. 날짜 변환
     Date sqlDate = parseDate(requestDto.getDate());
 
-
     // 5. MedicationLog 생성 및 저장
     MedicationLog logEntity =
         MedicationLog.builder()
@@ -309,9 +308,9 @@ public class MedicationService {
                           .time(
                               bundle.getAlarmTime() != null
                                   ? bundle
-                                  .getAlarmTime()
-                                  .toLocalTime()
-                                  .format(DateTimeFormatter.ofPattern("HH:mm"))
+                                      .getAlarmTime()
+                                      .toLocalTime()
+                                      .format(DateTimeFormatter.ofPattern("HH:mm"))
                                   : null)
                           .build();
 

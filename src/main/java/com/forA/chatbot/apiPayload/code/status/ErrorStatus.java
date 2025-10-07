@@ -51,7 +51,7 @@ public enum ErrorStatus implements BaseErrorCode {
   MEDICATION_INVALID_DATE_FORMAT(
       HttpStatus.BAD_REQUEST, "MEDICATION4012", "날짜 형식이 올바르지 않습니다. YYYY-MM-DD 형식으로 입력해주세요."),
 
-  //Notification 관련
+  // Notification 관련
   _FCM_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "NOTIFICATION5001", "FCM 메시지 전송에 실패했습니다."),
 
   TEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TEST500", "테스트를 실패하였습니다");
