@@ -16,7 +16,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run google-java-format and push changes
-        uses: axel-op/googlejavaformat-action@v3
+        uses: axel-op/googlejavaformat-action@v4.0.0
         with:
           args: "--replace"
           commit-message: "Style: google-java-format"
