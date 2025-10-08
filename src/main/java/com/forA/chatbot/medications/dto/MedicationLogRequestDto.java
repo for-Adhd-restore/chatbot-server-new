@@ -33,11 +33,10 @@ public class MedicationLogRequestDto {
 
   @Builder
   public MedicationLogRequestDto(
-      Long medicationId, String date, String status, Integer conditionLevel, String takenAt) {
+      Long medicationId, String date, String status, Integer conditionLevel) {
     this.medicationId = medicationId;
     this.date = date;
     this.status = status;
     this.conditionLevel = conditionLevel;
-    this.takenAt = takenAt;
   }
 }

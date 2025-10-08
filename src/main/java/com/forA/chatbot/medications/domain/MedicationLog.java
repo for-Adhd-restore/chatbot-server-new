@@ -3,7 +3,6 @@ package com.forA.chatbot.medications.domain;
 import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
 import java.sql.Date;
-import java.sql.Time;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,23 +27,15 @@ public class MedicationLog extends BaseTimeEntity {
   @Column(name = "is_taken", nullable = false)
   private Boolean isTaken;
 
-  @Column(name = "taken_at")
-  private Time takenAt;
-
   @Column(length = 50, name = "med_condition")
   private Integer medCondition;
 
   @Builder
   public MedicationLog(
-      MedicationBundle medicationBundle,
-      Date date,
-      Boolean isTaken,
-      Time takenAt,
-      Integer medCondition) {
+      MedicationBundle medicationBundle, Date date, Boolean isTaken, Integer medCondition) {
     this.medicationBundle = medicationBundle;
     this.date = date;
     this.isTaken = isTaken;
-    this.takenAt = takenAt;
     this.medCondition = medCondition;
   }
 }

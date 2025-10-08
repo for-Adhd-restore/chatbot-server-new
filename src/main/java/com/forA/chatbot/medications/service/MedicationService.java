@@ -228,16 +228,12 @@ public class MedicationService {
     // 3. 날짜 변환
     Date sqlDate = parseDate(requestDto.getDate());
 
-    // 4. 시간 변환 (nullable)
-    Time takenTime = parseTime(requestDto.getTakenAt());
-
     // 5. MedicationLog 생성 및 저장
     MedicationLog logEntity =
         MedicationLog.builder()
             .medicationBundle(bundle)
             .date(sqlDate)
             .isTaken(isTaken)
-            .takenAt(takenTime)
             .medCondition(requestDto.getConditionLevel())
             .build();
 
@@ -296,10 +292,35 @@ public class MedicationService {
                   TodayMedicationResponseDto.TodayHistory todayHistory =
                       createTodayHistory(todayLog);
 
+                  // typeTags 조회
+                  List<String> typeTags =
+                      medicationItemRepository.findByMedicationBundleId(bundle.getId()).stream()
+                          .map(MedicationItem::getMedicationName)
+                          .collect(Collectors.toList());
+
+                  // takeDays 변환
+                  List<String> takeDays = Arrays.asList(bundle.getDayOfWeek().split(","));
+
+                  // NotificationDto 생성
+                  NotificationDto notificationDto =
+                      NotificationDto.builder()
+                          .isOn(bundle.getAlarmEnabled())
+                          .time(
+                              bundle.getAlarmTime() != null
+                                  ? bundle
+                                      .getAlarmTime()
+                                      .toLocalTime()
+                                      .format(DateTimeFormatter.ofPattern("HH:mm"))
+                                  : null)
+                          .build();
+
                   return TodayMedicationResponseDto.builder()
                       .medicationId(bundle.getId())
                       .name(bundle.getBundleName())
                       .takeTime(bundle.getScheduledTime())
+                      .typeTags(typeTags)
+                      .takeDays(takeDays)
+                      .notification(notificationDto)
                       .todayHistory(todayHistory)
                       .build();
                 })
