@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -27,5 +28,16 @@ public class ReportController {
     ReportResponseDto.WeeklyReportResponse response = reportService.getWeeklyMedicationReport(userId);
 
     return ApiResponse.of(SuccessStatus._WEEKLY_MEDICATION_REPORT_RETRIEVED,response);
+  }
+
+  @GetMapping("/monthly/medication")
+  public ApiResponse<ReportResponseDto.MonthlyReportResponse> getMonthlyMedicationReport(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @RequestParam(value = "monthOffset", defaultValue = "0") int monthOffset) {
+
+    Long userId = userDetails.getUserId();
+    ReportResponseDto.MonthlyReportResponse response = reportService.getMonthlyMedicationReport(userId, monthOffset);
+
+    return ApiResponse.of(SuccessStatus._MONTHLY_MEDICATION_REPORT_RETRIEVED,response);
   }
 }
