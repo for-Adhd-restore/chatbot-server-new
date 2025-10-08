@@ -40,6 +40,6 @@ public interface MedicationBundleRepository extends JpaRepository<MedicationBund
   @Query("SELECT m FROM MedicationBundle m WHERE m.id = :id AND m.isDeleted = false")
   Optional<MedicationBundle> findActiveById(Long id);
 
-  // 사용자의 삭제되지 않은 복용 계획을 알람 시간 오름차순으로 조회
-  List<MedicationBundle> findByUserAndIsDeletedFalseOrderByAlarmTimeAsc(User user);
+  // 사용자의 삭제되지 않은 복용 계획을 복용 시간 오름차순으로 조회
+  List<MedicationBundle> findByUserAndIsDeletedFalseOrderByScheduledTimeAsc(User user);
 }

@@ -41,8 +41,8 @@ public class ReportService {
     LocalDate today = LocalDate.now();
     LocalDate startDate = today.minusDays(6);
 
-    // 3. 사용자의 모든 복용 계획 조회 (알람 시간 순으로 정렬)
-    List<MedicationBundle> bundles = medicationBundleRepository.findByUserAndIsDeletedFalseOrderByAlarmTimeAsc(user);
+    // 3. 사용자의 모든 복용 계획 조회 (복용 시간 순으로 정렬)
+    List<MedicationBundle> bundles = medicationBundleRepository.findByUserAndIsDeletedFalseOrderByScheduledTimeAsc(user);
 
     // 4. 기간 내의 모든 복용 기록 조회
     List<MedicationLog> logs = medicationLogRepository.findByMedicationBundle_UserAndDateBetween(user, java.sql.Date.valueOf(startDate), java.sql.Date.valueOf(today));
