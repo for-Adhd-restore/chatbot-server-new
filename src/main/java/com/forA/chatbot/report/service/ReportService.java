@@ -79,7 +79,7 @@ public class ReportService {
             return ReportResponseDto.MedicationStatusDto.builder()
                 .bundleId(bundle.getId())
                 .bundleName(bundle.getBundleName())
-                .alarmTime(bundle.getAlarmTime() != null ? bundle.getAlarmTime().toLocalTime().format(timeFormatter) : null)
+                .scheduledTime(bundle.getScheduledTime() != null ? bundle.getScheduledTime().toLocalTime().format(timeFormatter) : null)
                 .isTaken(isTaken)
                 .build();
           })

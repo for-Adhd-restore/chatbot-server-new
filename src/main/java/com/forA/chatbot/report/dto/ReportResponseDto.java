@@ -25,7 +25,7 @@ public class ReportResponseDto {
   public static class MedicationStatusDto {
     private Long bundleId;       // 어떤 복용 계획인지 식별자
     private String bundleName;   // 복용 계획 이름 (e.g., "아침 비타민")
-    private String alarmTime;    // 알람 시간 (e.g., "09:00:00")
+    private String scheduledTime;    // 복용 시간 (e.g., "09:00:00")
     private boolean isTaken;     // 복용 여부
   }
 }
