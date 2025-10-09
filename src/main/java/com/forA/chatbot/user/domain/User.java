@@ -1,5 +1,7 @@
 package com.forA.chatbot.user.domain;
 
+import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
+import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.enums.Gender;
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.converter.DisorderSetConverter;
@@ -88,11 +90,27 @@ public class User extends BaseTimeEntity {
     this.nickname = nickname;
   }
 
+  /*
+  * 성별 업데이트 (최초 1회만 가능)
+  * 이미 설정된 경우 예외 발생
+  * */
   public void updateGender(Gender gender) {
+    // Gender가 UNKNOWN이 아니고 null도 아닌 경우 수정 불가
+    if (this.gender != null && this.gender != Gender.UNKNOWN) {
+      throw new UserHandler(ErrorStatus.USER_GENDER_ALREADY_EXIST);
+    }
     this.gender = gender;
   }
 
+  /**
+   * 생년 업데이트 (최초 1회만 가능)
+   * 이미 설정된 경우 예외 발생
+   */
   public void updateBirthYear(Integer birthYear) {
+    // 이미 설정된 경우 수정 불가
+    if (this.birthYear != null) {
+      throw new UserHandler(ErrorStatus.USER_BIRTH_YEAR_ALREADY_EXIST);
+    }
     this.birthYear = birthYear;
   }
 
