@@ -58,9 +58,10 @@ public enum ErrorStatus implements BaseErrorCode {
 
   // User 관련 에러
   USER_GENDER_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "USER4001", "유저 성별을 변경할 수 없습니다."),
-  USER_BIRTH_YEAR_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "USER4002", "유저 생년을 변경할 수 없습니다.");
+  USER_BIRTH_YEAR_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "USER4002", "유저 생년을 변경할 수 없습니다."),
 
-
+  // Chat 관련 에러
+  SESSION_NOT_FOUND(HttpStatus.BAD_REQUEST, "CHAT4001", "존재하는 세션이 아닙니다.");
   private final HttpStatus httpStatus;
   private final String code;
   private final String message;

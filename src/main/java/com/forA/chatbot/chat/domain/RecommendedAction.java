@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "recommended_actions")
-public class RecommendedAction extends BaseTimeEntity {
+public class RecommendedAction extends BaseTimeEntity { // 챗봇이 제안한 행동 기록
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

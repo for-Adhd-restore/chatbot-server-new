@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "action_feedbacks")
-public class ActionFeedback extends BaseTimeEntity {
+public class ActionFeedback extends BaseTimeEntity { // 제안된 행동 수행 여부 및 만족도 피드백 기록
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
