@@ -13,10 +13,6 @@ public class UserResponse extends BaseTimeEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne
-  @JoinColumn(name = "chat_session_id", nullable = false)
-  private ChatSession chatSession;
-
   @Column(length = 50, nullable = false)
   private String step;
 

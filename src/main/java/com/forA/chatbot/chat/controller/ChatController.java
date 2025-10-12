@@ -1,3 +1,4 @@
+/*
 package com.forA.chatbot.chat.controller;
 
 import com.forA.chatbot.apiPayload.ApiResponse;
@@ -23,9 +24,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChatController {
   private ChatService chatService;
 
-  /**
+  */
+/**
    * [시작/재개] 챗봇 세션을 시작하거나 중간 이탈 시 재개합니다.
-   */
+   *//*
+
   @GetMapping("/session")
   public ApiResponse<ChatResponse> getCurrentStep(
       @AuthenticationPrincipal CustomUserDetails userDetails
@@ -40,9 +43,11 @@ public class ChatController {
     return ApiResponse.onSuccess(response);
   }
 
-  /**
+  */
+/**
    * [응답] 유저의 응답을 처리하고 챗봇의 다음 메시지를 반환합니다.
-   * */
+   * *//*
+
   @PostMapping("/session/{sessionId}")
   ApiResponse<ChatResponse> handleUserResponse(
       @PathVariable String sessionId,
@@ -61,3 +66,4 @@ public class ChatController {
     return ApiResponse.onSuccess(response);
   }
 }
+*/
