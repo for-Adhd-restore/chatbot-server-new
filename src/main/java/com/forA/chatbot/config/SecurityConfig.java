@@ -1,5 +1,7 @@
 package com.forA.chatbot.config;
 
+import static org.springframework.security.config.Customizer.withDefaults;
+
 import com.forA.chatbot.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,7 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http.csrf(csrf -> csrf.disable())
+        .cors(withDefaults()) // WebConfig에서 설정한 CORS 정책을 따르도록 설정
         .authorizeHttpRequests(
             auth ->
                 auth
