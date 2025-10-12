@@ -1,6 +1,5 @@
 package com.forA.chatbot.user.domain;
 
-import com.forA.chatbot.chat.domain.ChatSession;
 import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

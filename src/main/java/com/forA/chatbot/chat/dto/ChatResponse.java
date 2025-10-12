@@ -33,9 +33,9 @@ public class ChatResponse {
   }
 
   public enum MessageType {
-    TEXT,   // 일반 텍스트 응답 (GPT AI와 대화할 경우)
+    TEXT, // 일반 텍스트 응답 (GPT AI와 대화할 경우)
     OPTION, // 버튼 선택형 응답
-    INPUT   // 키보드 입력형 응답 (ex. 생년 입력, 현재 상황 입력)
+    INPUT // 키보드 입력형 응답 (ex. 생년 입력, 현재 상황 입력)
   }
 
   @Getter

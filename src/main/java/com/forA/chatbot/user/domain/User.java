@@ -91,9 +91,9 @@ public class User extends BaseTimeEntity {
   }
 
   /*
-  * 성별 업데이트 (최초 1회만 가능)
-  * 이미 설정된 경우 예외 발생
-  * */
+   * 성별 업데이트 (최초 1회만 가능)
+   * 이미 설정된 경우 예외 발생
+   * */
   public void updateGender(Gender gender) {
     // Gender가 UNKNOWN이 아니고 null도 아닌 경우 수정 불가
     if (this.gender != null && this.gender != Gender.UNKNOWN) {
@@ -102,10 +102,7 @@ public class User extends BaseTimeEntity {
     this.gender = gender;
   }
 
-  /**
-   * 생년 업데이트 (최초 1회만 가능)
-   * 이미 설정된 경우 예외 발생
-   */
+  /** 생년 업데이트 (최초 1회만 가능) 이미 설정된 경우 예외 발생 */
   public void updateBirthYear(Integer birthYear) {
     // 이미 설정된 경우 수정 불가
     if (this.birthYear != null) {

@@ -10,5 +10,4 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
 
   // 특정 세션의 메시지 개수 조회
   long countBySessionId(String sessionId);
-
 }

@@ -62,8 +62,11 @@ public class UserService {
       try {
         user.updateGender(request.getGender());
       } catch (IllegalStateException e) {
-        log.warn("성별 수정 시도 무시됨: userId={}, 기존 gender={}, 요청 gender={}",
-            userId, user.getGender(), request.getGender());
+        log.warn(
+            "성별 수정 시도 무시됨: userId={}, 기존 gender={}, 요청 gender={}",
+            userId,
+            user.getGender(),
+            request.getGender());
         // 예외를 던지지 않고 무시 (프론트에서는 성공으로 처리)
       }
     }
@@ -73,8 +76,11 @@ public class UserService {
       try {
         user.updateBirthYear(request.getBirthYear());
       } catch (IllegalStateException e) {
-        log.warn("생년 수정 시도 무시됨: userId={}, 기존 birthYear={}, 요청 birthYear={}",
-            userId, user.getBirthYear(), request.getBirthYear());
+        log.warn(
+            "생년 수정 시도 무시됨: userId={}, 기존 birthYear={}, 요청 birthYear={}",
+            userId,
+            user.getBirthYear(),
+            request.getBirthYear());
         // 예외를 던지지 않고 무시 (프론트에서는 성공으로 처리)
       }
     }
