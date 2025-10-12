@@ -54,8 +54,14 @@ public enum ErrorStatus implements BaseErrorCode {
   // Notification 관련
   _FCM_SEND_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "NOTIFICATION5001", "FCM 메시지 전송에 실패했습니다."),
 
-  TEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TEST500", "테스트를 실패하였습니다");
+  TEST_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TEST500", "테스트를 실패하였습니다"),
 
+  // User 관련 에러
+  USER_GENDER_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "USER4001", "유저 성별을 변경할 수 없습니다."),
+  USER_BIRTH_YEAR_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "USER4002", "유저 생년을 변경할 수 없습니다."),
+
+  // Chat 관련 에러
+  SESSION_NOT_FOUND(HttpStatus.BAD_REQUEST, "CHAT4001", "존재하는 세션이 아닙니다.");
   private final HttpStatus httpStatus;
   private final String code;
   private final String message;

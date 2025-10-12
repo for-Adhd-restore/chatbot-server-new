@@ -1,6 +1,5 @@
 package com.forA.chatbot.user.domain;
 
-import com.forA.chatbot.chat.domain.ChatSession;
 import com.forA.chatbot.global.BaseTimeEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -12,10 +11,6 @@ public class UserResponse extends BaseTimeEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
-  @ManyToOne
-  @JoinColumn(name = "chat_session_id", nullable = false)
-  private ChatSession chatSession;
 
   @Column(length = 50, nullable = false)
   private String step;

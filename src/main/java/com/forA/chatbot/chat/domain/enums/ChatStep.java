@@ -1,0 +1,15 @@
+package com.forA.chatbot.chat.domain.enums;
+
+public enum ChatStep {
+  GENDER,
+  BIRTH_YEAR,
+  JOB_TYPE,
+  DISORDER_TYPE,
+  SYMPTOM_TYPE,
+  NOTIFICATION_REQUEST,
+  EMOTION_SELECT,
+  SITUATION_INPUT,
+  ACTION_PROPOSE,
+  ACTION_FEEDBACK,
+  CHAT_END
+}
