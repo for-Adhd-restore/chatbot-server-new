@@ -215,17 +215,18 @@ public class ChatService {
         case EMOTION_SELECT:
           Set<EmotionType> emotions = parseAndValidateMultiSelect(userResponse, EmotionType::valueOf, 2, "감정");
           // 선택된 감정을 세션에 임시 저장 (SITUATION_INPUT 메시지에 사용)
-          session.setTemporaryData("selectedEmotions", selectedEmotions.stream().map(Enum::name).collect(Collectors.joining(",")));
+          String emotionsStringValue = emotions.stream().map(Enum::name).collect(Collectors.joining(","));
+          session.setTemporaryData("selectedEmotions", emotionsStringValue);
 
           // 감정 상태에 따른 분기 처리
           if (isPositiveOrSoSo(emotions)) {
             // 긍정/괜찮음 -> 단순 종료
             nextStep = ChatStep.CHAT_END;
-            botMessage = responseGenerator.createPositiveResponseMessage(selectedEmotions);
+            botMessage = responseGenerator.createPositiveResponseMessage(emotions);
           } else {
             // 부정/중립 -> 상황 질문
             nextStep = ChatStep.SITUATION_INPUT;
-            botMessage = responseGenerator.getBotMessageForStep(nextStep.name(), user, true, selectedEmotions);
+            botMessage = responseGenerator.getBotMessageForStep(nextStep.name(), user, true, emotions);
           }
           break;
         case SITUATION_INPUT:

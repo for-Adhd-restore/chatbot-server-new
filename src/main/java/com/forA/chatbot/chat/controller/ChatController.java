@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ChatController {
 
-  private ChatService chatService;
+  private final ChatService chatService;
 
   /**
    * [1. 대화 시작/재개(이어하기)]
