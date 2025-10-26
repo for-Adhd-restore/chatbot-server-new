@@ -1,10 +1,8 @@
 package com.forA.chatbot.chat.service;
 
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
-import com.forA.chatbot.apiPayload.exception.handler.ChatHandler;
 import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.auth.repository.UserRepository;
-import com.forA.chatbot.chat.domain.ChatMessage;
 import com.forA.chatbot.chat.domain.ChatSession;
 import com.forA.chatbot.chat.domain.enums.ChatStep;
 import com.forA.chatbot.chat.domain.enums.EmotionType;
@@ -18,6 +16,8 @@ import com.forA.chatbot.chat.repository.ChatMessageRepository;
 import com.forA.chatbot.chat.repository.ChatSessionRepository;
 import com.forA.chatbot.enums.Gender;
 import com.forA.chatbot.user.domain.User;
+import com.forA.chatbot.user.domain.enums.DisorderType;
+import com.forA.chatbot.user.domain.enums.JobType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -172,25 +172,54 @@ public class ChatService {
                 ButtonOption.builder().label("기타").value(Gender.OTHER.name()).build()
             ))
             .build();
+      case BIRTH_YEAR: // 2. 생년 입력
+        return ChatBotMessage.builder()
+            .content("알맞은 도움을 드리기 위해 연령대가 중요한 기준이 됩니다. 태어난 연도를 4자리 숫자를 알려주세요!")
+            .type(MessageType.INPUT)
+            .build();
+      case JOB_TYPE: // 3. 직업 선택 - 최대 2개까지 선택되도록 구현
+        return ChatBotMessage.builder()
+            .content("지금 하는 일이 어떻게 되는지 궁금해요! 최대 2개까지 선택할 수 있어요!")
+            .type(MessageType.OPTION)
+            .options(Arrays.stream(JobType.values())
+                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
+                .collect(Collectors.toList()))
+            .build();
+      case DISORDER_TYPE: // 4. 정신 질환 선택 - 최대 2개까지 선택되도록 구현
+        return ChatBotMessage.builder()
+            .content("앓고 있는 정신 질환이 있으신가요? 최대 2개까지 선택할 수 있어요!")
+            .type(MessageType.OPTION)
+            .options(Arrays.stream(DisorderType.values())
+                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
+                .collect(Collectors.toList()))
+            .build();
+      case SYMPTOM_TYPE: // 5. 증상 선택 - 최대 2개까지 선택되도록 구현
+        // TODO : 정신 질환 선택지를 동적으로 반영 필요
+        return null;
+      case EMOTION_SELECT: // 6. 감정 선택
+        String content = isUserOnboarded ?
+            String.format("안녕하세요, %s님! 모리예요! 🐾\n오늘은 기분이 어때요? 모리가 눈치 빠르게 알아챌 수 있게 이모지 두 개만 콕! 찍어주세요.", nickname) :
+            String.format("감사합니다! 모든 데이터는 마이페이지에서 수정과 삭제가 가능합니다. %s님 지금 어떤 기분이에요? 모리가 알아챌 수 있게 이모지 골라주세요", nickname);
 
-        case EMOTION_SELECT: // 6. 감정 선택
-          String content = isUserOnboarded ?
-              String.format("안녕하세요, %s님! 모리예요! 🐾\n오늘은 기분이 어때요? 모리가 눈치 빠르게 알아챌 수 있게 이모지 두 개만 콕! 찍어주세요.", nickname) :
-              String.format("감사합니다! 모든 데이터는 마이페이지에서 수정과 삭제가 가능합니다. %s님 지금 어떤 기분이에요? 모리가 알아챌 수 있게 이모지 골라주세요", nickname);
-
-          return ChatBotMessage.builder()
-              .content(content)
-              .type(MessageType.OPTION)
-              .options(Arrays.stream(EmotionType.values())
-                  .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
-                  .collect(Collectors.toList()))
-              .build();
-        default: // 해당 부분 이해 안됨
-          return ChatBotMessage.builder()
-              .content("...")
-              .type(MessageType.TEXT)
-              .build();
-
+        return ChatBotMessage.builder()
+            .content(content)
+            .type(MessageType.OPTION)
+            .options(Arrays.stream(EmotionType.values())
+                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
+                .collect(Collectors.toList()))
+            .build();
+      case SITUATION_INPUT: // 6.1 상황 입력 (타입: INPUT)
+        //TODO : (000 부분은 나중에 동적으로 채워야 함)
+        return ChatBotMessage.builder()
+            .content("지금 000고 000하시군요. 혹시 어떤 일이 있었는지 이야기 해줄 수 있나요?")
+            .type(MessageType.INPUT)
+            .build();
+      default:
+        log.warn("getBotMessageForStep: Unhandled step: {}", step);
+        return ChatBotMessage.builder()
+            .content("다음 단계로 진행합니다.") // 임시 메시지
+            .type(MessageType.TEXT)
+            .build();
     }
   }
 }
