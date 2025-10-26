@@ -8,6 +8,7 @@ import com.forA.chatbot.chat.domain.ChatMessage;
 import com.forA.chatbot.chat.domain.ChatSession;
 import com.forA.chatbot.chat.domain.enums.ChatStep;
 import com.forA.chatbot.chat.domain.enums.EmotionType;
+import com.forA.chatbot.chat.domain.enums.EmotionType.EmotionState;
 import com.forA.chatbot.chat.dto.ChatRequest;
 import com.forA.chatbot.chat.dto.ChatResponse;
 import com.forA.chatbot.chat.dto.ChatResponse.ButtonOption;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -69,23 +71,16 @@ public class ChatService {
     } else {
       // --- [CASE B: 신규 유저 또는 기존 유저] ---
       // 2. 가장 최근 세션을 찾아, 온보딩을 완료했었는지(기존 유저인지) 확인
-      Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(
-          userId);
+      Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(userId);
 
       // 사용자가 온보딩을 완료한 적이 있는지 여부
-      Boolean isUserOnboarded = lastSessionOpt
+      boolean isUserOnboarded = lastSessionOpt
           .map(ChatSession::getOnboardingCompleted)
           .orElse(false);
 
       // 3. 시작 단계 결정
-      String initialStep;
-      if (isUserOnboarded) {
-        // [기존 유저] -> 6. 감정 선택부터 시작
-        initialStep = ChatStep.EMOTION_SELECT.name();
-      } else {
-        // [신규 유저] -> 1. 성별 선택부터 시작
-        initialStep = ChatStep.GENDER.name();
-      }
+      String initialStep = isUserOnboarded ? ChatStep.EMOTION_SELECT.name() : ChatStep.GENDER.name();
+
       // 4. 새로운 세션 생성
       session = ChatSession.builder()
           .userId(userId)
@@ -103,7 +98,7 @@ public class ChatService {
     // (기존 유저 여부에 따라 6번 멘트가 달라지므로 isUserOnboarded 플래그 전달)
     ChatBotMessage botMessage = getBotMessageForStep(session.getCurrentStep(), user, session.getOnboardingCompleted());
 
-    // 6. (중요) 새 세션인 경우에만 봇의 첫 메시지를 DB에 기록하고, history에도 추가
+    // 6. 새 세션인 경우에만 봇의 첫 메시지를 DB에 기록하고, history에도 추가
     if (!isResuming) {
       recordBotMessage(session.getId(), session.getCurrentStep(), botMessage.getContent());
 
@@ -136,7 +131,6 @@ public class ChatService {
    */
   @Transactional
   public ChatResponse handleUserResponse(Long userId, String sessionId, ChatRequest request) {
-    // TODO: 1~5, 6번 로직의 핵심인 switch-case 구현
     // 1. 세션 및 유저 정보 로드
     ChatSession session = chatSessionRepository.findById(sessionId)
         .orElseThrow(() -> new ChatHandler(ErrorStatus.SESSION_NOT_FOUND));
@@ -171,14 +165,13 @@ public class ChatService {
           botMessage = getBotMessageForStep(nextStep.name(), user, false);
           break;
         case JOB_TYPE: // 3. 직업 응답 처리
-          Set<JobType> jobs = parseAndValidateJobs(userResponse); // "2개 이하" 유효성 검사
+          Set<JobType> jobs = parseAndValidateMultiSelect(userResponse, JobType::valueOf, 2, "직업");
           user.updateJobs(jobs);
           nextStep = ChatStep.DISORDER_TYPE;
           botMessage = getBotMessageForStep(nextStep.name(), user, false);
           break;
-
         case DISORDER_TYPE:
-          Set<DisorderType> disorders = parseAndValidateDisorders(userResponse); // "2개 이하" 유효성 검사
+          Set<DisorderType> disorders = parseAndValidateMultiSelect(userResponse, DisorderType::valueOf, 2, "질환");
           user.updateDisorders(disorders); // User 엔티티에 질환 저장
 
           if (disorders.stream().anyMatch(d -> d == DisorderType.NONE)) { // '없음' 선택 시
@@ -192,57 +185,157 @@ public class ChatService {
           }
           break;
         case SYMPTOM_TYPE: // 5. 증상 응답 처리 (온보딩 마지막)
-          Set<SymptomType> symptoms = parseSymptoms(userResponse);
+          Set<SymptomType> symptoms = parseAndValidateMultiSelect(userResponse, SymptomType::valueOf, Integer.MAX_VALUE, "증상");
           user.updateSymptoms(symptoms);
 
           nextStep = ChatStep.EMOTION_SELECT; // 다음 단계: 6번(감정)
           session.setOnboardingCompleted(true); // ★ 온보딩 완료
           botMessage = getBotMessageForStep(nextStep.name(), user, false); // 신규 유저용 6번 멘트
           break;
-        // TODO : 6단계 이후는 나중에 구현
+        case EMOTION_SELECT:
+          Set<EmotionType> emotions = parseAndValidateMultiSelect(userResponse, EmotionType::valueOf, 2, "감정");
+
+          // 감정 상태에 따른 분기 처리
+          if (isPositiveOrSoSo(emotions)) {
+            // [로직 6.2] 긍정/괜찮음 -> 단순 종료
+            nextStep = ChatStep.CHAT_END;
+            botMessage = createPositiveResponseMessage(emotions);
+          } else {
+            // [로직 6.1] 부정/중립 -> 상황 질문
+            nextStep = ChatStep.SITUATION_INPUT;
+            // TODO: "지금 OOO고 OOO하시군요" -> OOO을 동적으로 채워야 함
+            botMessage = getBotMessageForStep(nextStep.name(), user, true);
+          }
+          break;
+        case CHAT_END:
+          // 이미 대화가 종료된 상태
+          log.info("Chat session {} already ended.", sessionId);
+          botMessage = ChatBotMessage.builder()
+              .content("대화가 종료되었습니다. 새 대화를 시작하려면 다시 접속해주세요.")
+              .type(MessageType.TEXT)
+              .build();
+          break;
+        // TODO : 6.1 단계 이후는 나중에 구현
         default:
           log.warn("handleUserResponse: Unhandled step: {}", currentStep);
           throw new IllegalArgumentException("처리할 수 없는 단계입니다.");
       }
     } catch (IllegalArgumentException e) {
-      // 유효성 검사 실패
       log.warn("Invalid user response: {} for step: {}. Error: {}", userResponse, currentStep, e.getMessage());
-
-      // 사용자에게 에러 메시지 전송 (현재 단계 유지)
       botMessage = ChatBotMessage.builder()
-          .content(e.getMessage() + "\n다시 선택해주세요.") // e.g. "직업은 최대 2개까지 선택 가능합니다."
+          .content(e.getMessage() + "\n다시 선택해주세요.")
           .type(MessageType.TEXT)
           .build();
-      // nextStep은 기본값(currentStep)을 유지
     }
 
     // 4. 유저 정보 및 세션 상태 저장
     userRepository.save(user); // 1~5단계에서 변경된 유저 정보(성별, 생년 등)를 DB에 최종 저장
     session.setCurrentStep(nextStep.name());
     session.setLastInteractionAt(LocalDateTime.now());
+
+    // 대화 종료 시 세션에 종료 시간 기록
+    if(nextStep == ChatStep.CHAT_END) {
+      session.setEndedAt(LocalDateTime.now());
+    }
     chatSessionRepository.save(session);
 
     // 5. 봇의 다음 응답 메시지 DB에 기록
     recordBotMessage(sessionId, nextStep.name(), botMessage.getContent());
 
     // 6. 최종 응답 반환
-    return ChatResponse.builder() //
+    return ChatResponse.builder()
         .sessionId(session.getId())
         .currentStep(nextStep.name())
         .botMessage(botMessage)
-        .isCompleted(nextStep == ChatStep.CHAT_END) // (아직 CHAT_END 없음)
-        .onboardingCompleted(session.getOnboardingCompleted()) //
+        .isCompleted(nextStep == ChatStep.CHAT_END)
+        .onboardingCompleted(session.getOnboardingCompleted())
         .build();
   }
 
-  private Set<SymptomType> parseSymptoms(String responseValue) {
-    String[] selectedSymptoms = responseValue.split(",");
-    if (selectedSymptoms.length > 2 ||  selectedSymptoms.length < 1) {
-      throw new ChatHandler(ErrorStatus.INVALID_SYMPTOMS_COUNT);
+  /**
+   * 선택한 감정이 '긍정' 또는 '괜찮음'인지 확인
+   */
+  private boolean isPositiveOrSoSo(Set<EmotionType> emotions) {
+    if (emotions.isEmpty()) {
+      throw new IllegalArgumentException("감정을 선택해주세요.");
     }
-    return Arrays.stream(selectedSymptoms)
-        .map(SymptomType::valueOf)
-        .collect(Collectors.toSet());
+    // "긍정" 감정이거나 "괜찮음(SO_SO)"만 있는지 확인
+    return emotions.stream().allMatch(e ->
+        e.getState() == EmotionState.POSITIVE || //
+            e == EmotionType.SO_SO
+    );
+  }
+
+  /**
+   * 긍정/괜찮음 응답(고정 멘트)을 생성
+   */
+  private ChatBotMessage createPositiveResponseMessage(Set<EmotionType> emotions) {
+    String content;
+
+    // --- 1개 선택 시 ---
+    if (emotions.size() == 1) {
+      EmotionType emotion = emotions.iterator().next();
+      switch (emotion) {
+        case EXCITED:
+          content = "무언가 기대되는 일이 있었나 봐요! 그 에너지, 좋아요 😆";
+          break;
+        case JOY:
+          content = "즐거운 순간이 있었군요. 그 기분 오래오래 간직해요 😊";
+          break;
+        case PROUD:
+          content = "오늘 스스로에게 칭찬해줄 일이 있었나 봐요! 정말 잘했어요 👏";
+          break;
+        case HAPPY:
+          content = "행복하다고 느껴지는 순간, 너무 소중하죠. 지금 이 마음을 기억해요 💛";
+          break;
+        case FLUTTER:
+          content = "마음이 간질간질, 좋은 일이 기다리고 있나 봐요! 설렘은 삶의 활력소예요 🌸";
+          break;
+        case SO_SO:
+          content = "큰 감정 변화는 없지만, 이런 날도 충분히 괜찮아요. 그냥 있는 그대로의 하루도 소중해요 🍃";
+          break;
+        default: // 혹시 다른 긍정 감정이 추가될 경우 대비
+          content = "긍정적인 감정을 느끼셨군요! 좋아요.";
+      }
+      // --- 2개 선택 시 ---
+    } else if (emotions.size() == 2) {
+      // Set을 정렬된 List로 변환하여 순서에 상관없이 비교 가능하게 만듦
+      List<EmotionType> sortedEmotions = emotions.stream().sorted().collect(Collectors.toList());
+      EmotionType e1 = sortedEmotions.get(0);
+      EmotionType e2 = sortedEmotions.get(1);
+
+      // 미리 정의된 조합 멘트 (Map을 사용하면 더 깔끔하게 관리 가능)
+      Map<Set<EmotionType>, String> combinationMessages = Map.ofEntries(
+          Map.entry(Set.of(EmotionType.EXCITED, EmotionType.JOY), "신나고 즐거운 하루였네요! 이런 기분이 오래오래 이어졌으면 좋겠네요. 😄🎉"),
+          Map.entry(Set.of(EmotionType.EXCITED, EmotionType.PROUD), "신나고 뿌듯한 하루를 보내셨네요. 오늘의 성취가 모리도 뿌듯하게 느껴지네요. 😆👏"),
+          Map.entry(Set.of(EmotionType.EXCITED, EmotionType.HAPPY), "신나고 행복한 하루였네요. 좋은 일이 가득해서 저도 기분이 좋아지네요. 😊💛"),
+          Map.entry(Set.of(EmotionType.EXCITED, EmotionType.FLUTTER), "신나고 설레는 하루였네요. 앞으로도 기대되는 일이 많으시길 바랄게요. 💫🌸"),
+          Map.entry(Set.of(EmotionType.EXCITED, EmotionType.SO_SO), "신나는 순간도 있었고, 평범한 시간도 있었네요. 여러 감정이 어우러진 하루였던 것 같네요.🎭"),
+          Map.entry(Set.of(EmotionType.JOY, EmotionType.PROUD), "즐겁고 뿌듯한 하루를 보내셨네요. 오늘의 좋은 기억이 오래 남았으면 해요. 😊👏"),
+          Map.entry(Set.of(EmotionType.JOY, EmotionType.HAPPY), "즐거움과 행복이 함께한 하루였네요. 저도 덩달아 미소가 지어지네요. 😄💛"),
+          Map.entry(Set.of(EmotionType.JOY, EmotionType.FLUTTER), "즐겁고 설레는 하루였네요. 새로운 시작이나 만남이 있었던 걸까요? 앞으로도 좋은 일이 가득하길 바랄게요. 🌟😊"),
+          Map.entry(Set.of(EmotionType.JOY, EmotionType.SO_SO), "즐거운 순간도 있었고, 평범한 시간도 있었네요. 그런 하루도 충분히 의미 있네요. 🍃🙂"),
+          Map.entry(Set.of(EmotionType.PROUD, EmotionType.HAPPY), "뿌듯함과 행복이 함께한 하루였네요. 오늘의 성취가 큰 기쁨이 되었겠어요. 👏😊"),
+          Map.entry(Set.of(EmotionType.PROUD, EmotionType.FLUTTER), "뿌듯하고 설레는 하루였네요. 앞으로도 좋은 변화가 이어지길 바랄게요. 🌱💫"),
+          Map.entry(Set.of(EmotionType.PROUD, EmotionType.SO_SO), "뿌듯한 순간과 평범한 시간이 함께한 하루였네요. 그런 균형이 참 소중하네요. ⚖️🍀"),
+          Map.entry(Set.of(EmotionType.HAPPY, EmotionType.FLUTTER), "행복하고 설레는 하루였네요. 좋은 일이 곧 찾아올 것 같은 느낌이네요. 💛🌸"),
+          Map.entry(Set.of(EmotionType.HAPPY, EmotionType.SO_SO), "행복한 순간도 있었고, 평범한 시간도 있었네요. 오늘 하루도 잘 보내셨네요. 🌤️🙂"),
+          Map.entry(Set.of(EmotionType.FLUTTER, EmotionType.SO_SO), "설레는 순간도 있었고, 평범한 시간도 있었네요. 다양한 감정이 어우러진 하루였던 것 같네요. 🎈🍃")
+      );
+
+      // Map에서 해당 조합 찾기 (Set은 순서 무관)
+      content = combinationMessages.getOrDefault(emotions, "긍정적인 감정들이 함께했네요. 멋진 하루예요! 🌟"); // 매칭되는 조합 없으면 기본 메시지
+
+    } else {
+      // 혹시 0개 또는 3개 이상 선택된 경우 (Validation에서 걸러지겠지만 방어 코드)
+      content = "오늘 기분이 좋으셨군요!";
+    }
+
+
+    return ChatBotMessage.builder()
+        .content(content)
+        .type(MessageType.TEXT) // 텍스트만 보내고 종료
+        .build();
   }
 
   /**
@@ -265,27 +358,6 @@ public class ChatService {
         .type(MessageType.OPTION)
         .options(options)
         .build();
-  }
-
-  private Set<DisorderType> parseAndValidateDisorders(String responseValue) {
-    String[] selectedDisorders = responseValue.split(",");
-    if (selectedDisorders.length > 2 || selectedDisorders.length < 1) {
-      throw new ChatHandler(ErrorStatus.INVALID_DISORDER_COUNT);
-    }
-    return Arrays.stream(selectedDisorders)
-        .map(DisorderType::valueOf) //
-        .collect(Collectors.toSet());
-  }
-
-  private Set<JobType> parseAndValidateJobs(String responseValue) {
-    // 프론트에서 "JOB1,JOB2" 형식으로 보낸다고 가정
-    String[] selectedJobs = responseValue.split(",");
-    if (selectedJobs.length > 2 || selectedJobs.length < 1) {
-      throw new ChatHandler(ErrorStatus.INVALID_JOB_COUNT);
-    }
-    return Arrays.stream(selectedJobs)
-        .map(JobType::valueOf)
-        .collect(Collectors.toSet());
   }
 
   /**
@@ -382,18 +454,37 @@ public class ChatService {
                 .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
                 .collect(Collectors.toList()))
             .build();
-      case SITUATION_INPUT: // 6.1 상황 입력 (타입: INPUT)
-        //TODO : (000 부분은 나중에 동적으로 채워야 함)
+      case SITUATION_INPUT: // 6.1 상황 입력
+        // TODO : "OOO고 OOO하시군요" -> 선택한 감정으로 동적 멘트 생성
         return ChatBotMessage.builder()
             .content("지금 000고 000하시군요. 혹시 어떤 일이 있었는지 이야기 해줄 수 있나요?")
             .type(MessageType.INPUT)
             .build();
-      default:
-        log.warn("getBotMessageForStep: Unhandled step: {}", step);
+      case CHAT_END: // 종료
         return ChatBotMessage.builder()
-            .content("다음 단계로 진행합니다.") // 임시 메시지
+            .content("대화가 종료되었습니다.")
             .type(MessageType.TEXT)
             .build();
+      default:
+        log.warn("getBotMessageForStep: Unhandled step: {}", step);
+        return ChatBotMessage.builder().content("...").type(MessageType.TEXT).build();    }
+  }
+
+  private <T extends Enum<T>> Set<T> parseAndValidateMultiSelect(
+      String responseValue,
+      java.util.function.Function<String, T> valueOf,
+      int maxLimit,
+      String entityName
+  ) {
+    if(responseValue == null || responseValue.isEmpty()) {
+      throw new IllegalArgumentException(entityName + "을(를) 선택해주세요.");
     }
+    String[] values = responseValue.split(",");
+    if (values.length > maxLimit) {
+      throw new IllegalArgumentException(String.format("%s은(는) 최대 %d개까지 선택 가능합니다.", entityName, maxLimit));
+    }
+    return Arrays.stream(values)
+        .map(valueOf)
+        .collect(Collectors.toSet());
   }
 }
