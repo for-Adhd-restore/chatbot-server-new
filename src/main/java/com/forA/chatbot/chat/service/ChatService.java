@@ -4,6 +4,7 @@ import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.ChatHandler;
 import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.auth.repository.UserRepository;
+import com.forA.chatbot.chat.domain.ChatMessage;
 import com.forA.chatbot.chat.domain.ChatSession;
 import com.forA.chatbot.chat.domain.enums.ChatStep;
 import com.forA.chatbot.chat.domain.enums.EmotionType;
@@ -19,11 +20,13 @@ import com.forA.chatbot.enums.Gender;
 import com.forA.chatbot.user.domain.User;
 import com.forA.chatbot.user.domain.enums.DisorderType;
 import com.forA.chatbot.user.domain.enums.JobType;
+import com.forA.chatbot.user.domain.enums.SymptomType;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -135,25 +138,197 @@ public class ChatService {
   public ChatResponse handleUserResponse(Long userId, String sessionId, ChatRequest request) {
     // TODO: 1~5, 6번 로직의 핵심인 switch-case 구현
     // 1. 세션 및 유저 정보 로드
-    chatSessionRepository.findById(sessionId)
+    ChatSession session = chatSessionRepository.findById(sessionId)
         .orElseThrow(() -> new ChatHandler(ErrorStatus.SESSION_NOT_FOUND));
-    return null;
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
+
+    ChatStep currentStep = ChatStep.valueOf(session.getCurrentStep());
+    String userResponse = request.getResponseValue();
+
+    // 2. 사용자 응답 메시지 DB에 기록
+    recordUserMessage(sessionId, currentStep.name(), userResponse);
+
+    ChatStep nextStep = currentStep; // 다음 단계 (기본값은 현재 단계)
+    ChatBotMessage botMessage; // 봇이 보낼 다음 메시지
+
+    // 3. 현재 단계(currentStep)에 따라 로직 분기 (switch)
+    try {
+      switch (currentStep) {
+        case GENDER:
+          user.updateGender(Gender.valueOf(userResponse));
+          nextStep = ChatStep.BIRTH_YEAR;
+          botMessage = getBotMessageForStep(nextStep.name(), user, false);
+          break;
+        case BIRTH_YEAR:
+          int birthYear = Integer.parseInt(userResponse);
+          // TODO : 임시 생년 유효범위 세팅
+          if(birthYear < 1900 || birthYear > 2030) {
+            throw new UserHandler(ErrorStatus.INVALID_YEAR_OF_BIRTH);
+          }
+          user.updateBirthYear(birthYear);
+          nextStep = ChatStep.JOB_TYPE;
+          botMessage = getBotMessageForStep(nextStep.name(), user, false);
+          break;
+        case JOB_TYPE: // 3. 직업 응답 처리
+          Set<JobType> jobs = parseAndValidateJobs(userResponse); // "2개 이하" 유효성 검사
+          user.updateJobs(jobs);
+          nextStep = ChatStep.DISORDER_TYPE;
+          botMessage = getBotMessageForStep(nextStep.name(), user, false);
+          break;
+
+        case DISORDER_TYPE:
+          Set<DisorderType> disorders = parseAndValidateDisorders(userResponse); // "2개 이하" 유효성 검사
+          user.updateDisorders(disorders); // User 엔티티에 질환 저장
+
+          if (disorders.stream().anyMatch(d -> d == DisorderType.NONE)) { // '없음' 선택 시
+            nextStep = ChatStep.EMOTION_SELECT; // 증상 건너 뛰고 감정 선택으로
+            session.setOnboardingCompleted(true); // 온보딩 완료
+            botMessage = getBotMessageForStep(nextStep.name(), user, false); // 신규 유저용 6번 멘트
+          } else {
+            nextStep = ChatStep.SYMPTOM_TYPE; // 다음 단계: 5번(증상)
+            // 5단계 질문(증상 버튼)은 동적으로 생성해야 함
+            botMessage = createSymptomMessage(disorders);
+          }
+          break;
+        case SYMPTOM_TYPE: // 5. 증상 응답 처리 (온보딩 마지막)
+          Set<SymptomType> symptoms = parseSymptoms(userResponse);
+          user.updateSymptoms(symptoms);
+
+          nextStep = ChatStep.EMOTION_SELECT; // 다음 단계: 6번(감정)
+          session.setOnboardingCompleted(true); // ★ 온보딩 완료
+          botMessage = getBotMessageForStep(nextStep.name(), user, false); // 신규 유저용 6번 멘트
+          break;
+        // TODO : 6단계 이후는 나중에 구현
+        default:
+          log.warn("handleUserResponse: Unhandled step: {}", currentStep);
+          throw new IllegalArgumentException("처리할 수 없는 단계입니다.");
+      }
+    } catch (IllegalArgumentException e) {
+      // 유효성 검사 실패
+      log.warn("Invalid user response: {} for step: {}. Error: {}", userResponse, currentStep, e.getMessage());
+
+      // 사용자에게 에러 메시지 전송 (현재 단계 유지)
+      botMessage = ChatBotMessage.builder()
+          .content(e.getMessage() + "\n다시 선택해주세요.") // e.g. "직업은 최대 2개까지 선택 가능합니다."
+          .type(MessageType.TEXT)
+          .build();
+      // nextStep은 기본값(currentStep)을 유지
+    }
+
+    // 4. 유저 정보 및 세션 상태 저장
+    userRepository.save(user); // 1~5단계에서 변경된 유저 정보(성별, 생년 등)를 DB에 최종 저장
+    session.setCurrentStep(nextStep.name());
+    session.setLastInteractionAt(LocalDateTime.now());
+    chatSessionRepository.save(session);
+
+    // 5. 봇의 다음 응답 메시지 DB에 기록
+    recordBotMessage(sessionId, nextStep.name(), botMessage.getContent());
+
+    // 6. 최종 응답 반환
+    return ChatResponse.builder() //
+        .sessionId(session.getId())
+        .currentStep(nextStep.name())
+        .botMessage(botMessage)
+        .isCompleted(nextStep == ChatStep.CHAT_END) // (아직 CHAT_END 없음)
+        .onboardingCompleted(session.getOnboardingCompleted()) //
+        .build();
   }
 
+  private Set<SymptomType> parseSymptoms(String responseValue) {
+    String[] selectedSymptoms = responseValue.split(",");
+    if (selectedSymptoms.length > 2 ||  selectedSymptoms.length < 1) {
+      throw new ChatHandler(ErrorStatus.INVALID_SYMPTOMS_COUNT);
+    }
+    return Arrays.stream(selectedSymptoms)
+        .map(SymptomType::valueOf)
+        .collect(Collectors.toSet());
+  }
 
-  // 특정 세션의 모든 대화 기록을 불러온다.
-  private List<ChatMessageDto> getChatHistory(String id) {
-    // TODO: chatMessageRepository.findBySessionIdOrderBySentAtAsc(sessionId) 호출
-    log.info("getChatHistory - TO BE IMPLEMENTED");
-    return new ArrayList<>(); // 임시로 빈 리스트 반환
+  /**
+   * 4단계(질환) 응답을 기반으로 5단계(증상) 질문지를 동적으로 생성
+   */
+  private ChatBotMessage createSymptomMessage(Set<DisorderType> disorders) {
+    // 4단계에서 선택한 질환(disorders)에 해당하는 증상들만 가져오기
+    Set<SymptomType> symptoms = SymptomType.getByDisorderTypes(disorders);
+
+    List<ButtonOption> options = symptoms.stream()
+        .map(s -> ButtonOption.builder()
+            .label(s.getDescription())
+            .value(s.name())
+            .isMultiSelect(true)
+            .build())
+        .collect(Collectors.toList());
+
+    return ChatBotMessage.builder()
+        .content("주로 힘들어 하는 일은 어떤건가요? 모리가 참고해서 도와줄게요")
+        .type(MessageType.OPTION)
+        .options(options)
+        .build();
+  }
+
+  private Set<DisorderType> parseAndValidateDisorders(String responseValue) {
+    String[] selectedDisorders = responseValue.split(",");
+    if (selectedDisorders.length > 2 || selectedDisorders.length < 1) {
+      throw new ChatHandler(ErrorStatus.INVALID_DISORDER_COUNT);
+    }
+    return Arrays.stream(selectedDisorders)
+        .map(DisorderType::valueOf) //
+        .collect(Collectors.toSet());
+  }
+
+  private Set<JobType> parseAndValidateJobs(String responseValue) {
+    // 프론트에서 "JOB1,JOB2" 형식으로 보낸다고 가정
+    String[] selectedJobs = responseValue.split(",");
+    if (selectedJobs.length > 2 || selectedJobs.length < 1) {
+      throw new ChatHandler(ErrorStatus.INVALID_JOB_COUNT);
+    }
+    return Arrays.stream(selectedJobs)
+        .map(JobType::valueOf)
+        .collect(Collectors.toSet());
+  }
+
+  /**
+   * 사용자 메시지를 DB에 기록
+   */
+  private void recordUserMessage(String sessionId, String step, String content) {
+    ChatMessage message = ChatMessage.builder()
+        .sessionId(sessionId)
+        .senderType(ChatMessage.SenderType.USER)
+        .chatStep(step)
+        .messageContent(content)
+        .responseCode(content) // 선택/입력값 원본 저장
+        .sentAt(LocalDateTime.now())
+        .build();
+    chatMessageRepository.save(message);
+  }
+
+  /**
+   * 특정 세션의 모든 대화 기록을 불러옵니다.
+   */
+  private List<ChatMessageDto> getChatHistory(String sessionId) {
+    List<ChatMessage> messages = chatMessageRepository.findBySessionIdOrderBySentAtAsc(sessionId);
+    return messages.stream()
+        .map(msg -> ChatMessageDto.builder()
+            .sender(msg.getSenderType().name())
+            .content(msg.getMessageContent())
+            .sentAt(msg.getSentAt())
+            .build())
+        .collect(Collectors.toList());
   }
 
   /**
    * 봇의 응답을 MongoDB에 기록
    */
   private void recordBotMessage(String sessionId, String step, String content) {
-    // TODO: ChatMessage.builder()...build() 및 chatMessageRepository.save() 호출
-    log.info("recordBotMessage - TO BE IMPLEMENTED");
+    ChatMessage message = ChatMessage.builder()
+        .sessionId(sessionId)
+        .senderType(ChatMessage.SenderType.BOT)
+        .chatStep(step)
+        .messageContent(content)
+        .sentAt(LocalDateTime.now())
+        .build();
+    chatMessageRepository.save(message);
   }
 
   private ChatBotMessage getBotMessageForStep(String step, User user, boolean isUserOnboarded) {
@@ -194,9 +369,7 @@ public class ChatService {
                 .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
                 .collect(Collectors.toList()))
             .build();
-      case SYMPTOM_TYPE: // 5. 증상 선택 - 최대 2개까지 선택되도록 구현
-        // TODO : 정신 질환 선택지를 동적으로 반영 필요
-        return null;
+      // 5. SYMPTOM_TYPE은 동적이므로 여기서는 처리하지 않음 (createSymptomMessage가 대신 처리)
       case EMOTION_SELECT: // 6. 감정 선택
         String content = isUserOnboarded ?
             String.format("안녕하세요, %s님! 모리예요! 🐾\n오늘은 기분이 어때요? 모리가 눈치 빠르게 알아챌 수 있게 이모지 두 개만 콕! 찍어주세요.", nickname) :
