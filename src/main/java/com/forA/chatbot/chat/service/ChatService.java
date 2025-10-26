@@ -1,6 +1,7 @@
 package com.forA.chatbot.chat.service;
 
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
+import com.forA.chatbot.apiPayload.exception.handler.ChatHandler;
 import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.chat.domain.ChatSession;
@@ -133,9 +134,9 @@ public class ChatService {
   @Transactional
   public ChatResponse handleUserResponse(Long userId, String sessionId, ChatRequest request) {
     // TODO: 1~5, 6번 로직의 핵심인 switch-case 구현
-    log.info("handleUserResponse - TO BE IMPLEMENTED");
-
-    // 임시 반환
+    // 1. 세션 및 유저 정보 로드
+    chatSessionRepository.findById(sessionId)
+        .orElseThrow(() -> new ChatHandler(ErrorStatus.SESSION_NOT_FOUND));
     return null;
   }
 
