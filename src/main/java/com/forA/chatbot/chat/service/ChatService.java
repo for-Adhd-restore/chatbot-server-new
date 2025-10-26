@@ -52,10 +52,9 @@ public class ChatService {
   private final ChatSessionRepository chatSessionRepository; // 세션 관리
   private final ChatMessageRepository chatMessageRepository; // 메시지 기록
   private final ChatResponseGenerator responseGenerator;
-  private final UserRepository userRepository; // 사용자 정보 조회
+  private final UserRepository userRepository;
   private final ApplicationContext applicationContext;
   private final ObjectMapper objectMapper;
-
   private List<BehavioralSkill> behavioralSkills = Collections.emptyList();
 
   @PostConstruct
@@ -70,7 +69,6 @@ public class ChatService {
       this.behavioralSkills = Collections.emptyList();
     }
   }
-
 
   // 3번을 넘긴 후 대화 진행 x
   @Transactional
@@ -231,7 +229,6 @@ public class ChatService {
           break;
         case SITUATION_INPUT:
           userSituation = userResponse;
-
           // 입력된 상황을 세션에 임시 저장 (GPT에 추후 전달)
           session.setTemporaryData("userSituation", userSituation);
           nextStep = ChatStep.ACTION_PROPOSE; // 다음 단계: 도움 제안
@@ -240,7 +237,6 @@ public class ChatService {
         case ACTION_PROPOSE:
           String selectedEmotionsString = session.getTemporaryData("selectedEmotions"); // 임시 데이터 가져오기
           String situation = session.getTemporaryData("userSituation");
-
           if ("YES_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.SKILL_SELECT; // (새로운 단계 정의 필요)
             botMessage = responseGenerator.createSkillSelectMessage(session); // GPT 호출 (나중에 구현)
