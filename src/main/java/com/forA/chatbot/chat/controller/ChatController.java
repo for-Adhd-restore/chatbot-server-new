@@ -48,7 +48,7 @@ public class ChatController {
    * [2. 유저 응답 처리]
    * 유저의 응답(GENDER, BIRTH_YEAR, EMOTION_SELECT 등)을 처리하고
    * 챗봇의 다음 메시지(다음 단계의 질문)를 반환합니다.
-   * (1~5번 온보딩, 6번 감정 대화 모두 이 API 하나로 처리합니다)
+   * (온보딩, 감정 대화 모두 이 API 하나로 처리합니다)
    */
   @PostMapping("/session/{sessionId}")
   public ApiResponse<ChatResponse> handleUserResponse(

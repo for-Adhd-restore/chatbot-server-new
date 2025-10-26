@@ -146,6 +146,9 @@ public class ChatService {
     ChatStep nextStep = currentStep; // 다음 단계 (기본값은 현재 단계)
     ChatBotMessage botMessage; // 봇이 보낼 다음 메시지
 
+    // 임시 저장용 변수 (다음 단계에서 사용)
+    Set<EmotionType> selectedEmotions = null;
+    String userSituation = null;
     // 3. 현재 단계(currentStep)에 따라 로직 분기 (switch)
     try {
       switch (currentStep) {
@@ -194,18 +197,27 @@ public class ChatService {
           break;
         case EMOTION_SELECT:
           Set<EmotionType> emotions = parseAndValidateMultiSelect(userResponse, EmotionType::valueOf, 2, "감정");
+          // 선택된 감정을 세션에 임시 저장 (SITUATION_INPUT 메시지에 사용)
+          session.setTemporaryData("selectedEmotions", selectedEmotions.stream().map(Enum::name).collect(Collectors.joining(",")));
 
           // 감정 상태에 따른 분기 처리
           if (isPositiveOrSoSo(emotions)) {
-            // [로직 6.2] 긍정/괜찮음 -> 단순 종료
+            // 긍정/괜찮음 -> 단순 종료
             nextStep = ChatStep.CHAT_END;
             botMessage = createPositiveResponseMessage(emotions);
           } else {
-            // [로직 6.1] 부정/중립 -> 상황 질문
+            // 부정/중립 -> 상황 질문
             nextStep = ChatStep.SITUATION_INPUT;
-            // TODO: "지금 OOO고 OOO하시군요" -> OOO을 동적으로 채워야 함
-            botMessage = getBotMessageForStep(nextStep.name(), user, true);
+            botMessage = getBotMessageForStep(nextStep.name(), user, true, selectedEmotions);
           }
+          break;
+        case SITUATION_INPUT:
+          userSituation = userResponse;
+
+          // 입력된 상황을 세션에 임시 저장 (GPT에 추후 전달)
+          session.setTemporaryData("userSituation", userSituation);
+          nextStep = ChatStep.ACTION_PROPOSE; // 다음 단계: 도움 제안
+          botMessage = createActionProposeMessage(user.getNickname()); // "추천해도 될까요?" 메시지 생성
           break;
         case CHAT_END:
           // 이미 대화가 종료된 상태
@@ -215,7 +227,7 @@ public class ChatService {
               .type(MessageType.TEXT)
               .build();
           break;
-        // TODO : 6.1 단계 이후는 나중에 구현
+        // TODO : 6.1.1 단계 이후는 나중에 구현
         default:
           log.warn("handleUserResponse: Unhandled step: {}", currentStep);
           throw new IllegalArgumentException("처리할 수 없는 단계입니다.");
@@ -236,6 +248,8 @@ public class ChatService {
     // 대화 종료 시 세션에 종료 시간 기록
     if(nextStep == ChatStep.CHAT_END) {
       session.setEndedAt(LocalDateTime.now());
+      // 대화 종료 시 임시 데이터 삭제
+      session.clearTemporaryData();
     }
     chatSessionRepository.save(session);
 
@@ -249,6 +263,17 @@ public class ChatService {
         .botMessage(botMessage)
         .isCompleted(nextStep == ChatStep.CHAT_END)
         .onboardingCompleted(session.getOnboardingCompleted())
+        .build();
+  }
+
+  private ChatBotMessage createActionProposeMessage(String nickname) {
+    return ChatBotMessage.builder()
+        .content("그 상황에서 마음이 많이 복잡하고 힘들었겠어요. 다시 마주해야 한다고 생각하니 불안한 감정이 드는 게 정말 자연스러운 일이에요. 모리가 " + nickname + "님의 마음을 진정시키는데 도움이 될 수 있는 방법을 추천해도 될까요?")
+        .type(MessageType.OPTION)
+        .options(Arrays.asList(
+            ButtonOption.builder().label("응, 뭔데?").value("YES_PROPOSE").build(),
+            ButtonOption.builder().label("아니 혼자 진정하고 싶어").value("NO_PROPOSE").build()
+        ))
         .build();
   }
 
@@ -271,40 +296,18 @@ public class ChatService {
    */
   private ChatBotMessage createPositiveResponseMessage(Set<EmotionType> emotions) {
     String content;
-
-    // --- 1개 선택 시 ---
     if (emotions.size() == 1) {
       EmotionType emotion = emotions.iterator().next();
       switch (emotion) {
-        case EXCITED:
-          content = "무언가 기대되는 일이 있었나 봐요! 그 에너지, 좋아요 😆";
-          break;
-        case JOY:
-          content = "즐거운 순간이 있었군요. 그 기분 오래오래 간직해요 😊";
-          break;
-        case PROUD:
-          content = "오늘 스스로에게 칭찬해줄 일이 있었나 봐요! 정말 잘했어요 👏";
-          break;
-        case HAPPY:
-          content = "행복하다고 느껴지는 순간, 너무 소중하죠. 지금 이 마음을 기억해요 💛";
-          break;
-        case FLUTTER:
-          content = "마음이 간질간질, 좋은 일이 기다리고 있나 봐요! 설렘은 삶의 활력소예요 🌸";
-          break;
-        case SO_SO:
-          content = "큰 감정 변화는 없지만, 이런 날도 충분히 괜찮아요. 그냥 있는 그대로의 하루도 소중해요 🍃";
-          break;
-        default: // 혹시 다른 긍정 감정이 추가될 경우 대비
-          content = "긍정적인 감정을 느끼셨군요! 좋아요.";
+        case EXCITED: content = "무언가 기대되는 일이 있었나 봐요! 그 에너지, 좋아요 😆"; break;
+        case JOY: content = "즐거운 순간이 있었군요. 그 기분 오래오래 간직해요 😊"; break;
+        case PROUD: content = "오늘 스스로에게 칭찬해줄 일이 있었나 봐요! 정말 잘했어요 👏"; break;
+        case HAPPY: content = "행복하다고 느껴지는 순간, 너무 소중하죠. 지금 이 마음을 기억해요 💛"; break;
+        case FLUTTER: content = "마음이 간질간질, 좋은 일이 기다리고 있나 봐요! 설렘은 삶의 활력소예요 🌸"; break;
+        case SO_SO: content = "큰 감정 변화는 없지만, 이런 날도 충분히 괜찮아요. 그냥 있는 그대로의 하루도 소중해요 🍃"; break;
+        default: content = "긍정적인 감정을 느끼셨군요! 좋아요.";
       }
-      // --- 2개 선택 시 ---
     } else if (emotions.size() == 2) {
-      // Set을 정렬된 List로 변환하여 순서에 상관없이 비교 가능하게 만듦
-      List<EmotionType> sortedEmotions = emotions.stream().sorted().collect(Collectors.toList());
-      EmotionType e1 = sortedEmotions.get(0);
-      EmotionType e2 = sortedEmotions.get(1);
-
-      // 미리 정의된 조합 멘트 (Map을 사용하면 더 깔끔하게 관리 가능)
       Map<Set<EmotionType>, String> combinationMessages = Map.ofEntries(
           Map.entry(Set.of(EmotionType.EXCITED, EmotionType.JOY), "신나고 즐거운 하루였네요! 이런 기분이 오래오래 이어졌으면 좋겠네요. 😄🎉"),
           Map.entry(Set.of(EmotionType.EXCITED, EmotionType.PROUD), "신나고 뿌듯한 하루를 보내셨네요. 오늘의 성취가 모리도 뿌듯하게 느껴지네요. 😆👏"),
@@ -322,20 +325,11 @@ public class ChatService {
           Map.entry(Set.of(EmotionType.HAPPY, EmotionType.SO_SO), "행복한 순간도 있었고, 평범한 시간도 있었네요. 오늘 하루도 잘 보내셨네요. 🌤️🙂"),
           Map.entry(Set.of(EmotionType.FLUTTER, EmotionType.SO_SO), "설레는 순간도 있었고, 평범한 시간도 있었네요. 다양한 감정이 어우러진 하루였던 것 같네요. 🎈🍃")
       );
-
-      // Map에서 해당 조합 찾기 (Set은 순서 무관)
-      content = combinationMessages.getOrDefault(emotions, "긍정적인 감정들이 함께했네요. 멋진 하루예요! 🌟"); // 매칭되는 조합 없으면 기본 메시지
-
+      content = combinationMessages.getOrDefault(emotions, "긍정적인 감정들이 함께했네요. 멋진 하루예요! 🌟");
     } else {
-      // 혹시 0개 또는 3개 이상 선택된 경우 (Validation에서 걸러지겠지만 방어 코드)
       content = "오늘 기분이 좋으셨군요!";
     }
-
-
-    return ChatBotMessage.builder()
-        .content(content)
-        .type(MessageType.TEXT) // 텍스트만 보내고 종료
-        .build();
+    return ChatBotMessage.builder().content(content).type(MessageType.TEXT).build();
   }
 
   /**
@@ -403,7 +397,7 @@ public class ChatService {
     chatMessageRepository.save(message);
   }
 
-  private ChatBotMessage getBotMessageForStep(String step, User user, boolean isUserOnboarded) {
+  private ChatBotMessage getBotMessageForStep(String step, User user, boolean isUserOnboarded, Set<EmotionType> selectedEmotions) {
     ChatStep chatStep = ChatStep.valueOf(step);
     String nickname = user.getNickname() != null ? user.getNickname() : "USER";
 
@@ -454,10 +448,13 @@ public class ChatService {
                 .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
                 .collect(Collectors.toList()))
             .build();
-      case SITUATION_INPUT: // 6.1 상황 입력
-        // TODO : "OOO고 OOO하시군요" -> 선택한 감정으로 동적 멘트 생성
+      case SITUATION_INPUT:
+        // 선택된 감정 이름을 가져와서 메시지에 포함
+        String emotionNames = selectedEmotions.stream()
+            .map(EmotionType::getName)
+            .collect(Collectors.joining(" ", "지금 ", "상태이시군요."));
         return ChatBotMessage.builder()
-            .content("지금 000고 000하시군요. 혹시 어떤 일이 있었는지 이야기 해줄 수 있나요?")
+            .content(emotionNames + " 혹시 어떤 일이 있었는지 이야기 해줄 수 있나요?")
             .type(MessageType.INPUT)
             .build();
       case CHAT_END: // 종료
@@ -468,6 +465,10 @@ public class ChatService {
       default:
         log.warn("getBotMessageForStep: Unhandled step: {}", step);
         return ChatBotMessage.builder().content("...").type(MessageType.TEXT).build();    }
+  }
+  // 오버로딩: selectedEmotions가 필요 없는 경우 호출하는 메서드 (이것이 handleUserResponse 등에서 주로 사용됨)
+  private ChatBotMessage getBotMessageForStep(String step, User user, boolean isUserOnboarded) {
+    return getBotMessageForStep(step, user, isUserOnboarded, Set.of()); // 비어있는 Set 전달
   }
 
   private <T extends Enum<T>> Set<T> parseAndValidateMultiSelect(
