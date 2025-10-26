@@ -219,6 +219,17 @@ public class ChatService {
           nextStep = ChatStep.ACTION_PROPOSE; // 다음 단계: 도움 제안
           botMessage = createActionProposeMessage(user.getNickname()); // "추천해도 될까요?" 메시지 생성
           break;
+        case ACTION_PROPOSE:
+          if ("YES_PROPOSE".equals(userResponse)) {
+            nextStep = ChatStep.SKILL_SELECT;
+            botMessage = createSkillSelectMessage(session); // GPT 호출 (나중에 구현)
+          } else if ("NO_PROPOSE".equals(userResponse)) {
+            nextStep = ChatStep.CHAT_END;
+            botMessage = createAloneComfortMessage(session, user.getNickname()); // GPT 호출 (나중에 구현)
+          } else {
+            throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
+          }
+          break;
         case CHAT_END:
           // 이미 대화가 종료된 상태
           log.info("Chat session {} already ended.", sessionId);
@@ -227,7 +238,7 @@ public class ChatService {
               .type(MessageType.TEXT)
               .build();
           break;
-        // TODO : 6.1.1 단계 이후는 나중에 구현
+        // TODO : 6.1.3 단계 이후는 나중에 구현
         default:
           log.warn("handleUserResponse: Unhandled step: {}", currentStep);
           throw new IllegalArgumentException("처리할 수 없는 단계입니다.");
@@ -236,6 +247,12 @@ public class ChatService {
       log.warn("Invalid user response: {} for step: {}. Error: {}", userResponse, currentStep, e.getMessage());
       botMessage = ChatBotMessage.builder()
           .content(e.getMessage() + "\n다시 선택해주세요.")
+          .type(MessageType.TEXT)
+          .build();
+    } catch (ChatHandler e) {
+      log.warn("Chat handling error: Code={}, Message={}", e.getCode(), e.getMessage());
+      botMessage = ChatBotMessage.builder()
+          .content(e.getMessage() + "\n다시 시도해주세요.")
           .type(MessageType.TEXT)
           .build();
     }
@@ -263,6 +280,49 @@ public class ChatService {
         .botMessage(botMessage)
         .isCompleted(nextStep == ChatStep.CHAT_END)
         .onboardingCompleted(session.getOnboardingCompleted())
+        .build();
+  }
+
+  private ChatBotMessage createSkillSelectMessage(ChatSession session) {
+    String userSituation = session.getTemporaryData("userSituation");
+    String selectedEmotions = session.getTemporaryData("selectedEmotions");
+
+    // TODO: 1. GPT 호출하여 userSituation/selectedEmotions 기반으로 가장 적합한 skill_name 추천받기 (1개)
+    String recommendedSkillName = "(GPT 추천 스킬 이름)"; // 임시 (예: "일단 멈추고 한숨 돌리기🛑")
+    String recommendedSkillValue = "(GPT 추천 스킬 ID)"; // 임시 (예: "distress-001")
+
+    // TODO: 2. (선택) 행동 지침 DB에서 추가적인 skill_name 몇 개 더 가져오기 (총 4개가 되도록)
+    List<ButtonOption> options = Arrays.asList( // 임시 버튼 (실제로는 GPT 결과 + DB 조회 결과로 채워야 함)
+        ButtonOption.builder().label(recommendedSkillName).value(recommendedSkillValue).build(),
+        ButtonOption.builder().label("다른 스킬 1").value("SKILL_ID_2").build(),
+        ButtonOption.builder().label("다른 스킬 2").value("SKILL_ID_3").build(),
+        ButtonOption.builder().label("다른 스킬 3").value("SKILL_ID_4").build()
+    );
+
+    String content = "좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요. "
+        + "지금 감정에 도움이 될 수 있는 방법들을 소개했어요. 이 중에서 하나 골라 함께 해볼까요?";
+
+    return ChatBotMessage.builder()
+        .content(content)
+        .type(MessageType.OPTION)
+        .options(options)
+        .build();
+  }
+
+  private ChatBotMessage createAloneComfortMessage(ChatSession session, String nickname) {
+    String userSituation = session.getTemporaryData("userSituation");
+    String selectedEmotions = session.getTemporaryData("selectedEmotions");
+
+    // TODO: GPT 호출하여 userSituation과 selectedEmotions 기반으로 '상황에 따른 위로' 메시지 생성
+    String gptComfortMessage = "(GPT가 생성한 위로 메시지)"; // 임시
+
+    String finalMessage = "알겠어요. 지금은 혼자 생각을 정리하고 싶은 마음이 클 수도 있겠네요. 괜찮아요, 꼭 바로 뭔가 해결하려고 하지 않아도 돼요. "
+        + gptComfortMessage + " "
+        + "필요할 때 언제든 말 걸어줘요. 모리는 항상 " + nickname + "님 편이에요.";
+
+    return ChatBotMessage.builder()
+        .content(finalMessage)
+        .type(MessageType.TEXT) // 텍스트만 보내고 종료
         .build();
   }
 
@@ -457,6 +517,15 @@ public class ChatService {
             .content(emotionNames + " 혹시 어떤 일이 있었는지 이야기 해줄 수 있나요?")
             .type(MessageType.INPUT)
             .build();
+      case SKILL_SELECT:
+        return ChatBotMessage.builder()
+            .content("좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요." + "지금 감정에 도움이 될 수 있는 방법들을 소개했어요. 이 중에서 하나 골라 함께 해볼까요?")
+            .type(MessageType.OPTION)
+            .options(Arrays.asList( // TODO : 수정 필요 - 현재 임시 버튼
+                ButtonOption.builder().label("스킬1").value("SKILL_1").build(),
+                ButtonOption.builder().label("스킬2").value("SKILL_2").build()
+            ))
+            .build();
       case CHAT_END: // 종료
         return ChatBotMessage.builder()
             .content("대화가 종료되었습니다.")
@@ -466,7 +535,6 @@ public class ChatService {
         log.warn("getBotMessageForStep: Unhandled step: {}", step);
         return ChatBotMessage.builder().content("...").type(MessageType.TEXT).build();    }
   }
-  // 오버로딩: selectedEmotions가 필요 없는 경우 호출하는 메서드 (이것이 handleUserResponse 등에서 주로 사용됨)
   private ChatBotMessage getBotMessageForStep(String step, User user, boolean isUserOnboarded) {
     return getBotMessageForStep(step, user, isUserOnboarded, Set.of()); // 비어있는 Set 전달
   }
