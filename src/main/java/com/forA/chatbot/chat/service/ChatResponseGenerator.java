@@ -1,6 +1,5 @@
 package com.forA.chatbot.chat.service;
 
-import com.forA.chatbot.chat.domain.ChatSession;
 import com.forA.chatbot.chat.domain.enums.ChatStep;
 import com.forA.chatbot.chat.domain.enums.EmotionType;
 import com.forA.chatbot.chat.dto.ChatResponse.ButtonOption;
@@ -103,12 +102,11 @@ public class ChatResponseGenerator {
         log.warn("getBotMessageForStep: Unhandled step: {}", step);
         return ChatBotMessage.builder().content("...").type(MessageType.TEXT).build();    }
   }
+
   public ChatBotMessage getBotMessageForStep(String step, User user, boolean isUserOnboarded) {
     return getBotMessageForStep(step, user, isUserOnboarded, Set.of());
   }
-  /**
-   * 4단계(질환) 응답을 기반으로 5단계(증상) 질문지를 동적으로 생성
-   */
+
   public ChatBotMessage createSymptomMessage(Set<DisorderType> disorders) {
     // 4단계에서 선택한 질환(disorders)에 해당하는 증상들만 가져오기
     Set<SymptomType> symptoms = SymptomType.getByDisorderTypes(disorders);
@@ -128,9 +126,6 @@ public class ChatResponseGenerator {
         .build();
   }
 
-  /**
-   * 긍정/괜찮음 응답(고정 멘트)을 생성
-   */
   public ChatBotMessage createPositiveResponseMessage(Set<EmotionType> emotions) {
     String content;
     if (emotions.size() == 1) {
@@ -180,12 +175,7 @@ public class ChatResponseGenerator {
         .build();
   }
 
-  public ChatBotMessage createAloneComfortMessage(ChatSession session, String nickname) {
-    String userSituation = session.getTemporaryData("userSituation");
-    String selectedEmotions = session.getTemporaryData("selectedEmotions");
-
-    // TODO: GPT 호출하여 userSituation과 selectedEmotions 기반으로 '상황에 따른 위로' 메시지 생성
-    String gptComfortMessage = "(GPT가 생성한 위로 메시지)"; // 임시
+  public ChatBotMessage createAloneComfortMessage(String nickname, String gptComfortMessage) {
 
     String finalMessage = "알겠어요. 지금은 혼자 생각을 정리하고 싶은 마음이 클 수도 있겠네요. 괜찮아요, 꼭 바로 뭔가 해결하려고 하지 않아도 돼요. "
         + gptComfortMessage + " "
@@ -197,21 +187,14 @@ public class ChatResponseGenerator {
         .build();
   }
 
-  public ChatBotMessage createSkillSelectMessage(ChatSession session) {
-    String userSituation = session.getTemporaryData("userSituation");
-    String selectedEmotions = session.getTemporaryData("selectedEmotions");
-
-    // TODO: 1. GPT 호출하여 userSituation/selectedEmotions 기반으로 가장 적합한 skill_name 추천받기 (1개)
-    String recommendedSkillName = "(GPT 추천 스킬 이름)"; // 임시 (예: "일단 멈추고 한숨 돌리기🛑")
-    String recommendedSkillValue = "(GPT 추천 스킬 ID)"; // 임시 (예: "distress-001")
-
-    // TODO: 2. (선택) 행동 지침 DB에서 추가적인 skill_name 몇 개 더 가져오기 (총 4개가 되도록)
-    List<ButtonOption> options = Arrays.asList( // 임시 버튼 (실제로는 GPT 결과 + DB 조회 결과로 채워야 함)
-        ButtonOption.builder().label(recommendedSkillName).value(recommendedSkillValue).build(),
-        ButtonOption.builder().label("다른 스킬 1").value("SKILL_ID_2").build(),
-        ButtonOption.builder().label("다른 스킬 2").value("SKILL_ID_3").build(),
-        ButtonOption.builder().label("다른 스킬 3").value("SKILL_ID_4").build()
-    );
+  public ChatBotMessage createSkillSelectMessage(List<BehavioralSkill> skills) {
+    // 전달받은 스킬 목록으로 버튼 옵션 생성
+    List<ButtonOption> options = skills.stream()
+        .map(skill -> ButtonOption.builder()
+            .label(skill.skill_name())
+            .value(skill.chunk_id())
+            .build())
+        .collect(Collectors.toList());
 
     String content = "좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요. "
         + "지금 감정에 도움이 될 수 있는 방법들을 소개했어요. 이 중에서 하나 골라 함께 해볼까요?";

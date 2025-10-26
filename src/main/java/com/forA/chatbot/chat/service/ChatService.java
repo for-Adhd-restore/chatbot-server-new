@@ -1,5 +1,6 @@
 package com.forA.chatbot.chat.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
@@ -55,6 +56,7 @@ public class ChatService {
   private final UserRepository userRepository;
   private final ApplicationContext applicationContext;
   private final ObjectMapper objectMapper;
+  private final ChatAiService chatAiService;
   private List<BehavioralSkill> behavioralSkills = Collections.emptyList();
 
   @PostConstruct
@@ -69,7 +71,6 @@ public class ChatService {
       this.behavioralSkills = Collections.emptyList();
     }
   }
-
   // 3번을 넘긴 후 대화 진행 x
   @Transactional
   public ChatResponse initializeSession(Long userId) {
@@ -143,7 +144,6 @@ public class ChatService {
         .onboardingCompleted(session.getOnboardingCompleted())
         .build();
   }
-
   /**
    * [2. 유저 응답 처리]
    */
@@ -154,7 +154,6 @@ public class ChatService {
         .orElseThrow(() -> new ChatHandler(ErrorStatus.SESSION_NOT_FOUND));
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
-
     ChatStep currentStep = ChatStep.valueOf(session.getCurrentStep());
     String userResponse = request.getResponseValue();
     // 2. 사용자 응답 메시지 DB에 기록
@@ -162,9 +161,10 @@ public class ChatService {
 
     ChatStep nextStep = currentStep;
     ChatBotMessage botMessage; // 봇이 보낼 다음 메시지
-    Set<EmotionType> selectedEmotions = null;
-    String userSituation = null;
-
+    // (이전 단계에서 저장된 임시 데이터 가져오기)
+    String selectedEmotionsString = session.getTemporaryData("selectedEmotions");
+    Set<EmotionType> selectedEmotions = parseEmotionsFromString(selectedEmotionsString);
+    String userSituation = session.getTemporaryData("userSituation");
     // 3. 현재 단계(currentStep)에 따라 로직 분기 (switch)
     try {
       switch (currentStep) {
@@ -235,14 +235,21 @@ public class ChatService {
           botMessage = responseGenerator.createActionProposeMessage(user.getNickname());
           break;
         case ACTION_PROPOSE:
-          String selectedEmotionsString = session.getTemporaryData("selectedEmotions"); // 임시 데이터 가져오기
-          String situation = session.getTemporaryData("userSituation");
           if ("YES_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.SKILL_SELECT; // (새로운 단계 정의 필요)
-            botMessage = responseGenerator.createSkillSelectMessage(session); // GPT 호출 (나중에 구현)
+
+            // 1. AI 에게 추천 요청
+            String skillJson = convertSkillsToJson();
+            String primarySkillId = chatAiService.recommendSkillChunkId(userSituation, selectedEmotionsString, skillJson);
+            // 2. 추천 ID + 감정 기반으로 4개 스킬 목록 생성
+            List<BehavioralSkill> recommendedSkills = findSkills(primarySkillId, selectedEmotions, 4);
+            botMessage = responseGenerator.createSkillSelectMessage(recommendedSkills); // GPT 호출 (나중에 구현)
           } else if ("NO_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
-            botMessage = responseGenerator.createAloneComfortMessage(session, user.getNickname()); // GPT 호출 (나중에 구현)
+            // 1. AI에게 위로 메시지 생성 요청
+            String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
+            // 2. 생성기에게 위로 메시지 전달
+            botMessage = responseGenerator.createAloneComfortMessage(user.getNickname(), gptComfortMessage);
           } else {
             throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
           }
@@ -294,6 +301,24 @@ public class ChatService {
         .isCompleted(nextStep == ChatStep.CHAT_END)
         .onboardingCompleted(session.getOnboardingCompleted())
         .build();
+  }
+
+  private Set<EmotionType> parseEmotionsFromString(String emotionString) {
+    if (emotionString == null || emotionString.isEmpty()) {
+      return Collections.emptySet();
+    }
+    return Arrays.stream(emotionString.split(","))
+        .map(EmotionType::valueOf)
+        .collect(Collectors.toSet());
+  }
+
+  private String convertSkillsToJson() {
+    try {
+      return objectMapper.writeValueAsString(this.behavioralSkills);
+    } catch (JsonProcessingException e) {
+      log.error("Json 문자열 직렬화 실패", e);
+      return "[]"; // 오류 시 빈 배열 반환
+    }
   }
 
   /**
@@ -371,6 +396,11 @@ public class ChatService {
         .collect(Collectors.toSet());
   }
 
+  /**
+   * 1. AI가 추천한 Primary Skill ID를 받음
+   * 2. 해당 스킬을 리스트의 첫 번째로 추가
+   * 3. 감정 태그가 일치하는 다른 스킬들을 찾아 'count' 개수만큼 채움
+   */
   private List<BehavioralSkill> findSkills(String primarySkillId, Set<EmotionType> emotions, int count) {
     Optional<BehavioralSkill> primary = behavioralSkills.stream()
         .filter(skill -> skill.chunk_id().equals(primarySkillId))
