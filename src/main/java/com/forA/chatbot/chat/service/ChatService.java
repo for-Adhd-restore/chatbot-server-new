@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -240,9 +241,15 @@ public class ChatService {
 
             // 1. AI 에게 추천 요청
             String skillJson = convertSkillsToJson();
-            String primarySkillId = chatAiService.recommendSkillChunkId(userSituation, selectedEmotionsString, skillJson);
-            // 2. 추천 ID + 감정 기반으로 4개 스킬 목록 생성
-            List<BehavioralSkill> recommendedSkills = findSkills(primarySkillId, selectedEmotions, 4);
+            List<String> recommendedIds = chatAiService.recommendSkillChunkId(userSituation, selectedEmotionsString, skillJson);
+            // 2. GPT가 추천한 ID 리스트로 BehavioralSkill 객체 리스트 생성
+            List<BehavioralSkill> recommendedSkills = recommendedIds.stream()
+                .map(id -> behavioralSkills.stream()
+                    .filter(skill -> skill.chunk_id().equals(id))
+                    .findFirst()
+                    .orElse(null))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
             botMessage = responseGenerator.createSkillSelectMessage(recommendedSkills); // GPT 호출 (나중에 구현)
           } else if ("NO_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
