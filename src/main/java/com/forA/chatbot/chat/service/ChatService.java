@@ -117,6 +117,8 @@ public class ChatService {
       history.add(ChatMessageDto.builder()
           .sender("BOT")
           .content(botMessage.getContent())
+          .type(botMessage.getType())
+          .options(botMessage.getOptions())
           .sentAt(LocalDateTime.now())
           .build());
     }
