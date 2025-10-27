@@ -19,8 +19,10 @@ public class ChatResponse {
   @Getter
   @Builder
   public static class ChatMessageDto {
-    private String sender; // USER, BOT
+    private String sender;
     private String content;
+    private MessageType type;
+    private List<ButtonOption> options;
     private LocalDateTime sentAt;
   }
 
@@ -34,7 +36,7 @@ public class ChatResponse {
 
   public enum MessageType {
     TEXT, // 일반 텍스트 응답 (GPT AI와 대화할 경우)
-    OPTION, // 버튼 선택형 응답
+    OPTION,
     INPUT // 키보드 입력형 응답 (ex. 생년 입력, 현재 상황 입력)
   }
 

@@ -15,6 +15,7 @@ import com.forA.chatbot.chat.domain.enums.EmotionType;
 import com.forA.chatbot.chat.domain.enums.EmotionType.EmotionState;
 import com.forA.chatbot.chat.dto.ChatRequest;
 import com.forA.chatbot.chat.dto.ChatResponse;
+import com.forA.chatbot.chat.dto.ChatResponse.ButtonOption;
 import com.forA.chatbot.chat.dto.ChatResponse.ChatBotMessage;
 import com.forA.chatbot.chat.dto.ChatResponse.ChatMessageDto;
 import com.forA.chatbot.chat.dto.ChatResponse.MessageType;
@@ -74,7 +75,6 @@ public class ChatService {
       this.behavioralSkills = Collections.emptyList();
     }
   }
-  // 3번을 넘긴 후 대화 진행 x
   @Transactional
   public ChatResponse initializeSession(Long userId) {
     log.info("채팅 세션 초기화/재개: {}", userId);
@@ -106,7 +106,6 @@ public class ChatService {
         isResuming = true;
         log.info("온보딩 이후 미완료 세션 재개: {}", session.getId());
       } else {
-        // 새 세션 시작
         Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(userId);
 
         boolean isUserOnboarded = lastSessionOpt
@@ -131,7 +130,7 @@ public class ChatService {
 
     // 6. 새 세션인 경우에만 봇의 첫 메시지를 DB에 기록하고, history에도 추가
     if (!isResuming) {
-      recordBotMessage(session.getId(), session.getCurrentStep(), botMessage.getContent());
+      recordBotMessage(session.getId(), session.getCurrentStep(), botMessage);
       // 새 세션 응답에는 방금 보낸 봇 메시지만 포함
       history.add(ChatMessageDto.builder()
           .sender("BOT")
@@ -169,7 +168,6 @@ public class ChatService {
 
     ChatStep nextStep = currentStep;
     ChatBotMessage botMessage = null;
-    // (이전 단계에서 저장된 임시 데이터 가져오기)
     String selectedEmotionsString = session.getTemporaryData("selectedEmotions");
     Set<EmotionType> selectedEmotions = parseEmotionsFromString(selectedEmotionsString);
     String userSituation = session.getTemporaryData("userSituation");
@@ -336,7 +334,7 @@ public class ChatService {
     chatSessionRepository.save(session);
 
     // 5. 봇의 다음 응답 메시지 DB에 기록
-    recordBotMessage(sessionId, nextStep.name(), botMessage.getContent());
+    recordBotMessage(sessionId, nextStep.name(), botMessage);
 
     // 6. 최종 응답 반환
     return ChatResponse.builder()
@@ -393,20 +391,52 @@ public class ChatService {
   private List<ChatMessageDto> getChatHistory(String sessionId) {
     List<ChatMessage> messages = chatMessageRepository.findBySessionIdOrderBySentAtAsc(sessionId);
     return messages.stream()
-        .map(msg -> ChatMessageDto.builder()
-            .sender(msg.getSenderType().name())
-            .content(msg.getMessageContent())
-            .sentAt(msg.getSentAt())
-            .build())
+        .map(msg -> {
+          MessageType type = null;
+          List<ButtonOption> options = null;
+
+          if (msg.getMessageType() != null) {
+            try {
+              type = MessageType.valueOf(msg.getMessageType()); // String -> Enum
+            } catch (IllegalArgumentException e) {
+              log.warn("Invalid messageType found in DB: {}", msg.getMessageType());
+            }
+          }
+
+          if (msg.getOptionsJson() != null && !msg.getOptionsJson().isEmpty()) {
+            try {
+              options = objectMapper.readValue(msg.getOptionsJson(), new TypeReference<List<ButtonOption>>() {}); // JSON -> List
+            } catch (JsonProcessingException e) {
+              log.error("Failed to deserialize options JSON from DB: {}", msg.getOptionsJson(), e);
+            }
+          }
+          return ChatMessageDto.builder()
+              .sender(msg.getSenderType().name())
+              .content(msg.getMessageContent())
+              .sentAt(msg.getSentAt())
+              .type(type)
+              .options(options)
+              .build();
+        })
         .collect(Collectors.toList());
   }
 
-  private void recordBotMessage(String sessionId, String step, String content) {
+  private void recordBotMessage(String sessionId, String step, ChatBotMessage botMessage) {
+    String optionJson = null;
+    if (botMessage.getOptions() != null && !botMessage.getOptions().isEmpty()) {
+      try {
+         optionJson = objectMapper.writeValueAsString(botMessage.getOptions());
+      } catch (JsonProcessingException e) {
+        log.error("Json 직렬화에 실패했습니다. ",sessionId, e);
+      }
+    }
     ChatMessage message = ChatMessage.builder()
         .sessionId(sessionId)
         .senderType(SenderType.BOT)
         .chatStep(step)
-        .messageContent(content)
+        .messageContent(botMessage.getContent())
+        .messageType(botMessage.getType().toString())
+        .optionsJson(optionJson)
         .sentAt(LocalDateTime.now())
         .build();
     chatMessageRepository.save(message);

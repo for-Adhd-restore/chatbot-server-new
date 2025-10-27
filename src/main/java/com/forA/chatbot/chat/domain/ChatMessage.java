@@ -12,9 +12,8 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Setter
 @Builder
 @Document(collection = "chat_messages")
-public class ChatMessage { // 챗봇 및 유저의 모든 메시지를 순서대로 기록
-
-  public enum SenderType { // 누가 보낸 메시지인지 구분
+public class ChatMessage {
+  public enum SenderType {
     USER,
     BOT,
     SYSTEM
@@ -32,6 +31,8 @@ public class ChatMessage { // 챗봇 및 유저의 모든 메시지를 순서대
 
   @Field(name = "message_content")
   private String messageContent;
+  @Field(name = "message_type") private String messageType;
+  @Field(name = "options_json") private String optionsJson;
 
   @Field(name = "sent_at")
   @Builder.Default
