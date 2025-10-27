@@ -24,12 +24,6 @@ public class ChatController {
 
   private final ChatService chatService;
 
-  /**
-   * [1. 대화 시작/재개(이어하기)]
-   * 챗봇 세션을 시작하거나 중간 이탈 시 재개합니다.
-   * 사용자의 상태(onboardingCompleted)를 확인하고
-   * 현재 단계(currentStep)에 맞는 첫 질문을 반환합니다.
-   */
   @GetMapping("/session")
   public ApiResponse<ChatResponse> getCurrentStep(
       @AuthenticationPrincipal CustomUserDetails userDetails
@@ -44,12 +38,6 @@ public class ChatController {
     return ApiResponse.onSuccess(response);
   }
 
-  /**
-   * [2. 유저 응답 처리]
-   * 유저의 응답(GENDER, BIRTH_YEAR, EMOTION_SELECT 등)을 처리하고
-   * 챗봇의 다음 메시지(다음 단계의 질문)를 반환합니다.
-   * (온보딩, 감정 대화 모두 이 API 하나로 처리합니다)
-   */
   @PostMapping("/session/{sessionId}")
   public ApiResponse<ChatResponse> handleUserResponse(
       @PathVariable String sessionId,

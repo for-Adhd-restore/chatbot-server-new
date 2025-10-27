@@ -14,7 +14,7 @@ public class ChatResponse {
   private List<ChatMessageDto> messages; // 현재까지의 대화 기록 (세션 재개 시 유용)
   private ChatBotMessage botMessage; // 챗봇의 다음 메시지
   private Boolean isCompleted; // 현재 단계가 완료되었는지 여부
-  private Boolean onboardingCompleted; // 5.1 데이터 수집 완료 여부
+  private Boolean onboardingCompleted;
 
   @Getter
   @Builder

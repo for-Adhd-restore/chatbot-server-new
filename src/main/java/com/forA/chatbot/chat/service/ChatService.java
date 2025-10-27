@@ -7,6 +7,7 @@ import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.ChatHandler;
 import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.auth.repository.UserRepository;
+import com.forA.chatbot.chat.converter.ChatConverter;
 import com.forA.chatbot.chat.domain.ChatMessage;
 import com.forA.chatbot.chat.domain.ChatMessage.SenderType;
 import com.forA.chatbot.chat.domain.ChatSession;
@@ -29,7 +30,6 @@ import com.forA.chatbot.user.domain.enums.SymptomType;
 import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,6 +62,7 @@ public class ChatService {
   private final ObjectMapper objectMapper;
   private final ChatAiService chatAiService;
   private List<BehavioralSkill> behavioralSkills = Collections.emptyList();
+  private final ChatConverter chatConverter;
 
   @PostConstruct
   public void loadBehavioralSkills() {
@@ -82,65 +83,43 @@ public class ChatService {
         .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
 
     ChatSession session;
-    List<ChatMessageDto> history = Collections.emptyList();
-    boolean isResuming =  false;
-
-    // 1. 온보딩 미완료 세션 확인
-    Optional<ChatSession> activeSessionOpt = chatSessionRepository
-        .findFirstByUserIdAndOnboardingCompletedFalseOrderByStartedAtDesc(userId);
-
-    if (activeSessionOpt.isPresent()) {
-      // 온보딩(1~5) 중단 세션 이어하기
-      session = activeSessionOpt.get();
-      history = getChatHistory(session.getId());// 기존 대화 기록 로드
-      isResuming = true;
-      log.info("온보딩 미완료 세션 로드: {}", session.getId());
-    } else {
-      // 종료되지 않은 최신 세션 확인
-      Optional<ChatSession> unfinishedSessionOpt = chatSessionRepository
-          .findFirstByUserIdAndEndedAtIsNullOrderByStartedAtDesc(userId);
-
-      if (unfinishedSessionOpt.isPresent()) {
-        session = unfinishedSessionOpt.get();
-        history  = getChatHistory(session.getId());
-        isResuming = true;
-        log.info("온보딩 이후 미완료 세션 재개: {}", session.getId());
-      } else {
-        Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(userId);
-
-        boolean isUserOnboarded = lastSessionOpt
-            .map(ChatSession::getOnboardingCompleted)
-            .orElse(false);
-        String initialStep = isUserOnboarded ? ChatStep.EMOTION_SELECT.name() : ChatStep.GENDER.name();
-        session = ChatSession.builder()
-            .userId(userId)
-            .currentStep(initialStep)
-            .onboardingCompleted(isUserOnboarded)
-            .startedAt(LocalDateTime.now())
-            .build();
-
-        session = chatSessionRepository.save(session);
-        log.info("(온보딩 완료) 새 세션 시작: {}, Initial Step: {}", isUserOnboarded, initialStep);
-      }
-    }
-    // 5. 현재 단계(currentStep)에 맞는 봇 메시지 생성
     ChatBotMessage botMessage;
-    Set<EmotionType> currentEmotions = parseEmotionsFromString(session.getTemporaryData("selectedEmotions"));
-    botMessage = responseGenerator.getBotMessageForStep(session.getCurrentStep(), user, session.getOnboardingCompleted());
+    List<ChatMessageDto> history = Collections.emptyList();
 
-    // 6. 새 세션인 경우에만 봇의 첫 메시지를 DB에 기록하고, history에도 추가
-    if (!isResuming) {
+    // 1. 세션 확인
+    Optional<ChatSession> unfinishedSessionOpt = chatSessionRepository
+        .findFirstByUserIdAndEndedAtIsNullOrderByStartedAtDesc(userId);
+
+    if (unfinishedSessionOpt.isPresent()) { // 세션 미완
+      session = unfinishedSessionOpt.get();
+      history = getChatHistory(session.getId());
+      botMessage = chatConverter.convertLatestHistoryToBotMessage(history);
+      log.info("미완료 세션 재개: {}", session.getId());
+    } else { // 세션 완
+      Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(userId); // 가장 최신 세션 가져오기
+      boolean isUserOnboarded = lastSessionOpt
+          .map(ChatSession::getOnboardingCompleted)
+          .orElse(false);
+      String initialStep = isUserOnboarded ? ChatStep.EMOTION_SELECT.name() : ChatStep.GENDER.name();
+      session = ChatSession.builder()
+          .userId(userId)
+          .currentStep(initialStep)
+          .onboardingCompleted(isUserOnboarded)
+          .startedAt(LocalDateTime.now())
+          .build();
+
+      chatSessionRepository.save(session);
+      log.info("새 세션 시작: {}, Initial Step: {}", isUserOnboarded, initialStep);
+
+      Set<EmotionType> currentEmotions = parseEmotionsFromString(session.getTemporaryData("selectedEmotions"));
+      botMessage =  responseGenerator.getBotMessageForStep(session.getCurrentStep(), user, session.getOnboardingCompleted());
       recordBotMessage(session.getId(), session.getCurrentStep(), botMessage);
-      // 새 세션 응답에는 방금 보낸 봇 메시지만 포함
       history.add(ChatMessageDto.builder()
           .sender("BOT")
           .content(botMessage.getContent())
           .sentAt(LocalDateTime.now())
           .build());
     }
-    // 7. 세션 마지막 상호작용 시간 업데이트
-    session.setLastInteractionAt(LocalDateTime.now());
-    chatSessionRepository.save(session);
     // 8. 최종 응답 반환
     return ChatResponse.builder()
         .sessionId(session.getId())
@@ -458,32 +437,5 @@ public class ChatService {
     return Arrays.stream(values)
         .map(valueOf)
         .collect(Collectors.toSet());
-  }
-
-  private List<BehavioralSkill> findSkills(String primarySkillId, Set<EmotionType> emotions, int count) {
-    Optional<BehavioralSkill> primary = behavioralSkills.stream()
-        .filter(skill -> skill.chunk_id().equals(primarySkillId))
-        .findFirst();
-
-    List<String> emotionNames = emotions.stream().map(EmotionType::getName).collect(Collectors.toList());
-    List<BehavioralSkill> others = behavioralSkills.stream()
-        .filter(skill -> !skill.chunk_id().equals(primarySkillId))
-        .filter(skill -> skill.emotion_tags() != null && skill.emotion_tags().stream().anyMatch(emotionNames::contains))
-        .limit(count - 1) // limit은 스트림의 최대 크기를 제한
-        .collect(Collectors.toList());
-
-    List<BehavioralSkill> result = new ArrayList<>();
-    primary.ifPresent(result::add);
-    result.addAll(others);
-
-    // 결과 리스트의 크기가 count보다 작으면 추가
-    if (result.size() < count) {
-      behavioralSkills.stream()
-          .filter(skill -> !result.contains(skill)) // 이미 포함된 것 제외
-          .limit(count - result.size())
-          .forEach(result::add);
-    }
-
-    return result.stream().limit(count).collect(Collectors.toList()); // 최종 개수 보장
   }
 }
