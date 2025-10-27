@@ -77,57 +77,62 @@ public class ChatService {
   // 3번을 넘긴 후 대화 진행 x
   @Transactional
   public ChatResponse initializeSession(Long userId) {
-    log.info("Chat session initialization for userId: {}", userId);
+    log.info("채팅 세션 초기화/재개: {}", userId);
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
 
     ChatSession session;
-    List<ChatMessageDto> history;
+    List<ChatMessageDto> history = Collections.emptyList();
     boolean isResuming =  false;
 
-    // 1. 온보딩 (1 ~ 5)을 완료하지 않은 세션이 있는지 확인 (중간 이탈자)
+    // 1. 온보딩 미완료 세션 확인
     Optional<ChatSession> activeSessionOpt = chatSessionRepository
         .findFirstByUserIdAndOnboardingCompletedFalseOrderByStartedAtDesc(userId);
 
     if (activeSessionOpt.isPresent()) {
-      // 온보딩(1~5) 중에 나갔다가 다시 들어온 경우
+      // 온보딩(1~5) 중단 세션 이어하기
       session = activeSessionOpt.get();
       history = getChatHistory(session.getId());// 기존 대화 기록 로드
       isResuming = true;
-      log.info("Resuming existing incomplete session: {}", session.getId());
+      log.info("온보딩 미완료 세션 로드: {}", session.getId());
     } else {
-      // 2. 가장 최근 세션을 찾아, 온보딩을 완료했었는지(기존 유저인지) 확인
-      Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(userId);
+      // 종료되지 않은 최신 세션 확인
+      Optional<ChatSession> unfinishedSessionOpt = chatSessionRepository
+          .findFirstByUserIdAndEndedAtIsNullOrderByStartedAtDesc(userId);
 
-      // 사용자가 온보딩을 완료한 적이 있는지 여부
-      boolean isUserOnboarded = lastSessionOpt
-          .map(ChatSession::getOnboardingCompleted)
-          .orElse(false);
+      if (unfinishedSessionOpt.isPresent()) {
+        session = unfinishedSessionOpt.get();
+        history  = getChatHistory(session.getId());
+        isResuming = true;
+        log.info("온보딩 이후 미완료 세션 재개: {}", session.getId());
+      } else {
+        // 새 세션 시작
+        Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(userId);
 
-      // 3. 시작 단계 결정
-      String initialStep = isUserOnboarded ? ChatStep.EMOTION_SELECT.name() : ChatStep.GENDER.name();
+        boolean isUserOnboarded = lastSessionOpt
+            .map(ChatSession::getOnboardingCompleted)
+            .orElse(false);
+        String initialStep = isUserOnboarded ? ChatStep.EMOTION_SELECT.name() : ChatStep.GENDER.name();
+        session = ChatSession.builder()
+            .userId(userId)
+            .currentStep(initialStep)
+            .onboardingCompleted(isUserOnboarded)
+            .startedAt(LocalDateTime.now())
+            .build();
 
-      // 4. 새로운 세션 생성
-      session = ChatSession.builder()
-          .userId(userId)
-          .currentStep(initialStep)
-          .onboardingCompleted(isUserOnboarded)
-          .startedAt(LocalDateTime.now())
-          .build();
-
-      session = chatSessionRepository.save(session);
-      history = new ArrayList<>(); // 새 세션 시작
-      log.info("Starting new session. Onboarded: {}, Initial Step: {}", isUserOnboarded, initialStep);
+        session = chatSessionRepository.save(session);
+        log.info("(온보딩 완료) 새 세션 시작: {}, Initial Step: {}", isUserOnboarded, initialStep);
+      }
     }
-
     // 5. 현재 단계(currentStep)에 맞는 봇 메시지 생성
-    // (기존 유저 여부에 따라 6번 멘트가 달라지므로 isUserOnboarded 플래그 전달)
-    ChatBotMessage botMessage = responseGenerator.getBotMessageForStep(session.getCurrentStep(), user, session.getOnboardingCompleted());
+    ChatBotMessage botMessage;
+    Set<EmotionType> currentEmotions = parseEmotionsFromString(session.getTemporaryData("selectedEmotions"));
+    botMessage = responseGenerator.getBotMessageForStep(session.getCurrentStep(), user, session.getOnboardingCompleted());
 
     // 6. 새 세션인 경우에만 봇의 첫 메시지를 DB에 기록하고, history에도 추가
     if (!isResuming) {
       recordBotMessage(session.getId(), session.getCurrentStep(), botMessage.getContent());
-      // 방금 기록한 봇 메시지를 클라이언트에게 바로 보여주기 위해 history에 추가
+      // 새 세션 응답에는 방금 보낸 봇 메시지만 포함
       history.add(ChatMessageDto.builder()
           .sender("BOT")
           .content(botMessage.getContent())
@@ -141,8 +146,8 @@ public class ChatService {
     return ChatResponse.builder()
         .sessionId(session.getId())
         .currentStep(session.getCurrentStep())
-        .messages(history) // [중간 이탈자]는 기존 기록, [신규/기존]은 봇의 첫 메시지
-        .botMessage(botMessage) // 봇이 다음으로 할 말
+        .messages(history) // [중간 이탈자]는 이전 기록 전체, [신규/기존]은 봇의 첫 메시지
+        .botMessage(botMessage)
         .isCompleted(false)
         .onboardingCompleted(session.getOnboardingCompleted())
         .build();
@@ -361,9 +366,7 @@ public class ChatService {
     }
   }
 
-  /**
-   * 선택한 감정이 '긍정' 또는 '괜찮음'인지 확인
-   */
+
   private boolean isPositiveOrSoSo(Set<EmotionType> emotions) {
     if (emotions.isEmpty()) {
       throw new IllegalArgumentException("감정을 선택해주세요.");
@@ -375,9 +378,6 @@ public class ChatService {
     );
   }
 
-  /**
-   * 사용자 메시지를 DB에 기록
-   */
   private void recordUserMessage(String sessionId, String step, String content) {
     ChatMessage message = ChatMessage.builder()
         .sessionId(sessionId)
@@ -390,9 +390,6 @@ public class ChatService {
     chatMessageRepository.save(message);
   }
 
-  /**
-   * 특정 세션의 모든 대화 기록을 불러옵니다.
-   */
   private List<ChatMessageDto> getChatHistory(String sessionId) {
     List<ChatMessage> messages = chatMessageRepository.findBySessionIdOrderBySentAtAsc(sessionId);
     return messages.stream()
@@ -404,9 +401,6 @@ public class ChatService {
         .collect(Collectors.toList());
   }
 
-  /**
-   * 봇의 응답을 MongoDB에 기록
-   */
   private void recordBotMessage(String sessionId, String step, String content) {
     ChatMessage message = ChatMessage.builder()
         .sessionId(sessionId)
@@ -436,11 +430,6 @@ public class ChatService {
         .collect(Collectors.toSet());
   }
 
-  /**
-   * 1. AI가 추천한 Primary Skill ID를 받음
-   * 2. 해당 스킬을 리스트의 첫 번째로 추가
-   * 3. 감정 태그가 일치하는 다른 스킬들을 찾아 'count' 개수만큼 채움
-   */
   private List<BehavioralSkill> findSkills(String primarySkillId, Set<EmotionType> emotions, int count) {
     Optional<BehavioralSkill> primary = behavioralSkills.stream()
         .filter(skill -> skill.chunk_id().equals(primarySkillId))
