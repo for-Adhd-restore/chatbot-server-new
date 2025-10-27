@@ -233,18 +233,16 @@ public class ChatService {
           break;
         case SITUATION_INPUT:
           userSituation = userResponse;
-          // 입력된 상황을 세션에 임시 저장 (GPT에 추후 전달)
           session.setTemporaryData("userSituation", userSituation);
-          nextStep = ChatStep.ACTION_PROPOSE; // 다음 단계: 도움 제안
-          botMessage = responseGenerator.createActionProposeMessage(user.getNickname());
-          break;
+          String empathySentence = chatAiService.generateEmpathySentence(userSituation, selectedEmotions);
+          String goalPhrase = chatAiService.generateProposalGoalPhrase(userSituation, selectedEmotions);
+          nextStep = ChatStep.ACTION_PROPOSE;
+          botMessage = responseGenerator.createActionProposeMessage(nickname, empathySentence, goalPhrase);          break;
         case ACTION_PROPOSE:
           if ("YES_PROPOSE".equals(userResponse)) {
-            nextStep = ChatStep.SKILL_SELECT; // (새로운 단계 정의 필요)
-            // 1. AI 에게 추천 요청
+            nextStep = ChatStep.SKILL_SELECT;
             String skillJson = convertSkillsToJson();
             List<String> recommendedIds = chatAiService.recommendSkillChunkId(userSituation, selectedEmotionsString, skillJson);
-            // 2. GPT가 추천한 ID 리스트로 BehavioralSkill 객체 리스트 생성
             List<BehavioralSkill> recommendedSkills = recommendedIds.stream()
                 .map(id -> behavioralSkills.stream()
                     .filter(skill -> skill.chunk_id().equals(id))
@@ -255,9 +253,7 @@ public class ChatService {
             botMessage = responseGenerator.createSkillSelectMessage(recommendedSkills); // GPT 호출 (나중에 구현)
           } else if ("NO_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
-            // 1. AI에게 위로 메시지 생성 요청
             String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
-            // 2. 생성기에게 위로 메시지 전달
             botMessage = responseGenerator.createAloneComfortMessage(user.getNickname(), gptComfortMessage);
           } else {
             throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
@@ -285,10 +281,9 @@ public class ChatService {
           }
           break;
         case SKILL_CONFIRM:
-          if ("ACTION_DINE".equals(userResponse)) {
+          if ("ACTION_DONE".equals(userResponse)) {
             nextStep = ChatStep.ACTION_FEEDBACK;
             botMessage = responseGenerator.createFeedbackRequestMessage();
-            // 클라이언트는 이 응답을 받고 팝업을 띄울 것임
           } else if ("ACTION_SKIPPED".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
             String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
@@ -298,13 +293,13 @@ public class ChatService {
           break;
         case ACTION_FEEDBACK:
           String feedbackValue = userResponse;
-          nextStep = ChatStep.CHAT_END;botMessage = responseGenerator.createFeedbackDisplayAndClosingMessage(feedbackValue, nickname);
+          nextStep = ChatStep.CHAT_END;
+          botMessage = responseGenerator.createFeedbackDisplayAndClosingMessage(feedbackValue, nickname);
           break;
         case CHAT_END:
           log.info("Chat session {} already ended.", sessionId);
           botMessage = responseGenerator.getBotMessageForStep(currentStep.name(), user, true);
           break;
-        // TODO : 6.1.3 단계 이후는 나중에 구현
         default:
           log.warn("handleUserResponse: Unhandled step: {}", currentStep);
           throw new IllegalArgumentException("처리할 수 없는 단계입니다.");

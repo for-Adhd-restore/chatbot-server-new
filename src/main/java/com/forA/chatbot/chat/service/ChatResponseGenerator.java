@@ -164,9 +164,10 @@ public class ChatResponseGenerator {
     return ChatBotMessage.builder().content(content).type(MessageType.TEXT).build();
   }
 
-  public ChatBotMessage createActionProposeMessage(String nickname) {
+  public ChatBotMessage createActionProposeMessage(String nickname, String empathySentence, String goalPhrase) {
+    String content = empathySentence + " 모리가 " + nickname + "님을 위해 " + goalPhrase + " 도움이 될 수 있는 방법을 추천 드려도 될까요?";
     return ChatBotMessage.builder()
-        .content("그 상황에서 마음이 많이 복잡하고 힘들었겠어요. 다시 마주해야 한다고 생각하니 불안한 감정이 드는 게 정말 자연스러운 일이에요. 모리가 " + nickname + "님의 마음을 진정시키는데 도움이 될 수 있는 방법을 추천해도 될까요?")
+        .content(content)
         .type(MessageType.OPTION)
         .options(Arrays.asList(
             ButtonOption.builder().label("응, 뭔데?").value("YES_PROPOSE").build(),
@@ -221,15 +222,13 @@ public class ChatResponseGenerator {
       case "MUCH_BETTER_THANKS" -> "많이 나아졌어 고마워";
       case "SLIGHTLY_BETTER" -> "살짝 기분 좋아졌어";
       case "SAME" -> "그대로야";
-      case "SLIGHTLY_WORSE" -> "조금 더 안좋아"; // 이미지에 오타가 있는 것 같아 수정 ("안좋아")
-      case "MORE_HEAVY" -> "더 무거워졌어"; // 이미지와 일치하도록 수정 ("무거워졌어")
-      default -> "기분을 알려주셨어요."; // 예외 처리
+      case "SLIGHTLY_WORSE" -> "조금 더 안좋아";
+      case "MORE_HEAVY" -> "더 무거워졌어";
+      default -> "기분을 알려주셨어요.";
     };
-    String closingMessage = "\n\n힘들 때마다 언제든 모리를 찾아주세요.\n"
+    String closingMessage = "힘들 때마다 언제든 모리를 찾아주세요.\n"
         + "모리가 " + nickname + "님의 곁에서 도움이 될 수 있도록 함께할게요.\n"
-        + "지금 약 페이지로 이동하면,\n"
-        + "제 시간에 약을 복용하실 수 있도록 도와드릴게요!";
-
+        + "지금 약 페이지로 이동하면, 제 시간에 약을 복용하실 수 있도록 도와드릴게요!";
     return ChatBotMessage.builder()
         .content(feedbackText + closingMessage)
         .type(MessageType.TEXT)

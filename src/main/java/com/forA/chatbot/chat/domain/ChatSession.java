@@ -47,7 +47,7 @@ public class ChatSession {
   private LocalDateTime lastInteractionAt;
 
   public void setTemporaryData(String key, String value) {
-    if (this.temporaryData == null) { // 혹시 모를 Null 방지
+    if (this.temporaryData == null) {
       this.temporaryData = new HashMap<>();
     }
     this.temporaryData.put(key, value);
