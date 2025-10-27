@@ -8,6 +8,7 @@ import com.forA.chatbot.apiPayload.exception.handler.ChatHandler;
 import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.chat.domain.ChatMessage;
+import com.forA.chatbot.chat.domain.ChatMessage.SenderType;
 import com.forA.chatbot.chat.domain.ChatSession;
 import com.forA.chatbot.chat.domain.enums.ChatStep;
 import com.forA.chatbot.chat.domain.enums.EmotionType;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -161,12 +163,12 @@ public class ChatService {
     recordUserMessage(sessionId, currentStep.name(), userResponse);
 
     ChatStep nextStep = currentStep;
-    ChatBotMessage botMessage; // 봇이 보낼 다음 메시지
+    ChatBotMessage botMessage = null;
     // (이전 단계에서 저장된 임시 데이터 가져오기)
     String selectedEmotionsString = session.getTemporaryData("selectedEmotions");
     Set<EmotionType> selectedEmotions = parseEmotionsFromString(selectedEmotionsString);
     String userSituation = session.getTemporaryData("userSituation");
-    // 3. 현재 단계(currentStep)에 따라 로직 분기 (switch)
+    String nickname = user.getNickname() != null ? user.getNickname() : "USER";
     try {
       switch (currentStep) {
         case GENDER:
@@ -239,7 +241,6 @@ public class ChatService {
         case ACTION_PROPOSE:
           if ("YES_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.SKILL_SELECT; // (새로운 단계 정의 필요)
-
             // 1. AI 에게 추천 요청
             String skillJson = convertSkillsToJson();
             List<String> recommendedIds = chatAiService.recommendSkillChunkId(userSituation, selectedEmotionsString, skillJson);
@@ -261,6 +262,43 @@ public class ChatService {
           } else {
             throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
           }
+          break;
+        case SKILL_SELECT:
+          String selectedSkillId = userResponse;
+          BehavioralSkill selectedSkill = behavioralSkills.stream()
+              .filter(skill -> skill.chunk_id().equals(selectedSkillId))
+              .findFirst()
+              .orElse(null);
+          if (selectedSkill == null) {
+            log.error("선택하신 스킬을 찾을 수 없습니다: {}", selectedSkillId);
+            botMessage = ChatBotMessage.builder()
+                .content("선택하신 스킬을 찾을 수 없어요. 다시 선택해주세요.")
+                .type(MessageType.TEXT)
+                .build();
+          } else {
+            session.setTemporaryData("selectedSkillId", selectedSkillId);
+            session.setTemporaryData("selectedSkillName", selectedSkill.skill_name());
+            nextStep = ChatStep.SKILL_CONFIRM;
+            botMessage = responseGenerator.createSkillConfirmMessage(selectedSkill);
+
+            // TODO: 여기서 5분 타이머/스케줄러 시작 로직 추가 (푸시 알림용)
+          }
+          break;
+        case SKILL_CONFIRM:
+          if ("ACTION_DINE".equals(userResponse)) {
+            nextStep = ChatStep.ACTION_FEEDBACK;
+            botMessage = responseGenerator.createFeedbackRequestMessage();
+            // 클라이언트는 이 응답을 받고 팝업을 띄울 것임
+          } else if ("ACTION_SKIPPED".equals(userResponse)) {
+            nextStep = ChatStep.CHAT_END;
+            String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
+            botMessage = responseGenerator.createAloneComfortMessage(nickname, gptComfortMessage);
+          }
+          // TODO: 5분 타이머/스케줄러 취소 로직 추가
+          break;
+        case ACTION_FEEDBACK:
+          String feedbackValue = userResponse;
+          nextStep = ChatStep.CHAT_END;botMessage = responseGenerator.createFeedbackDisplayAndClosingMessage(feedbackValue, nickname);
           break;
         case CHAT_END:
           log.info("Chat session {} already ended.", sessionId);
@@ -293,7 +331,6 @@ public class ChatService {
     // 대화 종료 시 세션에 종료 시간 기록
     if(nextStep == ChatStep.CHAT_END) {
       session.setEndedAt(LocalDateTime.now());
-      // 대화 종료 시 임시 데이터 삭제
       session.clearTemporaryData();
     }
     chatSessionRepository.save(session);
@@ -349,7 +386,7 @@ public class ChatService {
   private void recordUserMessage(String sessionId, String step, String content) {
     ChatMessage message = ChatMessage.builder()
         .sessionId(sessionId)
-        .senderType(ChatMessage.SenderType.USER)
+        .senderType(SenderType.USER)
         .chatStep(step)
         .messageContent(content)
         .responseCode(content) // 선택/입력값 원본 저장
@@ -378,7 +415,7 @@ public class ChatService {
   private void recordBotMessage(String sessionId, String step, String content) {
     ChatMessage message = ChatMessage.builder()
         .sessionId(sessionId)
-        .senderType(ChatMessage.SenderType.BOT)
+        .senderType(SenderType.BOT)
         .chatStep(step)
         .messageContent(content)
         .sentAt(LocalDateTime.now())
@@ -388,7 +425,7 @@ public class ChatService {
 
   private <T extends Enum<T>> Set<T> parseAndValidateMultiSelect(
       String responseValue,
-      java.util.function.Function<String, T> valueOf,
+      Function<String, T> valueOf,
       int maxLimit,
       String entityName
   ) {

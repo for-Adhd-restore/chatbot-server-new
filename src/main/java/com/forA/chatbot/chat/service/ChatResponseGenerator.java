@@ -205,4 +205,58 @@ public class ChatResponseGenerator {
         .options(options)
         .build();
   }
+
+  public ChatBotMessage createFeedbackRequestMessage() {
+    // 실제 팝업 UI는 클라이언트에서 처리
+    return ChatBotMessage.builder()
+        .content("지금 마음은 조금 나아지셨는지 궁금해요. 기분을 체크해주세요!")
+        .type(MessageType.INPUT)
+        .build();
+  }
+
+
+  public ChatBotMessage createFeedbackDisplayAndClosingMessage(String feedbackValue, String nickname)
+  {
+    String feedbackText = switch (feedbackValue) {
+      case "MUCH_BETTER_THANKS" -> "많이 나아졌어 고마워";
+      case "SLIGHTLY_BETTER" -> "살짝 기분 좋아졌어";
+      case "SAME" -> "그대로야";
+      case "SLIGHTLY_WORSE" -> "조금 더 안좋아"; // 이미지에 오타가 있는 것 같아 수정 ("안좋아")
+      case "MORE_HEAVY" -> "더 무거워졌어"; // 이미지와 일치하도록 수정 ("무거워졌어")
+      default -> "기분을 알려주셨어요."; // 예외 처리
+    };
+    String closingMessage = "\n\n힘들 때마다 언제든 모리를 찾아주세요.\n"
+        + "모리가 " + nickname + "님의 곁에서 도움이 될 수 있도록 함께할게요.\n"
+        + "지금 약 페이지로 이동하면,\n"
+        + "제 시간에 약을 복용하실 수 있도록 도와드릴게요!";
+
+    return ChatBotMessage.builder()
+        .content(feedbackText + closingMessage)
+        .type(MessageType.TEXT)
+        .build();
+  }
+
+  public ChatBotMessage createSkillConfirmMessage(BehavioralSkill selectedSkill) {
+    if (selectedSkill == null)
+    {
+      log.warn("선택한 스킬 정보를 찾을 수 없습니다.");
+      return ChatBotMessage.builder()
+          .content("선택하신 스킬 정보를 찾을 수 없어요. 다시 시도해 주시겠어요?")
+          .type(MessageType.TEXT)
+          .build();
+    }
+
+    String skillName = selectedSkill.skill_name();
+    String description = selectedSkill.description();
+    String content = description // 먼저 스킬 설명을 보여주고
+        + "\n\n모리가 기다리고 있었어요! " + skillName + " 하고 오셨나요?";
+    return ChatBotMessage.builder()
+        .content(content)
+        .type(MessageType.OPTION)
+        .options(Arrays.asList(
+            ButtonOption.builder().label("응, 하고 왔어").value("ACTION_DONE").build(),
+            ButtonOption.builder().label("아니, 안 하고 왔어").value("ACTION_SKIPPED").build()
+        ))
+        .build();
+  }
 }
