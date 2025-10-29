@@ -23,6 +23,7 @@ import com.forA.chatbot.chat.dto.ChatResponse.MessageType;
 import com.forA.chatbot.chat.repository.ChatMessageRepository;
 import com.forA.chatbot.chat.repository.ChatSessionRepository;
 import com.forA.chatbot.enums.Gender;
+import com.forA.chatbot.notification.scheduler.ChatNotificationScheduler;
 import com.forA.chatbot.user.domain.User;
 import com.forA.chatbot.user.domain.enums.DisorderType;
 import com.forA.chatbot.user.domain.enums.JobType;
@@ -61,6 +62,7 @@ public class ChatService {
   private final ApplicationContext applicationContext;
   private final ObjectMapper objectMapper;
   private final ChatAiService chatAiService;
+  private final ChatNotificationScheduler chatNotificationScheduler;
   private List<BehavioralSkill> behavioralSkills = Collections.emptyList();
   private final ChatConverter chatConverter;
 
@@ -261,10 +263,14 @@ public class ChatService {
             nextStep = ChatStep.SKILL_CONFIRM;
             botMessage = responseGenerator.createSkillConfirmMessage(selectedSkill);
 
-            // TODO: 여기서 5분 타이머/스케줄러 시작 로직 추가 (푸시 알림용)
+            // 5분 알림 예약
+            chatNotificationScheduler.scheduleNotification(session.getId(), user.getId());
           }
           break;
         case SKILL_CONFIRM:
+          // 사용자가 응답했으므로 예약된 알림 취소
+          chatNotificationScheduler.cancelNotification(session.getId());
+
           if ("ACTION_DONE".equals(userResponse)) {
             nextStep = ChatStep.ACTION_FEEDBACK;
             botMessage = responseGenerator.createFeedbackRequestMessage();
@@ -273,7 +279,6 @@ public class ChatService {
             String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
             botMessage = responseGenerator.createAloneComfortMessage(nickname, gptComfortMessage);
           }
-          // TODO: 5분 타이머/스케줄러 취소 로직 추가
           break;
         case ACTION_FEEDBACK:
           String feedbackValue = userResponse;
@@ -406,7 +411,7 @@ public class ChatService {
     String optionJson = null;
     if (botMessage.getOptions() != null && !botMessage.getOptions().isEmpty()) {
       try {
-         optionJson = objectMapper.writeValueAsString(botMessage.getOptions());
+        optionJson = objectMapper.writeValueAsString(botMessage.getOptions());
       } catch (JsonProcessingException e) {
         log.error("Json 직렬화에 실패했습니다. ",sessionId, e);
       }
