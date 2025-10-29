@@ -21,8 +21,8 @@ public class ChatNotificationScheduler {
 
   public void scheduleNotification(String sessionId, Long userId) {
     // 5분 뒤 실행 시간 설정
-//    Instant scheduledTime = Instant.now().plusSeconds(300);
-    Instant scheduledTime = Instant.now().plusSeconds(5);
+    Instant scheduledTime = Instant.now().plusSeconds(300);
+//    Instant scheduledTime = Instant.now().plusSeconds(5);
 
     ScheduledFuture<?> future = taskScheduler.schedule(() -> {
       log.info("Executing scheduled notification for session: {}", sessionId);
