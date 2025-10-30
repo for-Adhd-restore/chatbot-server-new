@@ -32,4 +32,17 @@ public interface MedicationLogRepository extends JpaRepository<MedicationLog, Lo
   // 특정 사용자의 특정 기간 동안의 모든 복용 기록을 조회
   @Query("SELECT ml FROM MedicationLog ml JOIN ml.medicationBundle mb WHERE mb.user = :user AND ml.date BETWEEN :startDate AND :endDate")
   List<MedicationLog> findByMedicationBundle_UserAndDateBetween(@Param("user") User user, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+
+  /**
+   * 특정 사용자의 특정 날짜에 복용 완료한 약물 로그 조회
+   * - 감정 리포트에서 복약 시 기록된 컨디션(감정)을 찾기 위해 사용
+   */
+  @Query(
+      "SELECT ml FROM MedicationLog ml "
+          + "JOIN ml.medicationBundle mb "
+          + "WHERE mb.user.id = :userId "
+          + "AND ml.date = :date "
+          + "AND ml.isTaken = :isTaken")
+  List<MedicationLog> findByUserIdAndDateAndIsTaken(
+      @Param("userId") Long userId, @Param("date") Date date, @Param("isTaken") Boolean isTaken);
 }

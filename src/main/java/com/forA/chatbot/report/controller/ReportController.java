@@ -40,4 +40,20 @@ public class ReportController {
 
     return ApiResponse.of(SuccessStatus._MONTHLY_MEDICATION_REPORT_RETRIEVED,response);
   }
+
+  /**
+   * 주간 감정 리포트 조회
+   * - currentWeek: 오늘 포함 이전 7일
+   * - previousWeek: currentWeek 이전 7일
+   */
+  @GetMapping("/weekly/emotion")
+  public ApiResponse<ReportResponseDto.WeeklyEmotionReportResponse> getWeeklyEmotionReport(
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+    Long userId = userDetails.getUserId();
+    ReportResponseDto.WeeklyEmotionReportResponse response =
+        reportService.getWeeklyEmotionReport(userId);
+
+    return ApiResponse.of(SuccessStatus._WEEKLY_EMOTION_REPORT_RETRIEVED, response);
+  }
 }

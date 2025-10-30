@@ -49,5 +49,28 @@ public class ReportResponseDto {
     private String scheduledTime;    // 알람 시간 (e.g., "09:00:00")
     private boolean isTaken;     // 복용 여부
   }
+
+  // ========== 감정 리포트 관련 DTO ==========
+
+  /**
+   * 주간 감정 리포트 응답 DTO
+   */
+  @Getter
+  @Builder
+  public static class WeeklyEmotionReportResponse {
+    private List<DailyEmotionReportDto> currentWeek;
+    private List<DailyEmotionReportDto> previousWeek;
+  }
+
+  /**
+   * 일별 감정 리포트 DTO
+   */
+  @Getter
+  @Builder
+  public static class DailyEmotionReportDto {
+    private String date; // YYYY-MM-DD 형식 (예: "2025-10-24")
+    private String dayOfWeek; // 영어 대문자 (예: "MONDAY")
+    private Double emotionScore; // 감정 평균 점수 (소수점 포함)
+  }
 }
 
