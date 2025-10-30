@@ -1,4 +1,3 @@
-/*
 package com.forA.chatbot.chat.controller;
 
 import com.forA.chatbot.apiPayload.ApiResponse;
@@ -22,44 +21,37 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class ChatController {
-  private ChatService chatService;
 
-  */
-/** [시작/재개] 챗봇 세션을 시작하거나 중간 이탈 시 재개합니다. *//*
+  private final ChatService chatService;
 
-                                          @GetMapping("/session")
-                                          public ApiResponse<ChatResponse> getCurrentStep(
-                                              @AuthenticationPrincipal CustomUserDetails userDetails
-                                          ) {
-                                            Long userId = userDetails.getUserId();
-                                            log.info("Chat session initialization/resume requested for userId: {}", userId);
+  @GetMapping("/session")
+  public ApiResponse<ChatResponse> getCurrentStep(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  )
+  {
+    Long userId = userDetails.getUserId();
+    log.info("Chat session initialization/resume requested for userId: {}", userId);
+    // 세션 초기화
+    ChatResponse response = chatService.initializeSession(userId);
+    log.info("Chat session response sent: sessionId={}, currentStep={}", response.getSessionId(), response.getCurrentStep());
 
-                                            ChatResponse response = chatService.initializeSession(userId);
+    return ApiResponse.onSuccess(response);
+  }
 
-                                            log.info("Chat session response sent: sessionId={}, currentStep={}", response.getSessionId(), response.getCurrentStep());
+  @PostMapping("/session/{sessionId}")
+  public ApiResponse<ChatResponse> handleUserResponse(
+      @PathVariable String sessionId,
+      @Valid @RequestBody ChatRequest request,
+      @AuthenticationPrincipal CustomUserDetails userDetails)
+  {
 
-                                            return ApiResponse.onSuccess(response);
-                                          }
+    Long userId = userDetails.getUserId();
+    log.info("User response received. userId: {}, sessionId: {}, response: {}", userId, sessionId, request.getResponseValue());
 
-                                          */
-/** [응답] 유저의 응답을 처리하고 챗봇의 다음 메시지를 반환합니다. *//*
+    ChatResponse response = chatService.handleUserResponse(userId, sessionId, request);
 
-                                             @PostMapping("/session/{sessionId}")
-                                             ApiResponse<ChatResponse> handleUserResponse(
-                                                 @PathVariable String sessionId,
-                                                 @Valid @RequestBody ChatRequest request,
-                                                 @AuthenticationPrincipal CustomUserDetails userDetails){
+    log.info("Chat response sent. nextStep={}, isCompleted={}", response.getCurrentStep(), response.getIsCompleted());
 
-                                               Long userId = userDetails.getUserId();
-                                               log.info("User response received. userId: {}, sessionId: {}, response: {}",
-                                                   userId, sessionId, request.getResponseValue());
-
-                                               ChatResponse response = chatService.handleUserResponse(userId, sessionId, request);
-
-                                               log.info("Chat response sent. nextStep={}, isCompleted={}",
-                                                   response.getCurrentStep(), response.getIsCompleted());
-
-                                               return ApiResponse.onSuccess(response);
-                                             }
-                                           }
-                                           */
+    return ApiResponse.onSuccess(response);
+  }
+}

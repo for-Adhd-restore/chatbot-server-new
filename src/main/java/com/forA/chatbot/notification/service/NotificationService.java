@@ -65,4 +65,15 @@ public class NotificationService {
       }
     }
   }
+
+  public void sendChatReminderNotification(Long userId) {
+    deviceTokenRepository.findByUserId(userId).ifPresentOrElse(
+        deviceToken -> {
+          log.info("Sending chat reminder to user {}", userId);
+          String token = deviceToken.getDeviceToken();
+          sendPushNotification(token, "모리가 기다리고 있어요", "대화를 마무리하고 마음을 챙겨주세요!");
+        },
+        () -> log.warn("Device token not found for user {}. Cannot send reminder.", userId)
+    );
+  }
 }

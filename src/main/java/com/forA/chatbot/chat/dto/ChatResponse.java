@@ -14,13 +14,15 @@ public class ChatResponse {
   private List<ChatMessageDto> messages; // 현재까지의 대화 기록 (세션 재개 시 유용)
   private ChatBotMessage botMessage; // 챗봇의 다음 메시지
   private Boolean isCompleted; // 현재 단계가 완료되었는지 여부
-  private Boolean onboardingCompleted; // 5.1 데이터 수집 완료 여부
+  private Boolean onboardingCompleted;
 
   @Getter
   @Builder
   public static class ChatMessageDto {
-    private String sender; // USER, BOT
+    private String sender;
     private String content;
+    private MessageType type;
+    private List<ButtonOption> options;
     private LocalDateTime sentAt;
   }
 
@@ -34,7 +36,7 @@ public class ChatResponse {
 
   public enum MessageType {
     TEXT, // 일반 텍스트 응답 (GPT AI와 대화할 경우)
-    OPTION, // 버튼 선택형 응답
+    OPTION,
     INPUT // 키보드 입력형 응답 (ex. 생년 입력, 현재 상황 입력)
   }
 

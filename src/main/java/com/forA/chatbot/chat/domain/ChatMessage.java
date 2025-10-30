@@ -12,9 +12,8 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Setter
 @Builder
 @Document(collection = "chat_messages")
-public class ChatMessage { // 챗봇 및 유저의 모든 메시지를 순서대로 기록
-
-  public enum SenderType { // 누가 보낸 메시지인지 구분
+public class ChatMessage {
+  public enum SenderType {
     USER,
     BOT,
     SYSTEM
@@ -23,23 +22,22 @@ public class ChatMessage { // 챗봇 및 유저의 모든 메시지를 순서대
   @Id private String id;
 
   @Field(name = "session_id")
-  private String sessionId; // ChatSession과의 연결 고리
-
+  private String sessionId;
   @Field(name = "sender_type")
   private SenderType senderType;
 
-  // 메시지가 발생한 시점의 채팅 단계 (5.1.1, 5.2.2 등)
   @Field(name = "chat_step")
   private String chatStep;
 
   @Field(name = "message_content")
-  private String messageContent; // 실제 메시지 내용
+  private String messageContent;
+  @Field(name = "message_type") private String messageType;
+  @Field(name = "options_json") private String optionsJson;
 
   @Field(name = "sent_at")
   @Builder.Default
   private LocalDateTime sentAt = LocalDateTime.now();
 
-  // 유저 응답 메시지인 경우, 유저가 선택한 옵션의 코드 등을 저장 가능 (선택 사항)
   @Field(name = "response_code")
   private String responseCode;
 }
