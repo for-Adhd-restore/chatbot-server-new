@@ -66,6 +66,18 @@ dependencies {
     implementation 'mysql:mysql-connector-java:8.0.33'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // JUnit 5
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    // Mockito
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+
+    // AssertJ (더 나은 assertion)
+    testImplementation 'org.assertj:assertj-core'
+
+    // Spring Security Test (인증 테스트용)
+    testImplementation 'org.springframework.security:spring-security-test'
 
     testImplementation 'com.h2database:h2'
     testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x:4.11.0'
