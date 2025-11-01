@@ -31,6 +31,7 @@ import com.forA.chatbot.user.domain.enums.SymptomType;
 import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -86,7 +87,7 @@ public class ChatService {
 
     ChatSession session;
     ChatBotMessage botMessage;
-    List<ChatMessageDto> history = Collections.emptyList();
+    List<ChatMessageDto> history = new ArrayList<>();
 
     // 1. 세션 확인
     Optional<ChatSession> unfinishedSessionOpt = chatSessionRepository

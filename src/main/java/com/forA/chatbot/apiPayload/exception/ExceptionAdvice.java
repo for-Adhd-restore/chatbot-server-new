@@ -1,5 +1,6 @@
 package com.forA.chatbot.apiPayload.exception;
 
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.forA.chatbot.apiPayload.ApiResponse;
 import com.forA.chatbot.apiPayload.code.ErrorReasonDTO;
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,6 +37,31 @@ public class ExceptionAdvice extends ResponseEntityExceptionHandler {
 
     return handleExceptionInternalConstraint(
         e, ErrorStatus.valueOf(errorMessage), HttpHeaders.EMPTY, request);
+  }
+
+  @Override
+  protected ResponseEntity<Object> handleHttpMessageNotReadable(
+      HttpMessageNotReadableException e,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+
+    Map<String, String> errors = new LinkedHashMap<>();
+    String errorField = "request_body"; // 기본 에러 필드
+    String errorMessage = ErrorStatus._BAD_REQUEST.getMessage(); // 기본 메시지
+
+    // 원인 예외가 UnrecognizedPropertyException인지 확인 (알 수 없는 필드 에러)
+    if (e.getCause() instanceof UnrecognizedPropertyException) {
+      UnrecognizedPropertyException upe = (UnrecognizedPropertyException) e.getCause();
+      errorField = upe.getPropertyName(); // DTO에 없는 필드 이름 (예: "gender")
+      errorMessage = "올바른 필드를 입력해주세요.";
+      errors.put(errorField, errorMessage);
+    } else {
+      // 그 외 다른 JSON 파싱 에러 (형식 오류 등)
+      errors.put(errorField, errorMessage);
+    }
+    return handleExceptionInternalArgs(
+        e, HttpHeaders.EMPTY, ErrorStatus._BAD_REQUEST, request, errors);
   }
 
   @Override

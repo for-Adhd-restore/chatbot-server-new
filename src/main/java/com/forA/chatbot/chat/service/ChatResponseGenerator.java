@@ -230,7 +230,7 @@ public class ChatResponseGenerator {
         + "모리가 " + nickname + "님의 곁에서 도움이 될 수 있도록 함께할게요.\n"
         + "지금 약 페이지로 이동하면, 제 시간에 약을 복용하실 수 있도록 도와드릴게요!";
     return ChatBotMessage.builder()
-        .content(feedbackText + closingMessage)
+        .content(closingMessage)
         .type(MessageType.TEXT)
         .build();
   }
