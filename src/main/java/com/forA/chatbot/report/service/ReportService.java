@@ -216,8 +216,12 @@ public class ReportService {
     List<Integer> chatbotEmotionScores = getChatbotEmotionScores(userId, date);
     emotionScores.addAll(chatbotEmotionScores);
 
+
     // 2. 복약 시 수집한 감정 점수 계산
     List<Integer> medicationEmotionScores = getMedicationEmotionScores(userId, date);
+    for(Integer emotionScore : medicationEmotionScores) {
+      log.info("복약 감정 점수: {}",String.valueOf(emotionScore));
+    }
     emotionScores.addAll(medicationEmotionScores);
 
     // 3. 평균 계산
@@ -226,6 +230,7 @@ public class ReportService {
     }
 
     int totalScore = emotionScores.stream().mapToInt(Integer::intValue).sum();
+    log.info("최종 감정 점수 계산: {} 나누기 {}",String.valueOf(totalScore), String.valueOf(emotionScores.size()));
     return (double) totalScore / emotionScores.size();
   }
 
@@ -239,14 +244,15 @@ public class ReportService {
     List<Integer> scores = new ArrayList<>();
 
     try {
+      log.info("챗봇 감정 조회 시작 날짜: {}",String.valueOf(date));
       // 해당 날짜에 EMOTION_SELECT 단계인 ChatSession 조회
       // LocalDate를 LocalDateTime 범위로 변환 (00:00:00 ~ 23:59:59)
       java.time.LocalDateTime startOfDay = date.atStartOfDay();
       java.time.LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
 
       List<ChatSession> emotionSessions =
-          chatSessionRepository.findByUserIdAndCurrentStepAndDateRange(
-              userId, ChatStep.EMOTION_SELECT.name(), startOfDay, endOfDay);
+          chatSessionRepository.findByUserIdAndStartedAtBetween(
+              userId, startOfDay, endOfDay);
 
       for (ChatSession session : emotionSessions) {
         // 해당 세션의 USER 메시지 중 EMOTION_SELECT 단계의 메시지 조회
@@ -261,14 +267,13 @@ public class ReportService {
           if (responseCode != null && !responseCode.isEmpty()) {
             // 감정 코드 파싱 (예: "EXCITED,JOY")
             List<Integer> emotionScoresFromMessage = parseEmotionCodes(responseCode);
+            for (Integer emotionScore : emotionScoresFromMessage) {
+              log.info("챗봇 감정 점수: {}",String.valueOf(emotionScore));
+            }
+
             scores.addAll(emotionScoresFromMessage);
           }
         }
-      }
-
-      // 최대 3번까지만 사용
-      if (scores.size() > 3) {
-        return scores.subList(0, 3);
       }
 
     } catch (Exception e) {
