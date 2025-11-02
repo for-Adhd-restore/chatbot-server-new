@@ -15,6 +15,7 @@ import com.forA.chatbot.medications.repository.MedicationBundleRepository;
 import com.forA.chatbot.medications.repository.MedicationLogRepository;
 
 import com.forA.chatbot.report.dto.ReportResponseDto;
+import com.forA.chatbot.report.dto.ReportResponseDto.MonthlyEmotionReportResponse;
 import com.forA.chatbot.user.domain.User;
 import java.sql.Date;
 import java.time.DayOfWeek;
@@ -62,24 +63,24 @@ public class ReportService {
 
 
   public ReportResponseDto.MonthlyReportResponse getMonthlyMedicationReport(Long userId, int monthOffset) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new NotificationHandler(ErrorStatus.USER_NOT_FOUND));
+      User user =
+          userRepository
+              .findById(userId)
+              .orElseThrow(() -> new NotificationHandler(ErrorStatus.USER_NOT_FOUND));
 
-    // 1. monthOffset을 기준으로 대상 월의 시작일과 종료일 계산
-    YearMonth targetMonth = YearMonth.now().plusMonths(monthOffset);
-    LocalDate startDate = targetMonth.atDay(1);
-    LocalDate endDate = targetMonth.atEndOfMonth();
+      // 1. monthOffset을 기준으로 대상 월의 시작일과 종료일 계산
+      YearMonth targetMonth = YearMonth.now().plusMonths(monthOffset);
+      LocalDate startDate = targetMonth.atDay(1);
+      LocalDate endDate = targetMonth.atEndOfMonth();
 
-    // 2. 공통 로직을 사용하여 일별 리포트 데이터 생성
-    List<ReportResponseDto.DailyMedicationReportDto> monthData = generateDailyReports(user, startDate, endDate);
+      // 2. 공통 로직을 사용하여 일별 리포트 데이터 생성
+      List<ReportResponseDto.DailyMedicationReportDto> monthData = generateDailyReports(user, startDate, endDate);
 
-    return ReportResponseDto.MonthlyReportResponse.builder()
-        .year(targetMonth.getYear()) // 조회된 년도 추가
-        .month(targetMonth.getMonthValue()) // 조회된 월 추가
-        .monthData(monthData)
-        .build();
+      return ReportResponseDto.MonthlyReportResponse.builder()
+          .year(targetMonth.getYear()) // 조회된 년도 추가
+          .month(targetMonth.getMonthValue()) // 조회된 월 추가
+          .monthData(monthData)
+          .build();
   }
 
   /**
@@ -353,4 +354,20 @@ public class ReportService {
   }
 
 
+  public MonthlyEmotionReportResponse getMonthlyEmotionReport(Long userId, int monthOffset) {
+    // 1. monthOffset을 기준으로 대상 월의 시작일과 종료일 계산
+    YearMonth targetMonth = YearMonth.now().plusMonths(monthOffset);
+    LocalDate startDate = targetMonth.atDay(1);
+    LocalDate endDate = targetMonth.atEndOfMonth();
+
+    // 2. 공통 로직을 사용하여 일별 리포트 데이터 생성
+    List<ReportResponseDto.DailyEmotionReportDto> monthData = calculateDailyEmotionScores(userId, startDate, endDate);
+
+    return ReportResponseDto.MonthlyEmotionReportResponse.builder()
+        .year(targetMonth.getYear()) // 조회된 년도 추가
+        .month(targetMonth.getMonthValue()) // 조회된 월 추가
+        .monthData(monthData)
+        .build();
+
+  }
 }

@@ -56,4 +56,16 @@ public class ReportController {
 
     return ApiResponse.of(SuccessStatus._WEEKLY_EMOTION_REPORT_RETRIEVED, response);
   }
+
+  @GetMapping("/monthly/emotion")
+  public ApiResponse<ReportResponseDto.MonthlyEmotionReportResponse> getMonthlyEmotionReport (
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @RequestParam(value = "monthOffset", defaultValue = "0") int monthOffset) {
+
+    Long userId = userDetails.getUserId();
+    ReportResponseDto.MonthlyEmotionReportResponse response = reportService.getMonthlyEmotionReport(userId, monthOffset);
+
+
+    return ApiResponse.of(SuccessStatus._MONTHLY_EMOTION_REPORT_RETRIEVED, response);
+  }
 }

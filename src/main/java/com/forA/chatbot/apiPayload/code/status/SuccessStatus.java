@@ -26,8 +26,8 @@ public enum SuccessStatus implements BaseCode {
   //report 관련
   _WEEKLY_MEDICATION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2000","주간 복약 현황을 성공적으로 조회하였습니다."),
   _MONTHLY_MEDICATION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2001","월간 복약 현황을 성공적으로 조회했습니다."),
-  _WEEKLY_EMOTION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2002", "주간 감정 리포트를 성공적으로 조회했습니다.");
-
+  _WEEKLY_EMOTION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2002", "주간 감정 리포트를 성공적으로 조회했습니다."),
+  _MONTHLY_EMOTION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2003","월간 감정 리포트를 성공적으로 조회했습니다.");
   private final HttpStatus httpStatus;
   private final String code;
   private final String message;

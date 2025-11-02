@@ -62,6 +62,14 @@ public class ReportResponseDto {
     private List<DailyEmotionReportDto> previousWeek;
   }
 
+  @Getter
+  @Builder
+  public static class MonthlyEmotionReportResponse {
+    private int year;       // 조회 년도
+    private int month;      // 조회 월
+    private List<DailyEmotionReportDto> monthData;
+
+  }
   /**
    * 일별 감정 리포트 DTO
    */
@@ -72,5 +80,7 @@ public class ReportResponseDto {
     private String dayOfWeek; // 영어 대문자 (예: "MONDAY")
     private Double emotionScore; // 감정 평균 점수 (소수점 포함)
   }
+
+
 }
 
