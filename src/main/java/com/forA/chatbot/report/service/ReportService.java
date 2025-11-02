@@ -203,12 +203,7 @@ public class ReportService {
     return dailyDataList;
   }
 
-  /**
-   * 특정 날짜의 감정 점수 계산
-   * - 챗봇 감정 (최대 3번) + 복약 감정 (최대 3번)
-   * - 평균 = 전체 점수 합 / 기록 횟수
-   * - 기록이 없으면 0.0 반환
-   */
+  //특정 날짜의 감정 점수 계산
   private Double calculateEmotionScoreForDate(Long userId, LocalDate date) {
     List<Integer> emotionScores = new ArrayList<>();
 
@@ -234,18 +229,13 @@ public class ReportService {
     return (double) totalScore / emotionScores.size();
   }
 
-  /**
-   * 챗봇에서 수집한 감정 점수 조회
-   * - ChatSession의 currentStep이 'EMOTION_SELECT'인 세션 찾기
-   * - 해당 세션의 ChatMessage에서 SenderType이 USER인 메시지의 responseCode 파싱
-   * - EmotionType의 state에 따라 점수 계산: POSITIVE(+1), NEUTRAL(0), NEGATIVE(-1)
-   */
+
+   // 챗봇에서 수집한 감정 점수 조회
   private List<Integer> getChatbotEmotionScores(Long userId, LocalDate date) {
     List<Integer> scores = new ArrayList<>();
 
     try {
       log.info("챗봇 감정 조회 시작 날짜: {}",String.valueOf(date));
-      // 해당 날짜에 EMOTION_SELECT 단계인 ChatSession 조회
       // LocalDate를 LocalDateTime 범위로 변환 (00:00:00 ~ 23:59:59)
       java.time.LocalDateTime startOfDay = date.atStartOfDay();
       java.time.LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
