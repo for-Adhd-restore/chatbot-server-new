@@ -45,4 +45,20 @@ public interface MedicationLogRepository extends JpaRepository<MedicationLog, Lo
           + "AND ml.isTaken = :isTaken")
   List<MedicationLog> findByUserIdAndDateAndIsTaken(
       @Param("userId") Long userId, @Param("date") Date date, @Param("isTaken") Boolean isTaken);
+
+  /**
+   * 특정 기간 동안 특정 번들들의 복용 기록 개수 조회
+   */
+  @Query("SELECT COUNT(ml) FROM MedicationLog ml " +
+      "WHERE ml.medicationBundle.id IN :bundleIds " +
+      "AND ml.date BETWEEN :startDate AND :endDate " +
+      "AND ml.isTaken = :isTaken")
+  Long countByBundleIdsAndDateRangeAndIsTaken(
+      @Param("bundleIds") List<Long> bundleIds,
+      @Param("startDate") Date startDate,
+      @Param("endDate") Date endDate,
+      @Param("isTaken") Boolean isTaken
+  );
+
+
 }

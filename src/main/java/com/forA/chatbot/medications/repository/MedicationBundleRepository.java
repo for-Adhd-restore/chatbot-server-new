@@ -42,4 +42,6 @@ public interface MedicationBundleRepository extends JpaRepository<MedicationBund
 
   // 사용자의 삭제되지 않은 복용 계획을 복용 시간 오름차순으로 조회
   List<MedicationBundle> findByUserAndIsDeletedFalseOrderByScheduledTimeAsc(User user);
+
+  List<MedicationBundle> findByUserIdAndIsDeletedFalse(Long userId);
 }

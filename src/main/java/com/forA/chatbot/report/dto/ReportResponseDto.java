@@ -1,5 +1,6 @@
 package com.forA.chatbot.report.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import java.util.List;
@@ -79,6 +80,19 @@ public class ReportResponseDto {
     private String date; // YYYY-MM-DD 형식 (예: "2025-10-24")
     private String dayOfWeek; // 영어 대문자 (예: "MONDAY")
     private Double emotionScore; // 감정 평균 점수 (소수점 포함)
+  }
+
+  @Getter
+  @Builder
+  public static class WeeklyReportSummaryResponse {
+    private Boolean hasEmotionData;
+    private Boolean hasMedicationData;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Double medicationComplianceRate;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Double emotionImprovementRate;
   }
 
 

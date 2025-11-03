@@ -68,4 +68,14 @@ public class ReportController {
 
     return ApiResponse.of(SuccessStatus._MONTHLY_EMOTION_REPORT_RETRIEVED, response);
   }
+
+  @GetMapping("/weekly/summary")
+  public ApiResponse<ReportResponseDto.WeeklyReportSummaryResponse> getWeeklyReportSummary(
+      @AuthenticationPrincipal CustomUserDetails userDetails) {
+    Long userId = userDetails.getUserId();
+    ReportResponseDto.WeeklyReportSummaryResponse response = reportService.getWeeklyReportSummary(userId);
+
+    return ApiResponse.of(SuccessStatus._WEEKLY_REPORT_SUMMARY_RETRIEVED, response);
+
+  }
 }
