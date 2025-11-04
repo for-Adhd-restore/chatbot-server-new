@@ -63,10 +63,9 @@ public enum ErrorStatus implements BaseErrorCode {
 
   // Chat 관련 에러
   SESSION_NOT_FOUND(HttpStatus.BAD_REQUEST, "CHAT4001", "존재하는 세션이 아닙니다."),
-  INVALID_JOB_COUNT(HttpStatus.BAD_REQUEST, "CHAT4002", "직업 입력 개수가 올바르지 않습니다."),
-  INVALID_DISORDER_COUNT(HttpStatus.BAD_REQUEST, "CHAT4003", "질환 입력 개수가 올바르지 않습니다."),
-  INVALID_SYMPTOMS_COUNT(HttpStatus.BAD_REQUEST, "CHAT4004", "증상 입력 개수가 올바르지 않습니다."),
-  INVALID_BUTTON_SELECTION(HttpStatus.BAD_REQUEST, "CHAT4005", "올바른 버튼을 선택해 주세요.");
+  INVALID_BUTTON_SELECTION(HttpStatus.BAD_REQUEST, "CHAT4002", "올바른 버튼을 선택해 주세요."),
+  AI_RESPONSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT5001", "ai 응답 생성에 실패하였습니다"),
+  SKILL_NAME_IS_NULL(HttpStatus.BAD_REQUEST, "CHAT4003", "skill name이 공백입니다.");
 
 
   private final HttpStatus httpStatus;

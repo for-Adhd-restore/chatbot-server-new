@@ -209,4 +209,14 @@ public class ChatAiService {
     log.info("최종 추천된 스킬 chunk_id 리스트 ({}개): {}", recommendedChunkIds.size(), recommendedChunkIds);
     return recommendedChunkIds;
   }
+
+  public List<String> generateDetailedSkillSteps(String chunkId) {
+    log.info("AI 상세 행동 4가지 제안 요청 (미구현): {}", chunkId);
+
+    // TODO: 여기에 OpenAI API를 호출하여 chunkId(예: distress-001)에 해당하는
+    // 4가지 상세 행동 스텝(문자열 리스트)을 생성하는 로직을 구현해야 합니다.
+
+    // (임시 반환값)
+    return List.of();
+  }
 }

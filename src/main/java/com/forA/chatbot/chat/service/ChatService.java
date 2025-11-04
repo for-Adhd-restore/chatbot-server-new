@@ -223,12 +223,14 @@ public class ChatService {
           session.setTemporaryData("userSituation", userSituation);
           String empathySentence = chatAiService.generateEmpathySentence(userSituation, selectedEmotions);
           String goalPhrase = chatAiService.generateProposalGoalPhrase(userSituation, selectedEmotions);
-          nextStep = ChatStep.ACTION_PROPOSE;
-          botMessage = responseGenerator.createActionProposeMessage(nickname, empathySentence, goalPhrase);          break;
-        case ACTION_PROPOSE:
+          nextStep = ChatStep.ACTION_OFFER;
+          botMessage = responseGenerator.createActionOfferMessage(nickname, empathySentence, goalPhrase);
+          break;
+        case ACTION_OFFER:
           if ("YES_PROPOSE".equals(userResponse)) {
-            nextStep = ChatStep.SKILL_SELECT;
+            nextStep = ChatStep.ACTION_PROPOSE;
             String skillJson = convertSkillsToJson();
+            // 행동 추천 생성
             List<String> recommendedIds = chatAiService.recommendSkillChunkId(userSituation, selectedEmotionsString, skillJson);
             List<BehavioralSkill> recommendedSkills = recommendedIds.stream()
                 .map(id -> behavioralSkills.stream()
@@ -237,7 +239,7 @@ public class ChatService {
                     .orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-            botMessage = responseGenerator.createSkillSelectMessage(recommendedSkills); // GPT 호출 (나중에 구현)
+            botMessage = responseGenerator.createActionProposeMessage(recommendedSkills); // GPT 호출 (나중에 구현)
           } else if ("NO_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
             String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
@@ -246,7 +248,7 @@ public class ChatService {
             throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
           }
           break;
-        case SKILL_SELECT:
+        case ACTION_PROPOSE:
           String selectedSkillId = userResponse;
           BehavioralSkill selectedSkill = behavioralSkills.stream()
               .filter(skill -> skill.chunk_id().equals(selectedSkillId))
@@ -261,17 +263,19 @@ public class ChatService {
           } else {
             session.setTemporaryData("selectedSkillId", selectedSkillId);
             session.setTemporaryData("selectedSkillName", selectedSkill.skill_name());
-            nextStep = ChatStep.SKILL_CONFIRM;
-            botMessage = responseGenerator.createSkillConfirmMessage(selectedSkill);
-
-            // 5분 알림 예약
-            chatNotificationScheduler.scheduleNotification(session.getId(), user.getId());
+            nextStep = ChatStep.SKILL_SELECT;
+            List<String> detailedSteps = chatAiService.generateDetailedSkillSteps(selectedSkillId);
+            botMessage = responseGenerator.createSkillSelectMessage(selectedSkill, detailedSteps);
           }
           break;
+        case SKILL_SELECT:
+          chatNotificationScheduler.scheduleNotification(session.getId(), user.getId());
+          nextStep = ChatStep.SKILL_CONFIRM;
+          String skillName = session.getTemporaryData("selectedSkillName");
+          botMessage = responseGenerator.createSkillConfirmMessage(skillName, nickname);
+          break;
         case SKILL_CONFIRM:
-          // 사용자가 응답했으므로 예약된 알림 취소
           chatNotificationScheduler.cancelNotification(session.getId());
-
           if ("ACTION_DONE".equals(userResponse)) {
             nextStep = ChatStep.ACTION_FEEDBACK;
             botMessage = responseGenerator.createFeedbackRequestMessage();
@@ -279,6 +283,8 @@ public class ChatService {
             nextStep = ChatStep.CHAT_END;
             String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
             botMessage = responseGenerator.createAloneComfortMessage(nickname, gptComfortMessage);
+          } else {
+            throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
           }
           break;
         case ACTION_FEEDBACK:

@@ -1,5 +1,7 @@
 package com.forA.chatbot.chat.service;
 
+import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
+import com.forA.chatbot.apiPayload.exception.handler.ChatHandler;
 import com.forA.chatbot.chat.domain.enums.ChatStep;
 import com.forA.chatbot.chat.domain.enums.EmotionType;
 import com.forA.chatbot.chat.dto.ChatResponse.ButtonOption;
@@ -14,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.random.RandomGenerator.StreamableGenerator;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -164,7 +167,7 @@ public class ChatResponseGenerator {
     return ChatBotMessage.builder().content(content).type(MessageType.TEXT).build();
   }
 
-  public ChatBotMessage createActionProposeMessage(String nickname, String empathySentence, String goalPhrase) {
+  public ChatBotMessage createActionOfferMessage(String nickname, String empathySentence, String goalPhrase) {
     String content = empathySentence + " 모리가 " + nickname + "님을 위해 " + goalPhrase + " 도움이 될 수 있는 방법을 추천 드려도 될까요?";
     return ChatBotMessage.builder()
         .content(content)
@@ -188,7 +191,7 @@ public class ChatResponseGenerator {
         .build();
   }
 
-  public ChatBotMessage createSkillSelectMessage(List<BehavioralSkill> skills) {
+  public ChatBotMessage createActionProposeMessage(List<BehavioralSkill> skills) {
     // 전달받은 스킬 목록으로 버튼 옵션 생성
     List<ButtonOption> options = skills.stream()
         .map(skill -> ButtonOption.builder()
@@ -197,13 +200,59 @@ public class ChatResponseGenerator {
             .build())
         .collect(Collectors.toList());
 
-    String content = "좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요. "
+    String content = "좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요.\n"
         + "지금 감정에 도움이 될 수 있는 방법들을 소개했어요. 이 중에서 하나 골라 함께 해볼까요?";
 
     return ChatBotMessage.builder()
         .content(content)
         .type(MessageType.OPTION)
         .options(options)
+        .build();
+  }
+
+  public ChatBotMessage createSkillSelectMessage(BehavioralSkill selectedSkill, List<String> detailedSteps) {
+
+    if (selectedSkill == null)
+    {
+      log.warn("선택한 스킬 정보를 찾을 수 없습니다.");
+      return ChatBotMessage.builder()
+          .content("선택하신 스킬 정보를 찾을 수 없어요. 다시 시도해 주시겠어요?")
+          .type(MessageType.TEXT)
+          .build();
+    }
+    String description = selectedSkill.description();
+
+    List<ButtonOption> options;
+    if (detailedSteps != null && !detailedSteps.isEmpty()) {
+      options = detailedSteps.stream()
+          .map(stepText -> ButtonOption.builder()
+              .label(stepText)
+              .value(stepText)
+              .isMultiSelect(false)
+              .build())
+          .collect(Collectors.toList());
+    } else { // 응답 실패
+      throw new ChatHandler(ErrorStatus.AI_RESPONSE_FAILED);
+    }
+
+    return ChatBotMessage.builder()
+        .content(description)
+        .type(MessageType.OPTION)
+        .options(options)
+        .build();
+  }
+
+  public ChatBotMessage createSkillConfirmMessage(String skillName, String nickName) {
+    if (skillName == null) throw new ChatHandler(ErrorStatus.AI_RESPONSE_FAILED);
+
+    String content = "모리가 기다리고 있었어요! " + nickName + "님 " + skillName + " 하고 오셨나요?";
+    return ChatBotMessage.builder()
+        .content(content)
+        .type(MessageType.OPTION)
+        .options(Arrays.asList(
+            ButtonOption.builder().label("응, 하고 왔어").value("ACTION_DONE").build(),
+            ButtonOption.builder().label("아니, 안 하고 왔어").value("ACTION_SKIPPED").build()
+        ))
         .build();
   }
 
@@ -235,27 +284,4 @@ public class ChatResponseGenerator {
         .build();
   }
 
-  public ChatBotMessage createSkillConfirmMessage(BehavioralSkill selectedSkill) {
-    if (selectedSkill == null)
-    {
-      log.warn("선택한 스킬 정보를 찾을 수 없습니다.");
-      return ChatBotMessage.builder()
-          .content("선택하신 스킬 정보를 찾을 수 없어요. 다시 시도해 주시겠어요?")
-          .type(MessageType.TEXT)
-          .build();
-    }
-
-    String skillName = selectedSkill.skill_name();
-    String description = selectedSkill.description();
-    String content = description // 먼저 스킬 설명을 보여주고
-        + "\n\n모리가 기다리고 있었어요! " + skillName + " 하고 오셨나요?";
-    return ChatBotMessage.builder()
-        .content(content)
-        .type(MessageType.OPTION)
-        .options(Arrays.asList(
-            ButtonOption.builder().label("응, 하고 왔어").value("ACTION_DONE").build(),
-            ButtonOption.builder().label("아니, 안 하고 왔어").value("ACTION_SKIPPED").build()
-        ))
-        .build();
-  }
 }
