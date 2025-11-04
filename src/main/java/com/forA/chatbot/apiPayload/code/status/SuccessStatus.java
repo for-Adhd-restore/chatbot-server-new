@@ -22,8 +22,13 @@ public enum SuccessStatus implements BaseCode {
   MEDICATION_DELETED(HttpStatus.OK, "MEDICATION2005", "복용 계획이 성공적으로 삭제되었습니다."),
 
   // Notification 관련
-  _TOKEN_REFRESH_SUCCESS(HttpStatus.OK, "NOTIFICATION200", "FCM 토큰 갱신에 성공했습니다.");
-
+  _TOKEN_REFRESH_SUCCESS(HttpStatus.OK, "NOTIFICATION200", "FCM 토큰 갱신에 성공했습니다."),
+  //report 관련
+  _WEEKLY_MEDICATION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2000","주간 복약 현황을 성공적으로 조회하였습니다."),
+  _MONTHLY_MEDICATION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2001","월간 복약 현황을 성공적으로 조회했습니다."),
+  _WEEKLY_EMOTION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2002", "주간 감정 리포트를 성공적으로 조회했습니다."),
+  _MONTHLY_EMOTION_REPORT_RETRIEVED(HttpStatus.OK, "REPORT2003","월간 감정 리포트를 성공적으로 조회했습니다."),
+  _WEEKLY_REPORT_SUMMARY_RETRIEVED(HttpStatus.OK,"REPORT2004","주간 리포트 요약을 성공적으로 조회했습니다.");
   private final HttpStatus httpStatus;
   private final String code;
   private final String message;

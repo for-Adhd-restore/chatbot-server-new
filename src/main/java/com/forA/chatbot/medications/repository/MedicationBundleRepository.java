@@ -1,6 +1,7 @@
 package com.forA.chatbot.medications.repository;
 
 import com.forA.chatbot.medications.domain.MedicationBundle;
+import com.forA.chatbot.user.domain.User;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -38,4 +39,9 @@ public interface MedicationBundleRepository extends JpaRepository<MedicationBund
 
   @Query("SELECT m FROM MedicationBundle m WHERE m.id = :id AND m.isDeleted = false")
   Optional<MedicationBundle> findActiveById(Long id);
+
+  // 사용자의 삭제되지 않은 복용 계획을 복용 시간 오름차순으로 조회
+  List<MedicationBundle> findByUserAndIsDeletedFalseOrderByScheduledTimeAsc(User user);
+
+  List<MedicationBundle> findByUserIdAndIsDeletedFalse(Long userId);
 }
