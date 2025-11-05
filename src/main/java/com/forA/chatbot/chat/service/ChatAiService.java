@@ -1,5 +1,7 @@
 package com.forA.chatbot.chat.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forA.chatbot.chat.domain.enums.EmotionType;
 import java.util.Arrays;
 import java.util.Collections;
@@ -210,13 +212,56 @@ public class ChatAiService {
     return recommendedChunkIds;
   }
 
-  public List<String> generateDetailedSkillSteps(String chunkId) {
-    log.info("AI 상세 행동 4가지 제안 요청 (미구현): {}", chunkId);
+  public List<String> generateDetailedSkillSteps(BehavioralSkill skill) {
+    log.info("AI 상세 행동 4가지 제안 요청: {}", skill.chunk_id());
+    ChatClient chatClient = chatClientBuilder.build();
 
-    // TODO: 여기에 OpenAI API를 호출하여 chunkId(예: distress-001)에 해당하는
-    // 4가지 상세 행동 스텝(문자열 리스트)을 생성하는 로직을 구현해야 합니다.
+    String skillJsonContext;
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      skillJsonContext = objectMapper.writeValueAsString(skill);
+    } catch (JsonProcessingException e) {
+      log.error("Skill JSON 직렬화 실패", e);
+      skillJsonContext = skill.description();
+    }
 
-    // (임시 반환값)
-    return List.of();
+    String promptMessage = """
+            당신은 DBT(변증법적 행동 치료) 전문가입니다.
+            사용자가 다음 JSON 정보에 해당하는 행동을 선택했습니다:
+            [컨텍스트]
+            {skillContext}
+            
+            이 행동을 실제로 실천할 수 있는 4가지의 구체적이고 간단한 '상세 행동'을 제안해주세요.
+            
+            [규칙]
+            1. 응답은 반드시 4개의 짧은 행동(예: "거울 보고 웃기") 리스트여야 합니다.
+            2. 4개의 항목을 콤마(,)로만 구분된 하나의 문자열로 반환하세요.
+            3. (예시): 거울 보고 칭찬하기,내가 잘한 일 3가지 적기,따뜻한 물로 샤워하기,좋아하는 음악 1곡 듣기
+            4. 절대 다른 설명이나 번호(1., 2.)를 붙이지 마세요.
+            """;
+
+    PromptTemplate promptTemplate = new PromptTemplate(promptMessage);
+    Prompt prompt = promptTemplate.create(Map.of("skillContext", skillJsonContext));
+
+    ChatResponse response = chatClient.prompt(prompt).call().chatResponse();
+    Generation generation = response.getResult();
+
+    if (generation != null && generation.getOutput() != null) {
+      String rawResponse = generation.getOutput().getText().trim();
+      log.info("AI 상세 행동 응답 (Raw): {}", rawResponse);
+
+      return Arrays.stream(rawResponse.split(","))
+          .map(String::trim)
+          .limit(4)
+          .collect(Collectors.toList());
+    }
+
+    log.error("AI 상세 행동 생성 실패. 임시값을 반환합니다.");
+    return List.of(
+        "상세 행동 1 (AI 생성 실패)",
+        "상세 행동 2 (AI 생성 실패)",
+        "상세 행동 3 (AI 생성 실패)",
+        "상세 행동 4 (AI 생성 실패)"
+    );
   }
 }

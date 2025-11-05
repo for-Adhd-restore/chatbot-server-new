@@ -48,7 +48,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 record BehavioralSkill(String chunk_id, String skill_type, List<String> situation_tags,
-                       String skill_origin, String skill_name, String description,
+                       String skill_origin, String skill_name, String description, List<String> step_by_step,
                        List<String> emotion_tags) {}
 
 @Slf4j
@@ -264,7 +264,7 @@ public class ChatService {
             session.setTemporaryData("selectedSkillId", selectedSkillId);
             session.setTemporaryData("selectedSkillName", selectedSkill.skill_name());
             nextStep = ChatStep.SKILL_SELECT;
-            List<String> detailedSteps = chatAiService.generateDetailedSkillSteps(selectedSkillId);
+            List<String> detailedSteps = chatAiService.generateDetailedSkillSteps(selectedSkill);
             botMessage = responseGenerator.createSkillSelectMessage(selectedSkill, detailedSteps);
           }
           break;

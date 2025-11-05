@@ -222,18 +222,13 @@ public class ChatResponseGenerator {
     }
     String description = selectedSkill.description();
 
-    List<ButtonOption> options;
-    if (detailedSteps != null && !detailedSteps.isEmpty()) {
-      options = detailedSteps.stream()
-          .map(stepText -> ButtonOption.builder()
-              .label(stepText)
-              .value(stepText)
-              .isMultiSelect(false)
-              .build())
-          .collect(Collectors.toList());
-    } else { // 응답 실패
-      throw new ChatHandler(ErrorStatus.AI_RESPONSE_FAILED);
-    }
+    List<ButtonOption> options = detailedSteps.stream()
+        .map(stepText -> ButtonOption.builder()
+            .label(stepText)
+            .value(stepText)
+            .isMultiSelect(false)
+            .build())
+        .collect(Collectors.toList());
 
     return ChatBotMessage.builder()
         .content(description)
