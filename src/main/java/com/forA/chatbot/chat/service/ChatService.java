@@ -165,7 +165,6 @@ public class ChatService {
           break;
         case BIRTH_YEAR:
           int birthYear = Integer.parseInt(userResponse);
-          // TODO : 임시 생년 유효범위 세팅
           if(birthYear < 1900 || birthYear > 2030) {
             throw new UserHandler(ErrorStatus.INVALID_YEAR_OF_BIRTH);
           }
@@ -451,5 +450,28 @@ public class ChatService {
     return Arrays.stream(values)
         .map(valueOf)
         .collect(Collectors.toSet());
+  }
+
+  /**
+   * 기존에 미완료된 세션이 있다면 강제로 종료시키고, initializeSession을 호출하여 새 세션을 시작
+   */
+  @Transactional
+  public ChatResponse forceInitializeSession(Long userId) {
+    log.info("채팅 세션 강제 새로 시작: {}", userId);
+
+    // 1. 기존 미완료 세션이 있다면 종료시킴
+    Optional<ChatSession> unfinishedSessionOpt = chatSessionRepository
+        .findFirstByUserIdAndEndedAtIsNullOrderByStartedAtDesc(userId);
+
+    if (unfinishedSessionOpt.isPresent()) {
+      ChatSession unfinishedSession = unfinishedSessionOpt.get();
+      unfinishedSession.setEndedAt(LocalDateTime.now());
+      unfinishedSession.clearTemporaryData();
+      chatSessionRepository.save(unfinishedSession);
+      log.info("기존 미완료 세션 강제 종료: {}", unfinishedSession.getId());
+    }
+
+    // 2. (이제 미완료 세션이 없으므로) initializeSession을 호출하면 'else' 분기를 타게 됨
+    return initializeSession(userId);
   }
 }

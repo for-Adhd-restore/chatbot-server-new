@@ -68,7 +68,7 @@ public class ChatResponseGenerator {
       // 5. SYMPTOM_TYPE은 동적이므로 여기서는 처리하지 않음 (createSymptomMessage가 대신 처리)
       case EMOTION_SELECT: // 6. 감정 선택
         String content = isUserOnboarded ?
-            String.format("안녕하세요, %s님! 모리예요! 🐾\n오늘은 기분이 어때요? 모리가 눈치 빠르게 알아챌 수 있게 이모지 두 개만 콕! 찍어주세요.", nickname) :
+            String.format("안녕하세요, %s님! 모리예요! 🐾오늘은 기분이 어때요? 모리가 눈치 빠르게 알아챌 수 있게 이모지 두 개만 콕! 찍어주세요.", nickname) :
             String.format("감사합니다! 모든 데이터는 마이페이지에서 수정과 삭제가 가능합니다. %s님 지금 어떤 기분이에요? 모리가 알아챌 수 있게 이모지 골라주세요", nickname);
 
         return ChatBotMessage.builder()
@@ -91,7 +91,7 @@ public class ChatResponseGenerator {
         return ChatBotMessage.builder()
             .content("좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요." + "지금 감정에 도움이 될 수 있는 방법들을 소개했어요. 이 중에서 하나 골라 함께 해볼까요?")
             .type(MessageType.OPTION)
-            .options(Arrays.asList( // TODO : 수정 필요 - 현재 임시 버튼
+            .options(Arrays.asList(
                 ButtonOption.builder().label("스킬1").value("SKILL_1").build(),
                 ButtonOption.builder().label("스킬2").value("SKILL_2").build()
             ))
