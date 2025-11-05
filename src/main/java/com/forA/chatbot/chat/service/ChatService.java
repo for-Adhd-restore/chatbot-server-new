@@ -48,7 +48,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 record BehavioralSkill(String chunk_id, String skill_type, List<String> situation_tags,
-                       String skill_origin, String skill_name, String description,
+                       String skill_origin, String skill_name, String description, List<String> step_by_step,
                        List<String> emotion_tags) {}
 
 @Slf4j
@@ -165,7 +165,6 @@ public class ChatService {
           break;
         case BIRTH_YEAR:
           int birthYear = Integer.parseInt(userResponse);
-          // TODO : 임시 생년 유효범위 세팅
           if(birthYear < 1900 || birthYear > 2030) {
             throw new UserHandler(ErrorStatus.INVALID_YEAR_OF_BIRTH);
           }
@@ -181,7 +180,7 @@ public class ChatService {
           break;
         case DISORDER_TYPE:
           Set<DisorderType> disorders = parseAndValidateMultiSelect(userResponse, DisorderType::valueOf, 2, "질환");
-          user.updateDisorders(disorders); // User 엔티티에 질환 저장
+          user.updateDisorders(disorders);
 
           if (disorders.stream().anyMatch(d -> d == DisorderType.NONE)) { // '없음' 선택 시
             nextStep = ChatStep.EMOTION_SELECT; // 증상 건너 뛰고 감정 선택으로
@@ -221,14 +220,16 @@ public class ChatService {
         case SITUATION_INPUT:
           userSituation = userResponse;
           session.setTemporaryData("userSituation", userSituation);
-          String empathySentence = chatAiService.generateEmpathySentence(userSituation, selectedEmotions);
+          String empathySentence = chatAiService.generateEmpathyResponse(userSituation, selectedEmotions, user);
           String goalPhrase = chatAiService.generateProposalGoalPhrase(userSituation, selectedEmotions);
-          nextStep = ChatStep.ACTION_PROPOSE;
-          botMessage = responseGenerator.createActionProposeMessage(nickname, empathySentence, goalPhrase);          break;
-        case ACTION_PROPOSE:
+          nextStep = ChatStep.ACTION_OFFER;
+          botMessage = responseGenerator.createActionOfferMessage(nickname, empathySentence, goalPhrase);
+          break;
+        case ACTION_OFFER:
           if ("YES_PROPOSE".equals(userResponse)) {
-            nextStep = ChatStep.SKILL_SELECT;
+            nextStep = ChatStep.ACTION_PROPOSE;
             String skillJson = convertSkillsToJson();
+            // 행동 추천 생성
             List<String> recommendedIds = chatAiService.recommendSkillChunkId(userSituation, selectedEmotionsString, skillJson);
             List<BehavioralSkill> recommendedSkills = recommendedIds.stream()
                 .map(id -> behavioralSkills.stream()
@@ -237,16 +238,16 @@ public class ChatService {
                     .orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-            botMessage = responseGenerator.createSkillSelectMessage(recommendedSkills); // GPT 호출 (나중에 구현)
+            botMessage = responseGenerator.createActionProposeMessage(recommendedSkills);
           } else if ("NO_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
-            String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
+            String gptComfortMessage = chatAiService.generateSelfSoothingMessages(userSituation, selectedEmotions);
             botMessage = responseGenerator.createAloneComfortMessage(user.getNickname(), gptComfortMessage);
           } else {
             throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
           }
           break;
-        case SKILL_SELECT:
+        case ACTION_PROPOSE:
           String selectedSkillId = userResponse;
           BehavioralSkill selectedSkill = behavioralSkills.stream()
               .filter(skill -> skill.chunk_id().equals(selectedSkillId))
@@ -261,24 +262,43 @@ public class ChatService {
           } else {
             session.setTemporaryData("selectedSkillId", selectedSkillId);
             session.setTemporaryData("selectedSkillName", selectedSkill.skill_name());
-            nextStep = ChatStep.SKILL_CONFIRM;
-            botMessage = responseGenerator.createSkillConfirmMessage(selectedSkill);
-
-            // 5분 알림 예약
-            chatNotificationScheduler.scheduleNotification(session.getId(), user.getId());
+            nextStep = ChatStep.SKILL_SELECT;
+            List<String> detailedSteps = chatAiService.generateDetailedSkillSteps(selectedSkill);
+            String customDescription = chatAiService.generateSkillDescription(userSituation, selectedEmotions, selectedSkill, user);
+            botMessage = responseGenerator.createSkillSelectMessage(customDescription, detailedSteps);
           }
           break;
+        case SKILL_SELECT:
+          chatNotificationScheduler.scheduleNotification(session.getId(), user.getId());
+          nextStep = ChatStep.SKILL_CONFIRM;
+          String skillName = session.getTemporaryData("selectedSkillName");
+          botMessage = responseGenerator.createSkillConfirmMessage(skillName, nickname);
+          break;
         case SKILL_CONFIRM:
-          // 사용자가 응답했으므로 예약된 알림 취소
           chatNotificationScheduler.cancelNotification(session.getId());
-
           if ("ACTION_DONE".equals(userResponse)) {
             nextStep = ChatStep.ACTION_FEEDBACK;
             botMessage = responseGenerator.createFeedbackRequestMessage();
           } else if ("ACTION_SKIPPED".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
-            String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
+
+            String skippedSkillId = session.getTemporaryData("selectedSkillId");
+            BehavioralSkill skippedSkill = behavioralSkills.stream()
+                .filter(s -> s.chunk_id().equals(skippedSkillId))
+                .findFirst()
+                .orElse(null);
+
+            String gptComfortMessage;
+            if (skippedSkill != null) {
+              gptComfortMessage = chatAiService.generateActionSkipped(userSituation, selectedEmotions, skippedSkill);
+            } else {
+              // 스킬을 못찾는 비상시, 기존 '혼자 진정' 로직 사용
+              log.warn("SKILL_CONFIRM(SKIP): 스킵한 스킬을 찾을 수 없음: {}", skippedSkillId);
+              gptComfortMessage = chatAiService.generateSelfSoothingMessages(userSituation, selectedEmotions);
+            }
             botMessage = responseGenerator.createAloneComfortMessage(nickname, gptComfortMessage);
+          } else {
+            throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
           }
           break;
         case ACTION_FEEDBACK:
@@ -287,7 +307,7 @@ public class ChatService {
           botMessage = responseGenerator.createFeedbackDisplayAndClosingMessage(feedbackValue, nickname);
           break;
         case CHAT_END:
-          log.info("Chat session {} already ended.", sessionId);
+          log.info("Chat session {}이 이미 종료되었습니다.", sessionId);
           botMessage = responseGenerator.getBotMessageForStep(currentStep.name(), user, true);
           break;
         default:
@@ -445,5 +465,28 @@ public class ChatService {
     return Arrays.stream(values)
         .map(valueOf)
         .collect(Collectors.toSet());
+  }
+
+  /**
+   * 기존에 미완료된 세션이 있다면 강제로 종료시키고, initializeSession을 호출하여 새 세션을 시작
+   */
+  @Transactional
+  public ChatResponse forceInitializeSession(Long userId) {
+    log.info("채팅 세션 강제 새로 시작: {}", userId);
+
+    // 1. 기존 미완료 세션이 있다면 종료시킴
+    Optional<ChatSession> unfinishedSessionOpt = chatSessionRepository
+        .findFirstByUserIdAndEndedAtIsNullOrderByStartedAtDesc(userId);
+
+    if (unfinishedSessionOpt.isPresent()) {
+      ChatSession unfinishedSession = unfinishedSessionOpt.get();
+      unfinishedSession.setEndedAt(LocalDateTime.now());
+      unfinishedSession.clearTemporaryData();
+      chatSessionRepository.save(unfinishedSession);
+      log.info("기존 미완료 세션 강제 종료: {}", unfinishedSession.getId());
+    }
+
+    // 2. (이제 미완료 세션이 없으므로) initializeSession을 호출하면 'else' 분기를 타게 됨
+    return initializeSession(userId);
   }
 }

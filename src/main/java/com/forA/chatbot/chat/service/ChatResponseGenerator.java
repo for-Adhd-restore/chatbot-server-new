@@ -1,5 +1,7 @@
 package com.forA.chatbot.chat.service;
 
+import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
+import com.forA.chatbot.apiPayload.exception.handler.ChatHandler;
 import com.forA.chatbot.chat.domain.enums.ChatStep;
 import com.forA.chatbot.chat.domain.enums.EmotionType;
 import com.forA.chatbot.chat.dto.ChatResponse.ButtonOption;
@@ -65,7 +67,7 @@ public class ChatResponseGenerator {
       // 5. SYMPTOM_TYPE은 동적이므로 여기서는 처리하지 않음 (createSymptomMessage가 대신 처리)
       case EMOTION_SELECT: // 6. 감정 선택
         String content = isUserOnboarded ?
-            String.format("안녕하세요, %s님! 모리예요! 🐾\n오늘은 기분이 어때요? 모리가 눈치 빠르게 알아챌 수 있게 이모지 두 개만 콕! 찍어주세요.", nickname) :
+            String.format("안녕하세요, %s님! 모리예요! 🐾오늘은 기분이 어때요? 모리가 눈치 빠르게 알아챌 수 있게 이모지 두 개만 콕! 찍어주세요.", nickname) :
             String.format("감사합니다! 모든 데이터는 마이페이지에서 수정과 삭제가 가능합니다. %s님 지금 어떤 기분이에요? 모리가 알아챌 수 있게 이모지 골라주세요", nickname);
 
         return ChatBotMessage.builder()
@@ -79,7 +81,7 @@ public class ChatResponseGenerator {
         // 선택된 감정 이름을 가져와서 메시지에 포함
         String emotionNames = selectedEmotions.stream()
             .map(EmotionType::getName)
-            .collect(Collectors.joining(" ", "지금 ", "상태이시군요."));
+            .collect(Collectors.joining(" ", "지금 ", " 상태이시군요."));
         return ChatBotMessage.builder()
             .content(emotionNames + " 혹시 어떤 일이 있었는지 이야기 해줄 수 있나요?")
             .type(MessageType.INPUT)
@@ -88,7 +90,7 @@ public class ChatResponseGenerator {
         return ChatBotMessage.builder()
             .content("좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요." + "지금 감정에 도움이 될 수 있는 방법들을 소개했어요. 이 중에서 하나 골라 함께 해볼까요?")
             .type(MessageType.OPTION)
-            .options(Arrays.asList( // TODO : 수정 필요 - 현재 임시 버튼
+            .options(Arrays.asList(
                 ButtonOption.builder().label("스킬1").value("SKILL_1").build(),
                 ButtonOption.builder().label("스킬2").value("SKILL_2").build()
             ))
@@ -164,7 +166,7 @@ public class ChatResponseGenerator {
     return ChatBotMessage.builder().content(content).type(MessageType.TEXT).build();
   }
 
-  public ChatBotMessage createActionProposeMessage(String nickname, String empathySentence, String goalPhrase) {
+  public ChatBotMessage createActionOfferMessage(String nickname, String empathySentence, String goalPhrase) {
     String content = empathySentence + " 모리가 " + nickname + "님을 위해 " + goalPhrase + " 도움이 될 수 있는 방법을 추천 드려도 될까요?";
     return ChatBotMessage.builder()
         .content(content)
@@ -188,7 +190,7 @@ public class ChatResponseGenerator {
         .build();
   }
 
-  public ChatBotMessage createSkillSelectMessage(List<BehavioralSkill> skills) {
+  public ChatBotMessage createActionProposeMessage(List<BehavioralSkill> skills) {
     // 전달받은 스킬 목록으로 버튼 옵션 생성
     List<ButtonOption> options = skills.stream()
         .map(skill -> ButtonOption.builder()
@@ -197,13 +199,48 @@ public class ChatResponseGenerator {
             .build())
         .collect(Collectors.toList());
 
-    String content = "좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요. "
+    String content = "좋아요, 그럼 지금 이 감정에 도움이 될 수 있는 방법들을 하나씩 소개해볼게요.\n"
         + "지금 감정에 도움이 될 수 있는 방법들을 소개했어요. 이 중에서 하나 골라 함께 해볼까요?";
 
     return ChatBotMessage.builder()
         .content(content)
         .type(MessageType.OPTION)
         .options(options)
+        .build();
+  }
+
+  public ChatBotMessage createSkillSelectMessage(String customDescription, List<String> detailedSteps) {
+
+    if (customDescription == null)
+    {
+      log.warn("선택한 스킬 정보를 찾을 수 없습니다. (customDescription is null)");
+      customDescription = "선택하신 스킬 정보를 찾을 수 없어요. 다시 시도해 주시겠어요?";
+    }
+    List<ButtonOption> options = detailedSteps.stream()
+        .map(stepText -> ButtonOption.builder()
+            .label(stepText)
+            .value(stepText)
+            .isMultiSelect(false)
+            .build())
+        .collect(Collectors.toList());
+    return ChatBotMessage.builder()
+        .content(customDescription)
+        .type(MessageType.OPTION)
+        .options(options)
+        .build();
+  }
+
+  public ChatBotMessage createSkillConfirmMessage(String skillName, String nickName) {
+    if (skillName == null) throw new ChatHandler(ErrorStatus.AI_RESPONSE_FAILED);
+
+    String content = "모리가 기다리고 있었어요! " + nickName + "님 " + skillName + " 하고 오셨나요?";
+    return ChatBotMessage.builder()
+        .content(content)
+        .type(MessageType.OPTION)
+        .options(Arrays.asList(
+            ButtonOption.builder().label("응, 하고 왔어").value("ACTION_DONE").build(),
+            ButtonOption.builder().label("아니, 안 하고 왔어").value("ACTION_SKIPPED").build()
+        ))
         .build();
   }
 
@@ -226,8 +263,8 @@ public class ChatResponseGenerator {
       case "MORE_HEAVY" -> "더 무거워졌어";
       default -> "기분을 알려주셨어요.";
     };
-    String closingMessage = "힘들 때마다 언제든 모리를 찾아주세요.\n"
-        + "모리가 " + nickname + "님의 곁에서 도움이 될 수 있도록 함께할게요.\n"
+    String closingMessage = "힘들 때마다 언제든 모리를 찾아주세요."
+        + "모리가 " + nickname + "님의 곁에서 도움이 될 수 있도록 함께할게요."
         + "지금 약 페이지로 이동하면, 제 시간에 약을 복용하실 수 있도록 도와드릴게요!";
     return ChatBotMessage.builder()
         .content(closingMessage)
@@ -235,27 +272,4 @@ public class ChatResponseGenerator {
         .build();
   }
 
-  public ChatBotMessage createSkillConfirmMessage(BehavioralSkill selectedSkill) {
-    if (selectedSkill == null)
-    {
-      log.warn("선택한 스킬 정보를 찾을 수 없습니다.");
-      return ChatBotMessage.builder()
-          .content("선택하신 스킬 정보를 찾을 수 없어요. 다시 시도해 주시겠어요?")
-          .type(MessageType.TEXT)
-          .build();
-    }
-
-    String skillName = selectedSkill.skill_name();
-    String description = selectedSkill.description();
-    String content = description // 먼저 스킬 설명을 보여주고
-        + "\n\n모리가 기다리고 있었어요! " + skillName + " 하고 오셨나요?";
-    return ChatBotMessage.builder()
-        .content(content)
-        .type(MessageType.OPTION)
-        .options(Arrays.asList(
-            ButtonOption.builder().label("응, 하고 왔어").value("ACTION_DONE").build(),
-            ButtonOption.builder().label("아니, 안 하고 왔어").value("ACTION_SKIPPED").build()
-        ))
-        .build();
-  }
 }

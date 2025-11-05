@@ -54,4 +54,21 @@ public class ChatController {
 
     return ApiResponse.onSuccess(response);
   }
+  /**
+   * 기존에 미완료된 세션이 있어도 강제로 종료하고 새 세션을 시작합니다.
+   */
+  @PostMapping("/session/new")
+  public ApiResponse<ChatResponse> forceNewSession(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  )
+  {
+    Long userId = userDetails.getUserId();
+    log.info("Chat session FORCE NEW requested for userId: {}", userId);
+    // 강제 세션 초기화
+    ChatResponse response = chatService.forceInitializeSession(userId);
+    log.info("Chat session force new response sent: sessionId={}, currentStep={}", response.getSessionId(), response.getCurrentStep());
+
+    return ApiResponse.onSuccess(response);
+  }
+
 }
