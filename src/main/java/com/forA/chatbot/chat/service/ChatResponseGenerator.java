@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.random.RandomGenerator.StreamableGenerator;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +81,7 @@ public class ChatResponseGenerator {
         // 선택된 감정 이름을 가져와서 메시지에 포함
         String emotionNames = selectedEmotions.stream()
             .map(EmotionType::getName)
-            .collect(Collectors.joining(" ", "지금 ", "상태이시군요."));
+            .collect(Collectors.joining(" ", "지금 ", " 상태이시군요."));
         return ChatBotMessage.builder()
             .content(emotionNames + " 혹시 어떤 일이 있었는지 이야기 해줄 수 있나요?")
             .type(MessageType.INPUT)
@@ -210,18 +209,13 @@ public class ChatResponseGenerator {
         .build();
   }
 
-  public ChatBotMessage createSkillSelectMessage(BehavioralSkill selectedSkill, List<String> detailedSteps) {
+  public ChatBotMessage createSkillSelectMessage(String customDescription, List<String> detailedSteps) {
 
-    if (selectedSkill == null)
+    if (customDescription == null)
     {
-      log.warn("선택한 스킬 정보를 찾을 수 없습니다.");
-      return ChatBotMessage.builder()
-          .content("선택하신 스킬 정보를 찾을 수 없어요. 다시 시도해 주시겠어요?")
-          .type(MessageType.TEXT)
-          .build();
+      log.warn("선택한 스킬 정보를 찾을 수 없습니다. (customDescription is null)");
+      customDescription = "선택하신 스킬 정보를 찾을 수 없어요. 다시 시도해 주시겠어요?";
     }
-    String description = selectedSkill.description();
-
     List<ButtonOption> options = detailedSteps.stream()
         .map(stepText -> ButtonOption.builder()
             .label(stepText)
@@ -229,9 +223,8 @@ public class ChatResponseGenerator {
             .isMultiSelect(false)
             .build())
         .collect(Collectors.toList());
-
     return ChatBotMessage.builder()
-        .content(description)
+        .content(customDescription)
         .type(MessageType.OPTION)
         .options(options)
         .build();
@@ -270,8 +263,8 @@ public class ChatResponseGenerator {
       case "MORE_HEAVY" -> "더 무거워졌어";
       default -> "기분을 알려주셨어요.";
     };
-    String closingMessage = "힘들 때마다 언제든 모리를 찾아주세요.\n"
-        + "모리가 " + nickname + "님의 곁에서 도움이 될 수 있도록 함께할게요.\n"
+    String closingMessage = "힘들 때마다 언제든 모리를 찾아주세요."
+        + "모리가 " + nickname + "님의 곁에서 도움이 될 수 있도록 함께할게요."
         + "지금 약 페이지로 이동하면, 제 시간에 약을 복용하실 수 있도록 도와드릴게요!";
     return ChatBotMessage.builder()
         .content(closingMessage)

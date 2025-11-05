@@ -180,7 +180,7 @@ public class ChatService {
           break;
         case DISORDER_TYPE:
           Set<DisorderType> disorders = parseAndValidateMultiSelect(userResponse, DisorderType::valueOf, 2, "질환");
-          user.updateDisorders(disorders); // User 엔티티에 질환 저장
+          user.updateDisorders(disorders);
 
           if (disorders.stream().anyMatch(d -> d == DisorderType.NONE)) { // '없음' 선택 시
             nextStep = ChatStep.EMOTION_SELECT; // 증상 건너 뛰고 감정 선택으로
@@ -220,7 +220,7 @@ public class ChatService {
         case SITUATION_INPUT:
           userSituation = userResponse;
           session.setTemporaryData("userSituation", userSituation);
-          String empathySentence = chatAiService.generateEmpathySentence(userSituation, selectedEmotions);
+          String empathySentence = chatAiService.generateEmpathyResponse(userSituation, selectedEmotions, user);
           String goalPhrase = chatAiService.generateProposalGoalPhrase(userSituation, selectedEmotions);
           nextStep = ChatStep.ACTION_OFFER;
           botMessage = responseGenerator.createActionOfferMessage(nickname, empathySentence, goalPhrase);
@@ -238,10 +238,10 @@ public class ChatService {
                     .orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-            botMessage = responseGenerator.createActionProposeMessage(recommendedSkills); // GPT 호출 (나중에 구현)
+            botMessage = responseGenerator.createActionProposeMessage(recommendedSkills);
           } else if ("NO_PROPOSE".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
-            String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
+            String gptComfortMessage = chatAiService.generateSelfSoothingMessages(userSituation, selectedEmotions);
             botMessage = responseGenerator.createAloneComfortMessage(user.getNickname(), gptComfortMessage);
           } else {
             throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
@@ -264,7 +264,8 @@ public class ChatService {
             session.setTemporaryData("selectedSkillName", selectedSkill.skill_name());
             nextStep = ChatStep.SKILL_SELECT;
             List<String> detailedSteps = chatAiService.generateDetailedSkillSteps(selectedSkill);
-            botMessage = responseGenerator.createSkillSelectMessage(selectedSkill, detailedSteps);
+            String customDescription = chatAiService.generateSkillDescription(userSituation, selectedEmotions, selectedSkill, user);
+            botMessage = responseGenerator.createSkillSelectMessage(customDescription, detailedSteps);
           }
           break;
         case SKILL_SELECT:
@@ -280,7 +281,21 @@ public class ChatService {
             botMessage = responseGenerator.createFeedbackRequestMessage();
           } else if ("ACTION_SKIPPED".equals(userResponse)) {
             nextStep = ChatStep.CHAT_END;
-            String gptComfortMessage = chatAiService.generateSituationalComfort(userSituation, selectedEmotions);
+
+            String skippedSkillId = session.getTemporaryData("selectedSkillId");
+            BehavioralSkill skippedSkill = behavioralSkills.stream()
+                .filter(s -> s.chunk_id().equals(skippedSkillId))
+                .findFirst()
+                .orElse(null);
+
+            String gptComfortMessage;
+            if (skippedSkill != null) {
+              gptComfortMessage = chatAiService.generateActionSkipped(userSituation, selectedEmotions, skippedSkill);
+            } else {
+              // 스킬을 못찾는 비상시, 기존 '혼자 진정' 로직 사용
+              log.warn("SKILL_CONFIRM(SKIP): 스킵한 스킬을 찾을 수 없음: {}", skippedSkillId);
+              gptComfortMessage = chatAiService.generateSelfSoothingMessages(userSituation, selectedEmotions);
+            }
             botMessage = responseGenerator.createAloneComfortMessage(nickname, gptComfortMessage);
           } else {
             throw new ChatHandler(ErrorStatus.INVALID_BUTTON_SELECTION);
@@ -292,7 +307,7 @@ public class ChatService {
           botMessage = responseGenerator.createFeedbackDisplayAndClosingMessage(feedbackValue, nickname);
           break;
         case CHAT_END:
-          log.info("Chat session {} already ended.", sessionId);
+          log.info("Chat session {}이 이미 종료되었습니다.", sessionId);
           botMessage = responseGenerator.getBotMessageForStep(currentStep.name(), user, true);
           break;
         default:
