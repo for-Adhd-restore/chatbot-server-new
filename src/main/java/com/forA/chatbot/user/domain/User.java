@@ -125,8 +125,6 @@ public class User extends BaseTimeEntity {
 
   public void resetUserData() {
     this.nickname = null;
-    this.gender = Gender.UNKNOWN;
-    this.birthYear = null;
     this.jobs = new HashSet<>();
     this.disorders = new HashSet<>();
     this.symptoms = new HashSet<>();
