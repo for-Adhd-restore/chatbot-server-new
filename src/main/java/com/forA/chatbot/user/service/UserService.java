@@ -104,9 +104,7 @@ public class UserService {
     // 2. 사용자 프로필 데이터 초기화 (로그인 정보는 유지)
     user.resetUserData();
     userRepository.save(user);
-
-    log.info("User data reset completed for userId: {}", userId);
-
+    log.info("초기화 성공한 유저ID: {}", userId);
     return UserResetResponse.success();
   }
 

@@ -57,7 +57,9 @@ public class UserController {
 
     return ApiResponse.onSuccess(response);
   }
-
+  /**
+   * 사용자 정보 초기화
+   * */
   @PostMapping("/me/reset")
   public ApiResponse<UserResetResponse> resetUserData(
       @AuthenticationPrincipal CustomUserDetails userDetails) {
