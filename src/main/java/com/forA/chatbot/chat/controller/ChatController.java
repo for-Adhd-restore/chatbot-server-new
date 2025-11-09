@@ -4,8 +4,10 @@ import com.forA.chatbot.apiPayload.ApiResponse;
 import com.forA.chatbot.auth.jwt.CustomUserDetails;
 import com.forA.chatbot.chat.dto.ChatRequest;
 import com.forA.chatbot.chat.dto.ChatResponse;
+import com.forA.chatbot.chat.dto.ChatResponse.ChatMessageDto;
 import com.forA.chatbot.chat.service.ChatService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -69,6 +71,16 @@ public class ChatController {
     log.info("Chat session force new response sent: sessionId={}, currentStep={}", response.getSessionId(), response.getCurrentStep());
 
     return ApiResponse.onSuccess(response);
+  }
+
+  @GetMapping("/history/past-24h")
+  public ApiResponse<List<ChatMessageDto>> getRecentChatHistory(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    log.info("Recent chat history requested for userId: {}", userId);
+    List<ChatMessageDto> history = chatService.getRecentChatHistory(userId);
+    return ApiResponse.onSuccess(history);
   }
 
 }
