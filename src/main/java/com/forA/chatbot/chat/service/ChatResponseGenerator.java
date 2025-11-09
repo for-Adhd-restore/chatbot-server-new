@@ -53,7 +53,7 @@ public class ChatResponseGenerator {
             .content("지금 하는 일이 어떻게 되는지 궁금해요! 최대 2개까지 선택할 수 있어요!")
             .type(MessageType.OPTION)
             .options(Arrays.stream(JobType.values())
-                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
+                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).multiSelect(true).build())
                 .collect(Collectors.toList()))
             .build();
       case DISORDER_TYPE: // 4. 정신 질환 선택 - 최대 2개까지 선택되도록 구현
@@ -61,7 +61,7 @@ public class ChatResponseGenerator {
             .content("앓고 있는 정신 질환이 있으신가요? 최대 2개까지 선택할 수 있어요!")
             .type(MessageType.OPTION)
             .options(Arrays.stream(DisorderType.values())
-                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
+                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).multiSelect(true).build())
                 .collect(Collectors.toList()))
             .build();
       // 5. SYMPTOM_TYPE은 동적이므로 여기서는 처리하지 않음 (createSymptomMessage가 대신 처리)
@@ -74,7 +74,7 @@ public class ChatResponseGenerator {
             .content(content)
             .type(MessageType.OPTION)
             .options(Arrays.stream(EmotionType.values())
-                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).isMultiSelect(true).build())
+                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).multiSelect(true).build())
                 .collect(Collectors.toList()))
             .build();
       case SITUATION_INPUT:
@@ -117,7 +117,7 @@ public class ChatResponseGenerator {
         .map(s -> ButtonOption.builder()
             .label(s.getDescription())
             .value(s.name())
-            .isMultiSelect(true)
+            .multiSelect(true)
             .build())
         .collect(Collectors.toList());
 
@@ -220,7 +220,7 @@ public class ChatResponseGenerator {
         .map(stepText -> ButtonOption.builder()
             .label(stepText)
             .value(stepText)
-            .isMultiSelect(false)
+            .multiSelect(false)
             .build())
         .collect(Collectors.toList());
     return ChatBotMessage.builder()

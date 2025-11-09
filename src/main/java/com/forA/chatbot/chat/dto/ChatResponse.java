@@ -46,6 +46,6 @@ public class ChatResponse {
   public static class ButtonOption {
     private String label;
     private String value; // 백엔드로 전달될 실제 값 (예: MALE, 2000, DEPRESSION)
-    private boolean isMultiSelect; // 다중 선택 가능 여부
+    private boolean multiSelect; // 다중 선택 가능 여부
   }
 }
