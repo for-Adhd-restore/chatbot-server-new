@@ -15,6 +15,7 @@ public class ChatResponse {
   private ChatBotMessage botMessage; // 챗봇의 다음 메시지
   private Boolean isCompleted; // 현재 단계가 완료되었는지 여부
   private Boolean onboardingCompleted;
+  private Integer todayChatCount;
 
   @Getter
   @Builder

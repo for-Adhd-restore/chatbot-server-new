@@ -30,7 +30,9 @@ import com.forA.chatbot.user.domain.enums.JobType;
 import com.forA.chatbot.user.domain.enums.SymptomType;
 import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -88,6 +90,7 @@ public class ChatService {
     ChatSession session;
     ChatBotMessage botMessage;
     List<ChatMessageDto> history = new ArrayList<>();
+    int todayChatCount = getTodayChatCount(userId);
 
     // 1. 세션 확인
     Optional<ChatSession> unfinishedSessionOpt = chatSessionRepository
@@ -99,6 +102,10 @@ public class ChatService {
       botMessage = chatConverter.convertLatestHistoryToBotMessage(history);
       log.info("미완료 세션 재개: {}", session.getId());
     } else { // 세션 완
+      if (todayChatCount >= 3) {
+        log.warn("일일 채팅 횟수 초과: userId={}, count={}", userId, todayChatCount);
+        throw new ChatHandler(ErrorStatus.CHAT_LIMIT_EXCEEDED);
+      }
       Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(userId); // 가장 최신 세션 가져오기
       boolean isUserOnboarded = lastSessionOpt
           .map(ChatSession::getOnboardingCompleted)
@@ -112,6 +119,8 @@ public class ChatService {
           .build();
 
       chatSessionRepository.save(session);
+
+      todayChatCount++;
       log.info("새 세션 시작: {}, Initial Step: {}", isUserOnboarded, initialStep);
 
       Set<EmotionType> currentEmotions = parseEmotionsFromString(session.getTemporaryData("selectedEmotions"));
@@ -133,8 +142,19 @@ public class ChatService {
         .botMessage(botMessage)
         .isCompleted(false)
         .onboardingCompleted(session.getOnboardingCompleted())
+        .todayChatCount(todayChatCount)
         .build();
   }
+
+  private int getTodayChatCount(Long userId) {
+    LocalDateTime startOfDay = LocalDate.now().atStartOfDay(); // 00:00:00
+    LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX); // 23:59:59.999...
+
+    // 오늘 시작된 세션 수를 계산
+    long count = chatSessionRepository.countByUserIdAndStartedAtBetween(userId, startOfDay, endOfDay);
+    return (int) count;
+  }
+
   /**
    * [2. 유저 응답 처리]
    */
@@ -145,6 +165,9 @@ public class ChatService {
         .orElseThrow(() -> new ChatHandler(ErrorStatus.SESSION_NOT_FOUND));
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
+
+    int todayChatCount = getTodayChatCount(userId);
+
     ChatStep currentStep = ChatStep.valueOf(session.getCurrentStep());
     String userResponse = request.getResponseValue();
     // 2. 사용자 응답 메시지 DB에 기록
@@ -350,7 +373,62 @@ public class ChatService {
         .botMessage(botMessage)
         .isCompleted(nextStep == ChatStep.CHAT_END)
         .onboardingCompleted(session.getOnboardingCompleted())
+        .todayChatCount(todayChatCount)
         .build();
+  }
+
+  @Transactional(readOnly = true)
+  public List<ChatMessageDto> getRecentChatHistory(Long userId) {
+    LocalDateTime cutoffTime = LocalDateTime.now().minusHours(24);
+
+    List<ChatSession> recentSessions = chatSessionRepository.findByUserIdAndEndedAtAfter(
+        userId, cutoffTime);
+    if (recentSessions.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<String> sessionIds = recentSessions.stream()
+        .map(ChatSession::getId)
+        .collect(Collectors.toList());
+    // 해당 세션들의 모든 메시지 조회
+    List<ChatMessage> messages = chatMessageRepository.findBySessionIdInOrderBySentAtAsc(
+        sessionIds);
+    return convertMessagesToDto(messages);
+  }
+
+  private List<ChatMessageDto> convertMessagesToDto(List<ChatMessage> messages) {
+    if (messages.isEmpty() || messages == null) {
+      return Collections.emptyList();
+    }
+    return messages.stream()
+        .map(msg -> {
+          MessageType type = null;
+          List<ButtonOption> options = null;
+
+          if (msg.getMessageType() != null){
+            try {
+              type = MessageType.valueOf(msg.getMessageType());
+            } catch (IllegalArgumentException e) {
+              log.warn("Invalid messageType found in DB: {}", msg.getMessageType());
+            }
+          }
+
+          if (msg.getOptionsJson() != null && !msg.getOptionsJson().isEmpty()) {
+            try {
+              options = objectMapper.readValue(msg.getOptionsJson(), new TypeReference<List<ButtonOption>>() {}); // JSON -> List
+            } catch (JsonProcessingException e) {
+              log.error("Failed to deserialize options JSON from DB: {}", msg.getOptionsJson(), e);
+            }
+          }
+          return ChatMessageDto.builder()
+              .sender(msg.getSenderType().name())
+              .content(msg.getMessageContent())
+              .sentAt(msg.getSentAt())
+              .type(type)
+              .options(options)
+              .build();
+        })
+        .collect(Collectors.toList());
   }
 
   private Set<EmotionType> parseEmotionsFromString(String emotionString) {
@@ -370,7 +448,6 @@ public class ChatService {
       return "[]"; // 오류 시 빈 배열 반환
     }
   }
-
 
   private boolean isPositiveOrSoSo(Set<EmotionType> emotions) {
     if (emotions.isEmpty()) {

@@ -18,5 +18,8 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
    */
   List<ChatMessage> findBySessionIdAndSenderTypeAndChatStep(
       String sessionId, SenderType senderType, String chatStep);
-
+  /**
+   * 여러 세션 ID에 속하는 모든 메시지를 시간순으로 정렬하여 반환
+   */
+  List<ChatMessage> findBySessionIdInOrderBySentAtAsc(List<String> sessionIds);
 }
