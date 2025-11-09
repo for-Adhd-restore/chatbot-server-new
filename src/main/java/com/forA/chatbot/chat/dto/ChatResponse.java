@@ -15,6 +15,7 @@ public class ChatResponse {
   private ChatBotMessage botMessage; // 챗봇의 다음 메시지
   private Boolean isCompleted; // 현재 단계가 완료되었는지 여부
   private Boolean onboardingCompleted;
+  private Integer todayChatCount;
 
   @Getter
   @Builder
@@ -45,6 +46,6 @@ public class ChatResponse {
   public static class ButtonOption {
     private String label;
     private String value; // 백엔드로 전달될 실제 값 (예: MALE, 2000, DEPRESSION)
-    private boolean isMultiSelect; // 다중 선택 가능 여부
+    private boolean multiSelect; // 다중 선택 가능 여부
   }
 }
