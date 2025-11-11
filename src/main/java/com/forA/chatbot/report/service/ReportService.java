@@ -105,17 +105,35 @@ public class ReportService {
             Collectors.toMap(log -> log.getMedicationBundle().getId(), log -> log)
         ));
 
+    // 요일별 번들 맵 미리 생성 (루프 밖에서 한 번만 실행)
+    Map<DayOfWeek, List<MedicationBundle>> bundlesByDay = new EnumMap<>(DayOfWeek.class);
+    for (DayOfWeek day : DayOfWeek.values()) {
+      bundlesByDay.put(day, new ArrayList<>());
+    }
+
+    // isScheduledForDay 로직을 여기서 미리 처리
+    for (MedicationBundle bundle : bundles) {
+      if (bundle.getDayOfWeek() == null || bundle.getDayOfWeek().isEmpty()) continue;
+
+      Arrays.stream(bundle.getDayOfWeek().split(","))
+          .map(String::trim)
+          .filter(dbDay -> !dbDay.isEmpty())
+          .forEach(dbDay -> {
+            // "MONDAY", "TUESDAY" 등과 일치하는 DayOfWeek enum 찾기
+            DayOfWeek dayEnum = DayOfWeek.valueOf(dbDay.toUpperCase()); // DB 형식이 영어 대문자라 가정
+            bundlesByDay.get(dayEnum).add(bundle);
+          });
+    }
+
     List<ReportResponseDto.DailyMedicationReportDto> dailyReports = new ArrayList<>();
     DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
 
     // 시작일부터 종료일까지 하루씩 반복
     for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
       DayOfWeek dayOfWeekEnum = date.getDayOfWeek();
 
-      // 요일별로 예정된 복용 계획 필터링 (애플리케이션 레벨)
-      List<MedicationBundle> scheduledBundles = bundles.stream()
-          .filter(bundle -> isScheduledForDay(bundle, dayOfWeekEnum))
-          .toList();
+      List<MedicationBundle> scheduledBundles = bundlesByDay.get(dayOfWeekEnum);
 
       Map<Long, MedicationLog> dailyLogs = logMap.getOrDefault(date, Collections.emptyMap());
 
@@ -140,22 +158,6 @@ public class ReportService {
           .build());
     }
     return dailyReports;
-  }
-
-  // MedicationBundle의 dayOfWeek 문자열에 해당 요일이 포함되어 있는지 확인
-  private boolean isScheduledForDay(MedicationBundle bundle, DayOfWeek dayOfWeek) {
-    if (bundle.getDayOfWeek() == null || bundle.getDayOfWeek().isEmpty()) {
-      return false;
-    }
-
-    // DayOfWeek enum의 이름(e.g., "MONDAY")을 가져옵니다.
-    String englishDayName = dayOfWeek.name();
-
-    // DB에서 가져온 문자열(e.g., "MONDAY,TUESDAY")을 쉼표로 분리하고,
-    // 공백 제거 및 대소문자 무시 비교를 통해 현재 요일이 포함되어 있는지 확인합니다.
-    return Arrays.stream(bundle.getDayOfWeek().split(","))
-        .map(String::trim)
-        .anyMatch(dbDay -> dbDay.equalsIgnoreCase(englishDayName));
   }
 
   /**
