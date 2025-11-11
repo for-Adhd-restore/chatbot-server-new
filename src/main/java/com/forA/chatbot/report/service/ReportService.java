@@ -2,6 +2,7 @@ package com.forA.chatbot.report.service;
 
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.NotificationHandler;
+import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.chat.domain.ChatMessage;
 import com.forA.chatbot.chat.domain.ChatSession;
@@ -51,7 +52,7 @@ public class ReportService {
     User user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> new NotificationHandler(ErrorStatus.USER_NOT_FOUND));
+            .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
 
     LocalDate today = LocalDate.now();
     LocalDate startDate = today.minusDays(6);
@@ -69,7 +70,7 @@ public class ReportService {
       User user =
           userRepository
               .findById(userId)
-              .orElseThrow(() -> new NotificationHandler(ErrorStatus.USER_NOT_FOUND));
+              .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
 
       // 1. monthOffset을 기준으로 대상 월의 시작일과 종료일 계산
       YearMonth targetMonth = YearMonth.now().plusMonths(monthOffset);

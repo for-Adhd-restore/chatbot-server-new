@@ -364,7 +364,7 @@ public class MedicationService {
         .orElseThrow(
             () -> {
               log.error("사용자를 찾을 수 없습니다 - ID: {}", userId);
-              return new GeneralException(ErrorStatus.MEDICATION_USER_NOT_FOUND);
+              return new GeneralException(ErrorStatus.USER_NOT_FOUND);
             });
   }
 
