@@ -38,8 +38,9 @@ public class User extends BaseTimeEntity {
   @Column(unique = true)
   private String appleUniqueId;
 
-  @Column(length = 10, nullable = false)
+  @Column(length = 15, nullable = false)
   @Builder.Default
+  @Enumerated(EnumType.STRING) //숫자가 아닌 스트링으로 DB에 저장되도록
   private Gender gender = Gender.UNKNOWN;
 
   @Column(name = "birth_year")
