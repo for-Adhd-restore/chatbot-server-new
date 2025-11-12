@@ -1,4 +1,4 @@
-package com.forA.chatbot.subscriptions;
+package com.forA.chatbot.subscriptions.domain;
 
 import com.forA.chatbot.enums.SubscriptionStatus;
 import com.forA.chatbot.global.BaseTimeEntity;
