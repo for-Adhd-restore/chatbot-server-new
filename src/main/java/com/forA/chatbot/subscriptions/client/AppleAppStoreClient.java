@@ -1,6 +1,5 @@
 package com.forA.chatbot.subscriptions.client;
 
-import com.forA.chatbot.subscriptions.dto.SubscriptionStatusResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
