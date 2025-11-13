@@ -1,20 +1,50 @@
 package com.forA.chatbot.subscriptions.service;
 
-import com.forA.chatbot.subscriptions.dto.SubscriptionVerificationRequest;
+import com.forA.chatbot.auth.jwt.JwtUtil;
+import com.forA.chatbot.config.AppleClientSecretGenerator;
+import com.forA.chatbot.subscriptions.client.AppleAppStoreClient;
+import com.forA.chatbot.subscriptions.dto.SubscriptionStatusResponse;
+import com.forA.chatbot.subscriptions.dto.SubscriptionVerifyRequest;
+import java.io.IOException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class SubscriptionService {
+  private final AppleAppStoreClient appleAppStoreClient;
+  private final JwtUtil jwtUtil;
+  private final AppleClientSecretGenerator appleClientSecretGenerator;
 
   /**
    * ios 앱이 보낸 영수증 검증 -> 우리 DB에 구독 정보 생성/업데이트
    * */
   @Transactional
-  public void verifyPurchase(Long userId, SubscriptionVerificationRequest request) {
-    // 1. request에서 transactionId 추출
+  public void verifySubscription(Long userId, SubscriptionVerifyRequest request) {
+    String transactionId = request.getTransactionId();
+    log.info("영수증 검증 시작 - userId = {}, transactionId = {}", userId, transactionId);
+
+    // 애플 서버 인증용 JWT 생성
+    String serverToServerJwt;
+    try{
+      serverToServerJwt = appleClientSecretGenerator.generate();
+    } catch (IOException e) {
+      throw new RuntimeException(e); // 이후 에러 헨들러로 변경
+    }
+    String bearerToken = "Bearer " + serverToServerJwt;
+
+    // apple 과 통신
+    SubscriptionStatusResponse allSubscriptionStatuses = appleAppStoreClient.getAllSubscriptionStatuses(
+        bearerToken, transactionId);
+
+  }
+
+
+  @Transactional
+  public void verifyPurchase(Long userId, SubscriptionVerifyRequest request) {
     String transactionId = request.getTransactionId();
 
     // 2. AppleAppStoreClient를 호출하기 위한 Apple 전용 JWT 생성 : (App Store Connect에서 발급받은 .p8 키와 Key ID, Issuer ID 사용)

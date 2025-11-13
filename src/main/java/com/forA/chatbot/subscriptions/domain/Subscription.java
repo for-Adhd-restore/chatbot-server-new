@@ -5,8 +5,10 @@ import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.domain.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.Getter;
 
 @Entity
+@Getter
 @Table(name = "subscriptions")
 public class Subscription extends BaseTimeEntity {
 
