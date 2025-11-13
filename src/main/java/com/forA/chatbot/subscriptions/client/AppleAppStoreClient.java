@@ -1,5 +1,6 @@
 package com.forA.chatbot.subscriptions.client;
 
+import com.forA.chatbot.subscriptions.dto.SubscriptionStatusResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -7,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(name = "apple-appstore", url = "https://api.storekit.itunes.apple.com")
 public interface AppleAppStoreClient {
-
   /**
    *  거래 / 구독 상태 조회
    * Get Transaction Info: 단일 거래 상세 조회
@@ -17,5 +17,11 @@ public interface AppleAppStoreClient {
   String getTransactionInfo(
       @RequestHeader("Authorization") String appleJwt,
       @PathVariable("transactionId") String transactionId
+  );
+
+  @GetMapping("/inApps/v1/subscriptions/{originalTransactionId}")
+  SubscriptionStatusResponse getAllSubscriptionStatuses(
+      @RequestHeader("Authorization") String bearerToken,
+      @PathVariable("originalTransactionId") String originalTransactionId
   );
 }
