@@ -209,5 +209,8 @@ mongo_data_dev/
 # applekey 값 무시
 /src/main/resources/applekey/*
 
+# 인증서
+src/main/resources/certs/*
+
 #firebase 키 파일 무시
 /src/main/resources/mori-firebase-key.json
