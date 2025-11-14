@@ -66,7 +66,10 @@ public enum ErrorStatus implements BaseErrorCode {
   INVALID_BUTTON_SELECTION(HttpStatus.BAD_REQUEST, "CHAT4002", "올바른 버튼을 선택해 주세요."),
   AI_RESPONSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT5001", "ai 응답 생성에 실패하였습니다"),
   SKILL_NAME_IS_NULL(HttpStatus.BAD_REQUEST, "CHAT4003", "skill name이 공백입니다."),
-  CHAT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "CHAT4004", "하루에 최대 3번의 채팅만 가능합니다.");
+  CHAT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "CHAT4004", "하루에 최대 3번의 채팅만 가능합니다."),
+
+  // 인증서 관련 에러 (Subscription)
+  FAILED_TO_CREATE_CERTIFICATE_FACTORY(HttpStatus.INTERNAL_SERVER_ERROR, "SUBSCRIPTION5001", "CertificateFactory X.509 인스턴스 생성 실패");
 
   private final HttpStatus httpStatus;
   private final String code;
