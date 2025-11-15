@@ -1,5 +1,6 @@
 package com.forA.chatbot.notification.domain;
 
+import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.domain.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -11,7 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @Getter
 @NoArgsConstructor
 @Table(name = "device_tokens")
-public class DeviceToken {
+public class DeviceToken extends BaseTimeEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
