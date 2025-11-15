@@ -40,6 +40,7 @@ public class User extends BaseTimeEntity {
   private String providerUserId;
 
   @Column(nullable = false, name = "provider_type")
+  @Enumerated(EnumType.STRING)
   private ProviderType providerType;
 
   @Column(length = 15, nullable = false)
