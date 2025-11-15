@@ -3,6 +3,7 @@ package com.forA.chatbot.user.domain;
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.enums.Gender;
+import com.forA.chatbot.enums.ProviderType;
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.converter.DisorderSetConverter;
 import com.forA.chatbot.user.converter.JobSetConverter;
@@ -35,8 +36,11 @@ public class User extends BaseTimeEntity {
   private String email; // 이메일 필드 추가
 
   @Getter
-  @Column(unique = true)
-  private String appleUniqueId;
+  @Column(unique = true, name = "provider_user_id")
+  private String providerUserId;
+
+  @Column(nullable = false, name = "provider_type")
+  private ProviderType providerType;
 
   @Column(length = 15, nullable = false)
   @Builder.Default
