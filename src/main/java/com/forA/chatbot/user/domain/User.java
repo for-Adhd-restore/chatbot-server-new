@@ -51,7 +51,7 @@ public class User extends BaseTimeEntity {
   @Column(name = "birth_year")
   private Integer birthYear;
 
-  @Column(length = 20)
+  @Column(length = 100)
   private String nickname;
 
   @Column(name = "last_name")
