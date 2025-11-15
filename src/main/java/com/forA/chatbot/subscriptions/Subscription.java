@@ -37,7 +37,7 @@ public class Subscription extends BaseTimeEntity {
   private LocalDateTime updatedAt;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false, columnDefinition = "VARCHAR")
+  @Column(nullable = false, columnDefinition = "VARCHAR(50)")
   private SubscriptionStatus status;
 
   @Column(name = "is_auto_renew", nullable = false)
