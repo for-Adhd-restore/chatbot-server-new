@@ -39,11 +39,11 @@ public class User extends BaseTimeEntity {
   @Column(unique = true, name = "provider_user_id")
   private String providerUserId;
 
-  @Column(nullable = false, name = "provider_type")
+  @Column(nullable = false, name = "provider_type", columnDefinition = "VARCHAR(50)")
   @Enumerated(EnumType.STRING)
   private ProviderType providerType;
 
-  @Column(length = 15, nullable = false)
+  @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'UNKNOWN'")
   @Builder.Default
   @Enumerated(EnumType.STRING) //숫자가 아닌 스트링으로 DB에 저장되도록
   private Gender gender = Gender.UNKNOWN;
