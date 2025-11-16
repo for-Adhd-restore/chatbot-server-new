@@ -196,7 +196,7 @@ terraform/terraform.tfplan
 
 #로컬 테스트용 파일
 docker-compose.override.yml
-application-dev.properties
+
 application-local.properties
 src/main/resources/application-local.yml
 
