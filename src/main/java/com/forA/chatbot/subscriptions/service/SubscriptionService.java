@@ -227,9 +227,8 @@ public class SubscriptionService {
               subscription.getStatus() // 현재 상태 유지
           );
           break;
-        case "DID_FAIL_TO_RENEW": // 결제 실패 (유예 기간 시작)
+        case "DID_FAIL_TO_RENEW": // 결제 실패
           log.warn("[Webhook] 결제 실패(유예 기간). OTI: {}", originalTransactionId);
-          // TODO: 필요시 유예 기간(GRACE_PERIOD) 상태를 Enum에 추가하고 처리
           break;
         default:
           log.info("[Webhook] 처리하지 않는 알림 타입 수신: {}", notificationType);
