@@ -7,8 +7,10 @@ import com.forA.chatbot.config.AppleClientSecretGenerator;
 import com.forA.chatbot.enums.SubscriptionStatus;
 import com.forA.chatbot.subscriptions.client.AppleAppStoreClient;
 import com.forA.chatbot.subscriptions.domain.Subscription;
+import com.forA.chatbot.subscriptions.dto.DecodedNotificationPayload;
 import com.forA.chatbot.subscriptions.dto.DecodedSignedRenewalInfo;
 import com.forA.chatbot.subscriptions.dto.DecodedSignedTransactionInfo;
+import com.forA.chatbot.subscriptions.dto.NotificationDataPayload;
 import com.forA.chatbot.subscriptions.dto.SubscriptionResponseDto;
 import com.forA.chatbot.subscriptions.dto.SubscriptionStatusResponse;
 import com.forA.chatbot.subscriptions.dto.SubscriptionStatusResponse.LastTransaction;
@@ -16,6 +18,7 @@ import com.forA.chatbot.subscriptions.dto.SubscriptionVerifyRequest;
 import com.forA.chatbot.subscriptions.repository.SubscriptionRepository;
 import com.forA.chatbot.subscriptions.util.AppStoreJwsValidator;
 import com.forA.chatbot.user.domain.User;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -145,44 +148,101 @@ public class SubscriptionService {
   /**
    * 알림 처리 & 구독 상태 실시간 업데이트
    * */
-  public void handleAppleWebhook(String signedNotification) {
-// 1. Apple의 공개키를 이용해 'signedNotification (JWS)' 서명 검증 및 디코딩
+  @Transactional
+  public void handleAppleWebhook(String signedPayload) {
+    if (signedPayload == null || signedPayload.isEmpty()) {
+      log.warn("[Webhook] signedPayload가 비어있습니다.");
+      return;
+    }
+    try {
+      // 1. "바깥쪽" JWS 해독 (알림 타입 확인)
+      DecodedNotificationPayload notification = jwsValidator.decodeNotificationPayload(signedPayload);
+      String notificationType = notification.getNotificationType();
+      log.info("[Webhook] 알림 수신: Type = {}", notificationType);
+      // 2. "안쪽" JWS 해독 (실제 거래 정보)
+      NotificationDataPayload data = notification.getData();
+      if (data == null || data.getSignedTransactionInfo() == null || data.getSignedRenewalInfo() == null) {
+        log.warn("[Webhook] 알림 내부에 data 또는 JWS 정보가 없습니다. Type = {}", notificationType);
+        return;
+      }
+      DecodedSignedTransactionInfo transactionInfo = jwsValidator.decodeSignedTransaction(
+          data.getSignedTransactionInfo());
+      DecodedSignedRenewalInfo renewalInfo = jwsValidator.decodeRenewalInfo(
+          data.getSignedRenewalInfo());
 
-    // 2. 디코딩된 페이로드(SignedPayload)를 DTO로 파싱
-
-    // 3. 알림 타입(notificationType)과 하위 타입(subtype) 추출
-    //    (예: "SUBSCRIBED", "DID_RENEW", "EXPIRED", "REFUND", "REVOKE")
-
-    // 4. 페이로드의 data 객체에서 'signedTransactionInfo' (또다른 JWS) 추출
-
-    // 5. 'signedTransactionInfo'도 디코딩하여 거래 내역(DecodedTransaction) DTO로 파싱
-
-    // 6. DTO에서 originalTransactionId 추출
-
-    // 7. subscriptionRepository.findByOriginalTransactionId(originalTransactionId)로 구독 정보 조회
-    //    (Webhook은 신규 구독자가 아닌 기존 구독자에 대한 변경이므로, 조회가 되어야 함)
-
-    // 8. notificationType에 따라 분기 처리 (switch 문)
-
-    //    case "SUBSCRIBED": // 신규 구독 (무료 체험 시작 등)
-    //        // verifyPurchase와 유사하게 Subscription 객체 생성 또는 업데이트
-    //        // status를 ACTIVE로 설정
-
-    //    case "DID_RENEW": // 자동 갱신 성공(구독 연장)
-    //        // Subscription의 expiresAt (만료일)을 새 만료일로 업데이트
-    //        // status를 ACTIVE로 설정
-
-    //    case "EXPIRED": // 구독 만료
-    //        // Subscription의 status를 EXPIRED로 설정
-
-    //    case "REFUND": // 환불
-    //    case "REVOKE": // Apple 지원팀의 구독 취소
-    //        // Subscription의 status를 CANCELLED로 설정
-
-    //    case "DID_FAIL_TO_RENEW": // 갱신 실패 (결제 문제)
-    //        // Subscription의 status를 PENDING (유예 기간) 등으로 설정 (선택적)
-
-    // 9. 변경된 Subscription 객체를 repository.save()로 DB에 저장
+      // 3. DB에서 구독 정보 조회 (Webhook - 기존 구독자의 변경 알림)
+      String originalTransactionId = transactionInfo.getOriginalTransactionId();
+      Subscription subscription = subscriptionRepository.findByOriginalTransactionId(
+              originalTransactionId)
+          .orElseThrow(() -> {
+            log.warn("[Webhook] 알림을 받았으나, DB에 해당 originalTransactionId가 없습니다: {}",
+                originalTransactionId);
+            return new SubscriptionHandler(ErrorStatus.IAP_APPLE_INVALID_TRANSACTION);
+          });
+      // 4. 알람 타입에 따라 DB 상태 업데이트
+      switch (notificationType) {
+        case "DID_RENEW": // 자동 갱신 성공
+        case "SUBSCRIPTION": // 신규 구독 (or 구독 상품 변경)
+          log.info("[Webhook] 구독 갱신/변경. OTI: {}", originalTransactionId);
+          subscription.updateFromApple(
+              transactionInfo.getProductId(),
+              transactionInfo.getTransactionId(),
+              transactionInfo.getExpiresDateAsLocalDateTime(),
+              renewalInfo.getAutoRenewStatus() == 1, // 1 : 자동 갱신 o, 0 : x
+              transactionInfo.isTrial(),
+              SubscriptionStatus.ACTIVE // 갱신, 구독 시 무조건 ACTIVE
+          );
+          break;
+        case "EXPIRED": // 구독 만료
+          log.info("[Webhook] 구독 만료. OTI: {}", originalTransactionId);
+          subscription.updateFromApple(
+              subscription.getProductId(),
+              transactionInfo.getTransactionId(),
+              transactionInfo.getExpiresDateAsLocalDateTime(),
+              false,
+              subscription.getIsTrial(),
+              SubscriptionStatus.EXPIRED // 만료
+          );
+          break;
+        case "REVOKE" : // 환불 (Apple 에 의해 강제 취소)
+        case "REFUND": // 환불
+          log.info("[Webhook] 구독 환불/취소. OTI: {}", originalTransactionId);
+          subscription.updateFromApple(
+              subscription.getProductId(),
+              transactionInfo.getTransactionId(),
+              LocalDateTime.now(),
+              false,
+              subscription.getIsTrial(),
+              SubscriptionStatus.CANCELLED
+          );
+          break;
+        case "DID_CHANGE_RENEWAL_STATUS": // 사용자가 '자동 갱신' 변경
+          log.info("[Webhook] 자동 갱신 상태 변경. OTI: {}", originalTransactionId);
+          subscription.updateFromApple(
+              subscription.getProductId(),
+              subscription.getTransactionId(),
+              subscription.getExpiresAt(),
+              renewalInfo.getAutoRenewStatus() == 1, // 갱신된 상태(아마도 false)
+              subscription.getIsTrial(),
+              subscription.getStatus() // 현재 상태 유지
+          );
+          break;
+        case "DID_FAIL_TO_RENEW": // 결제 실패 (유예 기간 시작)
+          log.warn("[Webhook] 결제 실패(유예 기간). OTI: {}", originalTransactionId);
+          // TODO: 필요시 유예 기간(GRACE_PERIOD) 상태를 Enum에 추가하고 처리
+          break;
+        default:
+          log.info("[Webhook] 처리하지 않는 알림 타입 수신: {}", notificationType);
+          break;
+      }
+      subscriptionRepository.save(subscription);
+      log.info("[Webhook] DB 업데이트 완료. OTI: {}, NewStatus: {}",
+          originalTransactionId, subscription.getStatus());
+    } catch (Exception e) {
+      log.error("[Webhook] 처리 중 심각한 오류 발생", e);
+      // 200 OK 를 받지 못하면 APPLE 에서 이 알림을 재시도.
+      throw new SubscriptionHandler(ErrorStatus.IAP_APPLE_API_CALL_FAILED);
+    }
 
   }
 }

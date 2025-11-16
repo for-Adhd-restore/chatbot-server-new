@@ -65,7 +65,7 @@ public class AppStoreJwsValidator {
 
   }
   /**
-  * JWS를 파싱하고, 헤더의 x5c 인증서 체인을 검증한 뒤, 페이로드(Claims)를 반환 [Claims : JWT 형태]
+  * JWS를 파싱하고, 헤더의 x5c 인증서 체인을 검증한 뒤, 페이로드(Claims)를 반환 [Claims : JWT 내용물(payload)]
   * */
   private Claims verifyAndDecodeJws(String jws) {
     try {
