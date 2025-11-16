@@ -3,13 +3,16 @@ package com.forA.chatbot.subscriptions.controller;
 import com.forA.chatbot.apiPayload.ApiResponse;
 import com.forA.chatbot.auth.jwt.CustomUserDetails;
 import com.forA.chatbot.subscriptions.dto.AppleServerNotificationRequest;
+import com.forA.chatbot.subscriptions.dto.GetSubscriptionResponse;
 import com.forA.chatbot.subscriptions.dto.SubscriptionResponseDto;
+import com.forA.chatbot.subscriptions.dto.SubscriptionStatusResponse;
 import com.forA.chatbot.subscriptions.dto.SubscriptionVerifyRequest;
 import com.forA.chatbot.subscriptions.service.SubscriptionService;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,5 +44,13 @@ public class SubscriptionController {
   ){
     log.info("Apple 서버 알림(Webhook) 수신 시작");
     subscriptionService.handleAppleWebhook(request.getSignedPayload());
+  }
+  @GetMapping("/status")
+  public ApiResponse<GetSubscriptionResponse>  getSubscriptionStatus(
+      @AuthenticationPrincipal CustomUserDetails userDetails
+  ) {
+    Long userId = userDetails.getUserId();
+    GetSubscriptionResponse response = subscriptionService.getSubscriptionStatus(userId);
+    return ApiResponse.onSuccess(response);
   }
 }

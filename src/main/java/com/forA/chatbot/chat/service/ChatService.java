@@ -499,7 +499,7 @@ public class ChatService {
   }
 
   private void checkPremiumStatus(Long userId) {
-    Subscription subscription = subscriptionRepository.findByUserId(userId)
+    Subscription subscription = subscriptionRepository.findByUser_Id(userId)
         .orElseThrow(() -> new SubscriptionHandler(ErrorStatus.IAP_SUBSCRIPTION_NOT_FOUND));
     if (!subscription.isActive()) {
       throw new SubscriptionHandler(ErrorStatus.IAP_PREMIUM_REQUIRED);

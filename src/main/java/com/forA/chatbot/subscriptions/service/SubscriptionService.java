@@ -11,6 +11,7 @@ import com.forA.chatbot.subscriptions.domain.Subscription;
 import com.forA.chatbot.subscriptions.dto.DecodedNotificationPayload;
 import com.forA.chatbot.subscriptions.dto.DecodedSignedRenewalInfo;
 import com.forA.chatbot.subscriptions.dto.DecodedSignedTransactionInfo;
+import com.forA.chatbot.subscriptions.dto.GetSubscriptionResponse;
 import com.forA.chatbot.subscriptions.dto.NotificationDataPayload;
 import com.forA.chatbot.subscriptions.dto.SubscriptionResponseDto;
 import com.forA.chatbot.subscriptions.dto.SubscriptionStatusResponse;
@@ -258,4 +259,19 @@ public class SubscriptionService {
     }
 
   }
+  @Transactional(readOnly = true)
+  public GetSubscriptionResponse getSubscriptionStatus(Long userId) {
+    log.info("DB에서 구독 상태 조회 - userId = {}", userId);
+    Subscription subscription = subscriptionRepository.findByUser_Id(userId)
+        .orElseThrow(() -> new SubscriptionHandler(ErrorStatus.IAP_SUBSCRIPTION_NOT_FOUND));
+    return GetSubscriptionResponse.builder()
+        .productId(subscription.getProductId())
+        .expiresAt(subscription.getExpiresAt())
+        .status(subscription.getStatus())
+        .isTrial(subscription.getIsTrial())
+        .autoRenew(subscription.getIsAutoRenew())
+        .originalTransactionId(subscription.getOriginalTransactionId())
+        .build();
+  }
+
 }
