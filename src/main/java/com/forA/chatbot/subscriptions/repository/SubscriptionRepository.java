@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
 
   Optional<Subscription> findByOriginalTransactionId(String originalTransactionId);
+  Optional<Subscription> findByUserId(Long userId);
 }
