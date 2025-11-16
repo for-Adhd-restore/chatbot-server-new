@@ -6,6 +6,7 @@ import com.forA.chatbot.subscriptions.dto.AppleServerNotificationRequest;
 import com.forA.chatbot.subscriptions.dto.SubscriptionResponseDto;
 import com.forA.chatbot.subscriptions.dto.SubscriptionVerifyRequest;
 import com.forA.chatbot.subscriptions.service.SubscriptionService;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,7 +28,7 @@ public class SubscriptionController {
   @PostMapping("/verify")
   public ApiResponse<SubscriptionResponseDto> verifySubscription(
       @AuthenticationPrincipal CustomUserDetails userDetails,
-      @RequestBody SubscriptionVerifyRequest request
+      @Valid @RequestBody SubscriptionVerifyRequest request
   ) {
     Long userId = userDetails.getUserId();
     log.info("영수증 검증 요청 수신 - userId = {}", userId);
