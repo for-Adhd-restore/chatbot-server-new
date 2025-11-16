@@ -1,5 +1,6 @@
 package com.forA.chatbot.auth.repository;
 
+import com.forA.chatbot.enums.ProviderType;
 import com.forA.chatbot.user.domain.User;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,7 +13,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-  Optional<User> findByAppleUniqueId(String appleUniqueId);
+  Optional<User> findByProviderTypeAndProviderUserId(ProviderType providerType,
+      String providerUserId);
 
   Optional<User> findByEmail(String email);
 

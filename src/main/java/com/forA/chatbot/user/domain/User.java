@@ -3,6 +3,7 @@ package com.forA.chatbot.user.domain;
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.enums.Gender;
+import com.forA.chatbot.enums.ProviderType;
 import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.converter.DisorderSetConverter;
 import com.forA.chatbot.user.converter.JobSetConverter;
@@ -35,26 +36,31 @@ public class User extends BaseTimeEntity {
   private String email; // 이메일 필드 추가
 
   @Getter
-  @Column(unique = true)
-  private String appleUniqueId;
+  @Column(unique = true, name = "provider_user_id")
+  private String providerUserId;
 
-  @Column(length = 10, nullable = false)
+  @Column(nullable = false, name = "provider_type", columnDefinition = "VARCHAR(50)")
+  @Enumerated(EnumType.STRING)
+  private ProviderType providerType;
+
+  @Column(nullable = false, columnDefinition = "VARCHAR(50) DEFAULT 'UNKNOWN'")
   @Builder.Default
+  @Enumerated(EnumType.STRING) //숫자가 아닌 스트링으로 DB에 저장되도록
   private Gender gender = Gender.UNKNOWN;
 
   @Column(name = "birth_year")
   private Integer birthYear;
 
-  @Column(length = 20)
+  @Column(length = 100)
   private String nickname;
 
-  @Column(name = "last_name", length = 20)
+  @Column(name = "last_name")
   private String lastName;
 
-  @Column(name = "first_name", length = 30)
+  @Column(name = "first_name")
   private String firstName;
 
-  @Column(name = "full_name", length = 50, nullable = false)
+  @Column(name = "full_name", nullable = false)
   private String fullName;
 
   @Convert(converter = JobSetConverter.class)
@@ -79,7 +85,7 @@ public class User extends BaseTimeEntity {
   @Builder.Default
   private Boolean isDeleted = false;
 
-  @Column(name = "deleated_at")
+  @Column(name = "deleted_at")
   private LocalDateTime deletedAt;
 
   @Column(name = "is_notification_enabled")

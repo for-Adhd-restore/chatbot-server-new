@@ -7,6 +7,7 @@ import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.enums.Gender;
+import com.forA.chatbot.enums.ProviderType;
 import com.forA.chatbot.user.domain.User;
 import io.jsonwebtoken.Claims;
 import java.time.LocalDateTime;
@@ -36,7 +37,7 @@ public class AppleAuthService {
     String email = claims.get("email", String.class);
 
     // 3. 기존 사용자 조회 또는 신규 생성
-    Optional<User> existingUser = userRepository.findByAppleUniqueId(appleUniqueId);
+    Optional<User> existingUser = userRepository.findByProviderTypeAndProviderUserId(ProviderType.APPLE, appleUniqueId);
     User user;
     boolean isNewUser = false;
     if (existingUser.isPresent()) {
@@ -48,7 +49,8 @@ public class AppleAuthService {
 
       user =
           User.builder()
-              .appleUniqueId(appleUniqueId)
+              .providerUserId(appleUniqueId)
+              .providerType(ProviderType.APPLE)
               .email(email)
               .fullName(buildFullName(request.getFirstName(), request.getLastName()))
               .firstName(request.getFirstName())
