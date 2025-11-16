@@ -196,7 +196,7 @@ public class SubscriptionService {
       // 4. 알람 타입에 따라 DB 상태 업데이트
       switch (notificationType) {
         case "DID_RENEW": // 자동 갱신 성공
-        case "SUBSCRIPTION": // 신규 구독 (or 구독 상품 변경)
+        case "SUBSCRIBED": // 신규 구독 (or 구독 상품 변경)
           log.info("[Webhook] 구독 갱신/변경. OTI: {}", originalTransactionId);
           subscription.updateFromApple(
               transactionInfo.getProductId(),
