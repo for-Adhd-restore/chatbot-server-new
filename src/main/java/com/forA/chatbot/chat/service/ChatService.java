@@ -108,10 +108,10 @@ public class ChatService {
       botMessage = chatConverter.convertLatestHistoryToBotMessage(history);
       log.info("미완료 세션 재개: {}", session.getId());
     } else { // 세션 완
-      if (todayChatCount >= 3) {
+/*      if (todayChatCount >= 3) {
         log.warn("일일 채팅 횟수 초과: userId={}, count={}", userId, todayChatCount);
         throw new ChatHandler(ErrorStatus.CHAT_LIMIT_EXCEEDED);
-      }
+      }*/
       Optional<ChatSession> lastSessionOpt = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(userId); // 가장 최신 세션 가져오기
       boolean isUserOnboarded = lastSessionOpt
           .map(ChatSession::getOnboardingCompleted)

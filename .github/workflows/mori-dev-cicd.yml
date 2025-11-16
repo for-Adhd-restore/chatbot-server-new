@@ -34,7 +34,14 @@ jobs:
           echo "Creating firebase key file..."
           echo "${{ secrets.FIREBASE_KEY_BASE64 }}" | base64 --decode > src/main/resources/mori-firebase-key.json
           echo "File created successfully."
-        
+      - name: Create Apple Root CA Cert
+        run: |
+          echo "Creating Apple Root CA cert directory..."
+          mkdir -p src/main/resources/certs
+          echo "Creating Apple Root CA cert file..."
+          echo "${{ secrets.APPLE_ROOT_CA_G3_BASE64 }}" | base64 --decode > src/main/resources/certs/AppleRootCA-G3.cer
+          echo "CA File created successfully." 
+
       - name: Grant execute permission for Gradlew
         run: chmod +x ./gradlew
 
