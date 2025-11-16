@@ -2,6 +2,7 @@ package com.forA.chatbot.subscriptions.controller;
 
 import com.forA.chatbot.apiPayload.ApiResponse;
 import com.forA.chatbot.auth.jwt.CustomUserDetails;
+import com.forA.chatbot.subscriptions.dto.SubscriptionResponseDto;
 import com.forA.chatbot.subscriptions.dto.SubscriptionVerifyRequest;
 import com.forA.chatbot.subscriptions.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +24,13 @@ public class SubscriptionController {
    * 사용자가 앱에서 최초 구매(또는 복원) 후 영수증(transactionId)을 전송하는 API
    * */
   @PostMapping("/verify")
-  public ApiResponse<String> verifySubscription(
+  public ApiResponse<SubscriptionResponseDto> verifySubscription(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestBody SubscriptionVerifyRequest request
   ) {
     Long userId = userDetails.getUserId();
     log.info("영수증 검증 요청 수신 - userId = {}", userId);
-    subscriptionService.verifySubscription(userId, request);
-
-    return ApiResponse.onSuccess("검증 로직 구현 필요");
+    SubscriptionResponseDto responseDto = subscriptionService.verifySubscription(userId, request);
+    return ApiResponse.onSuccess(responseDto);
   }
 }
