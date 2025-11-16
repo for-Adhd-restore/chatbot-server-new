@@ -1,6 +1,7 @@
 package com.forA.chatbot.subscriptions.util;
 
 import com.forA.chatbot.apiPayload.exception.handler.SubscriptionHandler;
+import com.forA.chatbot.subscriptions.dto.DecodedNotificationPayload;
 import com.forA.chatbot.subscriptions.dto.DecodedSignedRenewalInfo;
 import com.forA.chatbot.subscriptions.dto.DecodedSignedTransactionInfo;
 import java.io.ByteArrayInputStream;
@@ -52,8 +53,19 @@ public class AppStoreJwsValidator {
     return objectMapper.convertValue(claims, DecodedSignedRenewalInfo.class);
   }
 
+  // Apple 서버 알림 signedPayload JWS 검증 및 디코딩
+  public DecodedNotificationPayload decodeNotificationPayload(String jws) {
+    Claims claims = verifyAndDecodeJws(jws); // // 1. JWS 검증 및 Claims 추출
+    try {
+      return objectMapper.convertValue(claims, DecodedNotificationPayload.class);
+    } catch (Exception e) {
+      log.error("JWS Claims를 DecodedNotificationPayload DTO로 변환 실패", e);
+      throw new SubscriptionHandler(ErrorStatus.IAP_APPLE_INVALID_TRANSACTION);
+    }
+
+  }
   /**
-  * JWS를 파싱하고, 헤더의 x5c 인증서 체인을 검증한 뒤, 페이로드(Claims)를 반환 [Claims : JWT 형태 (?)]
+  * JWS를 파싱하고, 헤더의 x5c 인증서 체인을 검증한 뒤, 페이로드(Claims)를 반환 [Claims : JWT 형태]
   * */
   private Claims verifyAndDecodeJws(String jws) {
     try {
@@ -93,7 +105,6 @@ public class AppStoreJwsValidator {
 
     @Override
     public Key resolveSigningKey(JwsHeader header, byte[] content) {
-      // JWS (Detached Payload) - 이 시나리오에서는 사용 안 함
       return getPublicKey(header);
     }
 
