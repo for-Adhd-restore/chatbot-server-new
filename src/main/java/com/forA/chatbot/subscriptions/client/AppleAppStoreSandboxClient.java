@@ -6,8 +6,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-@FeignClient(name = "apple-appstore", url = "https://api.storekit.itunes.apple.com")
-public interface AppleAppStoreClient {
+@FeignClient(name = "apple-appstore-sandbox", url = "https://api.storekit-sandbox.itunes.apple.com")
+public interface AppleAppStoreSandboxClient {
+
   @GetMapping("/inApps/v1/subscriptions/{originalTransactionId}")
   SubscriptionStatusResponse getAllSubscriptionStatuses(
       @RequestHeader("Authorization") String bearerToken,

@@ -6,6 +6,7 @@ import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.config.AppleClientSecretGenerator;
 import com.forA.chatbot.enums.SubscriptionStatus;
 import com.forA.chatbot.subscriptions.client.AppleAppStoreClient;
+import com.forA.chatbot.subscriptions.client.AppleAppStoreSandboxClient;
 import com.forA.chatbot.subscriptions.domain.Subscription;
 import com.forA.chatbot.subscriptions.dto.DecodedNotificationPayload;
 import com.forA.chatbot.subscriptions.dto.DecodedSignedRenewalInfo;
@@ -18,8 +19,8 @@ import com.forA.chatbot.subscriptions.dto.SubscriptionVerifyRequest;
 import com.forA.chatbot.subscriptions.repository.SubscriptionRepository;
 import com.forA.chatbot.subscriptions.util.AppStoreJwsValidator;
 import com.forA.chatbot.user.domain.User;
+import feign.FeignException;
 import java.time.LocalDateTime;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class SubscriptionService {
   private final AppStoreJwsValidator jwsValidator;
   private final UserRepository userRepository;
   private final SubscriptionRepository subscriptionRepository;
+  private final AppleAppStoreSandboxClient appleAppStoreSandboxClient;
+
   /**
    * ios 앱이 보낸 영수증 검증 -> 우리 DB에 구독 정보 생성/업데이트
    * */
@@ -56,7 +59,18 @@ public class SubscriptionService {
     SubscriptionStatusResponse appleResponse;
     try {
       appleResponse = appleAppStoreClient.getAllSubscriptionStatuses(bearerToken, transactionId);
-    } catch (Exception e) {
+    } catch (FeignException.NotFound e) { // 404 NotFound 예외 발생 시
+      log.warn("Production API에서 404 Not Found. Sandbox API로 재시도합니다. OTI: {}", transactionId);
+      try {
+         appleResponse = appleAppStoreSandboxClient.getAllSubscriptionStatuses(
+            bearerToken, transactionId);
+        log.debug("Apple Sandbox API 호출 성공");
+      } catch (Exception sandboxE) {
+        log.error("Apple Sandbox API 호출 실패", sandboxE);
+        throw new SubscriptionHandler(ErrorStatus.IAP_APPLE_API_CALL_FAILED);
+      }
+    }
+    catch (Exception e) {
       log.error("Apple App Store API 호출 실패", e);
       throw new SubscriptionHandler(ErrorStatus.IAP_APPLE_API_CALL_FAILED);
     }
