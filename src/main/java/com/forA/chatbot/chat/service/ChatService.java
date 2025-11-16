@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.ChatHandler;
+import com.forA.chatbot.apiPayload.exception.handler.SubscriptionHandler;
 import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.chat.converter.ChatConverter;
@@ -24,6 +25,8 @@ import com.forA.chatbot.chat.repository.ChatMessageRepository;
 import com.forA.chatbot.chat.repository.ChatSessionRepository;
 import com.forA.chatbot.enums.Gender;
 import com.forA.chatbot.notification.scheduler.ChatNotificationScheduler;
+import com.forA.chatbot.subscriptions.domain.Subscription;
+import com.forA.chatbot.subscriptions.repository.SubscriptionRepository;
 import com.forA.chatbot.user.domain.User;
 import com.forA.chatbot.user.domain.enums.DisorderType;
 import com.forA.chatbot.user.domain.enums.JobType;
@@ -68,6 +71,7 @@ public class ChatService {
   private final ChatNotificationScheduler chatNotificationScheduler;
   private List<BehavioralSkill> behavioralSkills = Collections.emptyList();
   private final ChatConverter chatConverter;
+  private final SubscriptionRepository subscriptionRepository;
 
   @PostConstruct
   public void loadBehavioralSkills() {
@@ -83,6 +87,8 @@ public class ChatService {
   }
   @Transactional
   public ChatResponse initializeSession(Long userId) {
+    checkPremiumStatus(userId);
+
     log.info("채팅 세션 초기화/재개: {}", userId);
     User user = userRepository.findById(userId)
         .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
@@ -160,6 +166,8 @@ public class ChatService {
    */
   @Transactional
   public ChatResponse handleUserResponse(Long userId, String sessionId, ChatRequest request) {
+    checkPremiumStatus(userId);
+
     // 1. 세션 및 유저 정보 로드
     ChatSession session = chatSessionRepository.findById(sessionId)
         .orElseThrow(() -> new ChatHandler(ErrorStatus.SESSION_NOT_FOUND));
@@ -565,5 +573,13 @@ public class ChatService {
 
     // 2. (이제 미완료 세션이 없으므로) initializeSession을 호출하면 'else' 분기를 타게 됨
     return initializeSession(userId);
+  }
+
+  private void checkPremiumStatus(Long userId) {
+    Subscription subscription = subscriptionRepository.findByUser_Id(userId)
+        .orElseThrow(() -> new SubscriptionHandler(ErrorStatus.IAP_SUBSCRIPTION_NOT_FOUND));
+    if (!subscription.isActive()) {
+      throw new SubscriptionHandler(ErrorStatus.IAP_PREMIUM_REQUIRED);
+    }
   }
 }

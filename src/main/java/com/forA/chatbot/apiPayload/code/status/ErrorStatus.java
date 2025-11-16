@@ -66,7 +66,14 @@ public enum ErrorStatus implements BaseErrorCode {
   INVALID_BUTTON_SELECTION(HttpStatus.BAD_REQUEST, "CHAT4002", "올바른 버튼을 선택해 주세요."),
   AI_RESPONSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CHAT5001", "ai 응답 생성에 실패하였습니다"),
   SKILL_NAME_IS_NULL(HttpStatus.BAD_REQUEST, "CHAT4003", "skill name이 공백입니다."),
-  CHAT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "CHAT4004", "하루에 최대 3번의 채팅만 가능합니다.");
+  CHAT_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "CHAT4004", "하루에 최대 3번의 채팅만 가능합니다."),
+
+  // IAP (Subscription)
+  FAILED_TO_CREATE_CERTIFICATE_FACTORY(HttpStatus.INTERNAL_SERVER_ERROR, "SUBSCRIPTION5001", "CertificateFactory X.509 인스턴스 생성 실패"),
+  IAP_APPLE_API_CALL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IAP5001", "Apple App Store 서버 API 호출에 실패했습니다."),
+  IAP_APPLE_INVALID_TRANSACTION(HttpStatus.BAD_REQUEST, "IAP4001", "Apple 응답에서 유효한 트랜잭션 데이터를 찾을 수 없습니다."),
+  IAP_SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "IAP4002", "구독 정보를 찾을 수 없습니다. 구매/복원을 시도해주세요."),
+  IAP_PREMIUM_REQUIRED(HttpStatus.FORBIDDEN, "IAP4003", "구독이 필요한 서비스입니다.");
 
   private final HttpStatus httpStatus;
   private final String code;
