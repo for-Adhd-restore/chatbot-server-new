@@ -5,6 +5,7 @@ import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.domain.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @Table(name = "subscriptions")
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Subscription extends BaseTimeEntity {
 
   @Id
@@ -23,7 +24,7 @@ public class Subscription extends BaseTimeEntity {
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  @Column(name = "product_id", nullable = false, unique = true)
+  @Column(name = "product_id", nullable = false)
   private String productId;
 
   @Column(name = "original_transaction_id", nullable = false, unique = true)

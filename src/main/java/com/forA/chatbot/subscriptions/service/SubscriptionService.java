@@ -17,13 +17,14 @@ import com.forA.chatbot.subscriptions.repository.SubscriptionRepository;
 import com.forA.chatbot.subscriptions.util.AppStoreJwsValidator;
 import com.forA.chatbot.user.domain.User;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class SubscriptionService {
   private final AppleAppStoreClient appleAppStoreClient;
   private final AppleClientSecretGenerator appleClientSecretGenerator;
@@ -35,7 +36,7 @@ public class SubscriptionService {
    * */
   @Transactional
   public SubscriptionResponseDto verifySubscription(Long userId, SubscriptionVerifyRequest request) {
-    String transactionId = request.getTransactionId();
+    String transactionId = request.getOriginalTransactionId();
     log.info("영수증 검증 시작 - userId = {}, transactionId = {}", userId, transactionId);
 
     // 애플 서버 인증용 JWT 생성
