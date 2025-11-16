@@ -2,6 +2,7 @@ package com.forA.chatbot.subscriptions.controller;
 
 import com.forA.chatbot.apiPayload.ApiResponse;
 import com.forA.chatbot.auth.jwt.CustomUserDetails;
+import com.forA.chatbot.subscriptions.dto.AppleServerNotificationRequest;
 import com.forA.chatbot.subscriptions.dto.SubscriptionResponseDto;
 import com.forA.chatbot.subscriptions.dto.SubscriptionVerifyRequest;
 import com.forA.chatbot.subscriptions.service.SubscriptionService;
@@ -32,5 +33,12 @@ public class SubscriptionController {
     log.info("영수증 검증 요청 수신 - userId = {}", userId);
     SubscriptionResponseDto responseDto = subscriptionService.verifySubscription(userId, request);
     return ApiResponse.onSuccess(responseDto);
+  }
+  @PostMapping("/notification")
+  public void handleAppleServerNotification(
+      @RequestBody AppleServerNotificationRequest request
+  ){
+    log.info("Apple 서버 알림(Webhook) 수신 시작");
+    subscriptionService.handleAppleWebhook(request.getSignedPayload());
   }
 }

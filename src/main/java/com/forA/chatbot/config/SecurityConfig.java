@@ -30,6 +30,7 @@ public class SecurityConfig {
                         "/",
                         "/test/**",
                         "/api/v1/auth/**", // 로그인, 애플 로그인, 임시 로그인 포함
+                        "/api/v1/subscription/notification", // Apple Webhook 수신 경로
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/swagger-resources/**",
