@@ -582,4 +582,21 @@ public class ChatService {
       throw new SubscriptionHandler(ErrorStatus.IAP_PREMIUM_REQUIRED);
     }
   }
+  @Transactional
+  public void deleteAllChatDataByUserId(Long userId) {
+    log.info("사용자의 모든 채팅 데이터 삭제 시작: userId={}", userId);
+
+    List<ChatSession> chatSessions = chatSessionRepository.findByUserId(userId);
+    if (chatSessions.isEmpty()) {
+      log.info("삭제할 채팅 데이터가 없습니다 : userId={}", userId);
+      return;
+    }
+    List<String> sessionIds = chatSessions.stream()
+        .map(ChatSession::getId)
+        .collect(Collectors.toList());
+    chatMessageRepository.deleteBySessionIdIn(sessionIds);
+    log.info("{}개의 채팅 세션에 대한 메시지 삭제 완료", sessionIds.size());
+    chatSessionRepository.deleteByUserId(userId);
+    log.info("사용자의 모든 채팅 세션 삭제 완료: userId={}", userId);
+  }
 }

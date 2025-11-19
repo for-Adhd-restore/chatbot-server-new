@@ -24,4 +24,8 @@ public interface ChatSessionRepository extends MongoRepository<ChatSession, Stri
    * 특정 사용자의 세션 중, 특정 시간 이후에 종료된 세션 목록을 반환
    */
   List<ChatSession> findByUserIdAndEndedAtAfter(Long userId, LocalDateTime cutoffTime);
+
+  List<ChatSession> findByUserId(Long userId);
+
+  void deleteByUserId(Long userId);
 }
