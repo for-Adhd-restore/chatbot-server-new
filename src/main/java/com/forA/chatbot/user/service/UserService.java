@@ -3,6 +3,7 @@ package com.forA.chatbot.user.service;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.auth.service.BlacklistService;
+import com.forA.chatbot.chat.service.ChatService;
 import com.forA.chatbot.medications.repository.MedicationBundleRepository;
 import com.forA.chatbot.medications.repository.MedicationLogRepository;
 import com.forA.chatbot.user.domain.User;
@@ -31,6 +32,7 @@ public class UserService {
   private final MedicationBundleRepository medicationBundleRepository;
   private final RefreshTokenRepository refreshTokenRepository;
   private final BlacklistService blacklistService;
+  private final ChatService chatService;
 
   @Transactional
   public NicknameResponse updateNickname(Long userId, String nickname) {
@@ -156,8 +158,8 @@ public class UserService {
       medicationBundleRepository.deleteByUserId(userId);
       log.info("MedicationBundle 삭제 완료: userId={}", userId);
 
-      // TODO: ChatSession 및 관련 채팅 데이터 삭제 (Repository가 필요하면 추가)
-      // deleteChatRelatedData(userId);
+      chatService.deleteAllChatDataByUserId(userId);
+      log.info("Chat 관련 데이터 삭제 완료 : userId={}", userId);
 
       log.info("사용자 연관 데이터 삭제 완료: userId={}", userId);
     } catch (Exception e) {

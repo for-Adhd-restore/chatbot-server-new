@@ -2,6 +2,7 @@ package com.forA.chatbot.chat.repository;
 
 import com.forA.chatbot.chat.domain.ChatMessage;
 import com.forA.chatbot.chat.domain.ChatMessage.SenderType;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -22,4 +23,6 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Stri
    * 여러 세션 ID에 속하는 모든 메시지를 시간순으로 정렬하여 반환
    */
   List<ChatMessage> findBySessionIdInOrderBySentAtAsc(List<String> sessionIds);
+
+  void deleteBySessionIdIn(Collection<String> sessionIds);
 }
