@@ -64,7 +64,6 @@ public class FirebaseConfig {
 
     } catch (Exception e) {
       e.printStackTrace();
-      // 운영 중이라면 여기서 앱을 종료시키는 게 나을 수도 있습니다.
       throw new RuntimeException("Firebase 초기화 실패", e);
     }
   }
