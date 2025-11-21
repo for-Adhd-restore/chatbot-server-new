@@ -3,6 +3,19 @@ networks:
     driver: bridge
 
 services:
+  app:
+    image: foradhd2024/mori:latest
+    container_name: mori-app
+    restart: always
+    depends_on:
+      - db
+      - mongo
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    networks:
+      - mori-network
   db:
     image: mysql:8.0 # 사용할 MySQL 이미지
     container_name: ${MYSQL_DATABASE}
@@ -13,5 +26,20 @@ services:
       - .env
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - mori-network
+  mongo:
+    image: mongo:8.0
+    container_name: ${MONGO_DATABASE}
+    restart: always
+    ports:
+      - "27017:27017" # MongoDB 기본 포트
+    env_file:
+      - .env
+    volumes:
+      - mongo_data:/data/db # MongoDB 데이터 저장 경로
+    networks:
+      - mori-network
 volumes:
   db_data:
+  mongo_data: # MongoDB 데이터를 저장할 볼륨 추가

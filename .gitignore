@@ -169,6 +169,48 @@ gradle-app.setting
 # Java heap dump
 *.hprof
 
+# 키 관련 데이터 제거
+/src/main/resources/keys/
+
 # End of https://www.toptal.com/developers/gitignore/api/intellij,java,gradle
 HELP.md
+src/main/resources/keys/.env
+
+# 키 관련 데이터
+/src/main/resources/keys/
+
+
+#환경설정파일
 .env
+
+# Terraform
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/.terraform.lock.hcl
+terraform/terraform.tfplan
+
+# AWS 관련
+.aws/
+*.pem
+
+#로컬 테스트용 파일
+docker-compose.override.yml
+
+application-local.properties
+src/main/resources/application-local.yml
+
+/src/main/resources/application-local.yml
+
+# 로컬 MySQL/Mongo 데이터 디렉토리 무시
+db_data_dev/
+mongo_data_dev/
+
+# applekey 값 무시
+/src/main/resources/applekey/*
+
+# 인증서
+#src/main/resources/certs/*
+
+#firebase 키 파일 무시
+/src/main/resources/mori-firebase-key.json

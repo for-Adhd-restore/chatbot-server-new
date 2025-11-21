@@ -12,15 +12,26 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SwaggerConfig {
 
-    @Bean
-    public OpenAPI openAPI() {
-        Info info = new Info()
-                .title("Mori API")
-                .description("Mori API 명세서")
-                .version("1.0.0");
+  @Bean
+  public OpenAPI openAPI() {
+    Info info = new Info().title("Mori API").description("Mori API 명세서").version("1.0.0");
 
-        return new OpenAPI()
-                .info(info)
-                .addServersItem(new Server().url("/"));
-    }
+    // JWT 보안 스키마 정의
+    SecurityScheme bearerAuth =
+        new SecurityScheme()
+            .type(SecurityScheme.Type.HTTP)
+            .scheme("bearer")
+            .bearerFormat("JWT")
+            .in(SecurityScheme.In.HEADER)
+            .name("Authorization");
+
+    // 보안 요구사항 정의
+    SecurityRequirement securityRequirement = new SecurityRequirement().addList("bearerAuth");
+
+    return new OpenAPI()
+        .info(info)
+        .addServersItem(new Server().url("/"))
+        .components(new Components().addSecuritySchemes("bearerAuth", bearerAuth))
+        .addSecurityItem(securityRequirement);
+  }
 }
