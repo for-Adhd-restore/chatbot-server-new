@@ -85,6 +85,9 @@ dependencies {
     //firebase 관련
     implementation 'com.google.firebase:firebase-admin:9.7.0'
 
+    //flyway (mysql 마이그레이션)
+    implementation 'org.flywaydb:flyway-mysql'
+
 }
 
 tasks.named('test') {
