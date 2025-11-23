@@ -6,6 +6,8 @@ import com.forA.chatbot.auth.dto.AuthResponse;
 import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
+import com.forA.chatbot.chat.domain.ChatSession;
+import com.forA.chatbot.chat.repository.ChatSessionRepository;
 import com.forA.chatbot.enums.Gender;
 import com.forA.chatbot.enums.ProviderType;
 import com.forA.chatbot.user.domain.User;
@@ -26,7 +28,7 @@ public class AppleAuthService {
   private final UserRepository userRepository;
   private final JwtUtil jwtUtil;
   private final RefreshTokenRepository refreshTokenRepository;
-
+  private final ChatSessionRepository chatSessionRepository;
   @Transactional
   public AuthResponse authenticateWithApple(AppleLoginRequest request) {
     // 1. Apple Identity Token 검증
@@ -66,6 +68,10 @@ public class AppleAuthService {
     // 4. JWT 토큰 생성
     String accessToken = jwtUtil.createAccessToken(String.valueOf(user.getId()));
     String refreshToken = createRefreshToken(user.getId());
+
+    boolean onboardingCompleted = chatSessionRepository.findFirstByUserIdOrderByStartedAtDesc(user.getId())
+        .map(ChatSession::getOnboardingCompleted)
+        .orElse(false);
     // 5. 응답 생성
     return AuthResponse.builder()
         .accessToken(accessToken)
@@ -74,6 +80,7 @@ public class AppleAuthService {
         .expiresIn(86400L)
         .userId(user.getId())
         .isNewUser(isNewUser)
+        .onboardingCompleted(onboardingCompleted)
         .build();
   }
 
