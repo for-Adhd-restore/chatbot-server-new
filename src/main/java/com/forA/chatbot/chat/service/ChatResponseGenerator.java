@@ -74,7 +74,12 @@ public class ChatResponseGenerator {
             .content(content)
             .type(MessageType.OPTION)
             .options(Arrays.stream(EmotionType.values())
-                .map(e -> ButtonOption.builder().label(e.getName()).value(e.name()).multiSelect(true).build())
+                .map(e -> ButtonOption.builder()
+                    .label(e.getName())
+                    .value(e.name())
+                    .multiSelect(true)
+                    .group(e.getState().name())
+                    .build())
                 .collect(Collectors.toList()))
             .build();
       case SITUATION_INPUT:

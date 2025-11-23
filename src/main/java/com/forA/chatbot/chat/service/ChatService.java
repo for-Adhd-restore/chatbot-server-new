@@ -87,7 +87,8 @@ public class ChatService {
   }
   @Transactional
   public ChatResponse initializeSession(Long userId) {
-    checkPremiumStatus(userId);
+    // TODO : 구독 여부 체크 주석 해제
+    //checkPremiumStatus(userId);
 
     log.info("채팅 세션 초기화/재개: {}", userId);
     User user = userRepository.findById(userId)
@@ -108,6 +109,7 @@ public class ChatService {
       botMessage = chatConverter.convertLatestHistoryToBotMessage(history);
       log.info("미완료 세션 재개: {}", session.getId());
     } else { // 세션 완
+      // TODO : 채팅 제한 주석 해제
 /*      if (todayChatCount >= 3) {
         log.warn("일일 채팅 횟수 초과: userId={}, count={}", userId, todayChatCount);
         throw new ChatHandler(ErrorStatus.CHAT_LIMIT_EXCEEDED);
@@ -166,7 +168,8 @@ public class ChatService {
    */
   @Transactional
   public ChatResponse handleUserResponse(Long userId, String sessionId, ChatRequest request) {
-    checkPremiumStatus(userId);
+    // TODO : 구독 여부 체크 주석 해제
+    //checkPremiumStatus(userId);
 
     // 1. 세션 및 유저 정보 로드
     ChatSession session = chatSessionRepository.findById(sessionId)
