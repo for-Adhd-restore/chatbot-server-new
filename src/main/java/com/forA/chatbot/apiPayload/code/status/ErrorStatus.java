@@ -29,11 +29,9 @@ public enum ErrorStatus implements BaseErrorCode {
 
   // TEMP LOGIN
   TEMP_LOGIN_FAILED(HttpStatus.BAD_REQUEST, "AUTH4003", "임시 로그인에 실패했습니다."),
-  USER_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTH4004", "존재하지 않는 사용자입니다."),
 
   // MEDICATION - 약물 관련 에러 코드들
   MEDICATION_PLAN_ACCESS_DENIED(HttpStatus.FORBIDDEN, "MEDICATION002", "해당 복용 계획에 접근할 권한이 없습니다."),
-  MEDICATION_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEDICATION4001", "사용자를 찾을 수 없습니다."),
   MEDICATION_INVALID_TIME_FORMAT(
       HttpStatus.BAD_REQUEST, "MEDICATION4002", "시간 형식이 올바르지 않습니다. HH:mm 형식으로 입력해주세요."),
   MEDICATION_NOTIFICATION_TIME_REQUIRED(
@@ -60,6 +58,7 @@ public enum ErrorStatus implements BaseErrorCode {
   USER_GENDER_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "USER4001", "유저 성별을 변경할 수 없습니다."),
   USER_BIRTH_YEAR_ALREADY_EXIST(HttpStatus.BAD_REQUEST, "USER4002", "유저 생년을 변경할 수 없습니다."),
   INVALID_YEAR_OF_BIRTH(HttpStatus.BAD_REQUEST, "USER4003", "유저 생년이 유효하지 않습니다."),
+  USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER4004", "사용자를 찾을 수 없습니다."),
 
   // Chat 관련 에러
   SESSION_NOT_FOUND(HttpStatus.BAD_REQUEST, "CHAT4001", "존재하는 세션이 아닙니다."),
