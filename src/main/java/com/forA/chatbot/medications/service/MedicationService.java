@@ -17,14 +17,10 @@ import com.forA.chatbot.medications.repository.MedicationBundleRepository;
 import com.forA.chatbot.medications.repository.MedicationItemRepository;
 import com.forA.chatbot.medications.repository.MedicationLogRepository;
 import com.forA.chatbot.user.domain.User;
-import java.sql.Date;
-import java.sql.Time;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -52,8 +48,11 @@ public class MedicationService {
     User user = findUserById(userId);
 
     // 2. 시간 파싱
-    Time scheduledTime = parseTime(requestDto.getTakeTime());
-    Time alarmTime = parseAlarmTime(requestDto.getNotification());
+    LocalTime scheduledTime = LocalTime.parse(requestDto.getTakeTime());
+    LocalTime alarmTime = null;
+    if (requestDto.getNotification().getIsOn() && requestDto.getNotification().getTime() != null) {
+      alarmTime = LocalTime.parse(requestDto.getNotification().getTime());
+    }
 
     // 3. 요일 문자열 생성
     String dayOfWeekStr = String.join(",", requestDto.getTakeDays());
@@ -122,9 +121,9 @@ public class MedicationService {
             ? String.join(",", requestDto.getTakeDays())
             : existingBundle.getDayOfWeek();
 
-    Time updatedScheduledTime =
+    LocalTime updatedScheduledTime =
         requestDto.getTakeTime() != null
-            ? parseTime(requestDto.getTakeTime())
+            ? LocalTime.parse(requestDto.getTakeTime())
             : existingBundle.getScheduledTime();
 
     Boolean updatedAlarmEnabled =
@@ -132,9 +131,9 @@ public class MedicationService {
             ? requestDto.getNotification().getIsOn()
             : existingBundle.getAlarmEnabled();
 
-    Time updatedAlarmTime =
+    LocalTime updatedAlarmTime =
         (requestDto.getNotification() != null && requestDto.getNotification().getTime() != null)
-            ? parseTime(requestDto.getNotification().getTime())
+            ? LocalTime.parse(requestDto.getNotification().getTime())
             : existingBundle.getAlarmTime();
 
     // 4. MedicationBundle 업데이트
@@ -226,13 +225,13 @@ public class MedicationService {
     }
 
     // 3. 날짜 변환
-    Date sqlDate = parseDate(requestDto.getDate());
+    LocalDate date = LocalDate.parse(requestDto.getDate());
 
     // 5. MedicationLog 생성 및 저장
     MedicationLog logEntity =
         MedicationLog.builder()
             .medicationBundle(bundle)
-            .date(sqlDate)
+            .date(date)
             .isTaken(isTaken)
             .medCondition(requestDto.getConditionLevel())
             .build();
@@ -265,32 +264,31 @@ public class MedicationService {
     medicationBundleRepository.save(existingBundle);
   }
 
-  public List<TodayMedicationResponseDto> getTodayMedications(Long userId) {
-    log.info("오늘의 복약 계획 조회 요청 - 사용자 ID: {}", userId);
+  public List<TodayMedicationResponseDto> getDailyMedications(Long userId, LocalDate date) {
+    // 파라미터가 없으면 오늘 날짜로 설정
+    LocalDate searchDate = (date == null) ? LocalDate.now() : date;
+    log.info("복약 계획 조회 요청 - 사용자 ID: {}, 날짜: {}", userId, searchDate);
 
-    // 오늘 요일 계산 (영어)
-    DayOfWeek today = LocalDate.now().getDayOfWeek();
-    String todayDayOfWeek = today.name(); // "MONDAY", "TUESDAY" 등
-    log.info("오늘 요일: " + todayDayOfWeek);
-    // 오늘 날짜
-    Date todayDate = Date.valueOf(LocalDate.now());
+    // 요일 계산
+    String targetDayOfWeek = searchDate.getDayOfWeek().name();
+    log.info("조회 요일: {}", targetDayOfWeek);
 
-    // 오늘 요일에 해당하는 복약 계획들 조회
-    List<MedicationBundle> todayBundles =
-        medicationBundleRepository.findByUserIdAndDayOfWeek(userId, todayDayOfWeek);
+    // 해당 요일의 복약 계획들 조회
+    List<MedicationBundle> bundles =
+        medicationBundleRepository.findByUserIdAndDayOfWeek(userId, targetDayOfWeek);
 
-    log.info("조회된 복약 계획 수: {}", todayBundles.size());
-
-    // 각 복약 계획에 대해 오늘의 기록 조회 및 응답 생성
+    log.info("조회된 복약 계획 수: {}", bundles.size());
+    // TODO: N+1 문제 발생 지점, 추후 In절 조회나 Batch Fetch로 최적화 예정
+    // 각 복약 계획에 대해 해당 날짜의 기록 조회 및 응답 생성
     List<TodayMedicationResponseDto> responses =
-        todayBundles.stream()
+        bundles.stream()
             .map(
                 bundle -> {
-                  Optional<MedicationLog> todayLog =
-                      medicationLogRepository.findByMedicationBundleAndDate(bundle, todayDate);
+                  Optional<MedicationLog> historyLog =
+                      medicationLogRepository.findByMedicationBundleAndDate(bundle, searchDate);
 
-                  TodayMedicationResponseDto.TodayHistory todayHistory =
-                      createTodayHistory(todayLog);
+                  TodayMedicationResponseDto.TodayHistory history =
+                      createTodayHistory(historyLog);
 
                   // typeTags 조회
                   List<String> typeTags =
@@ -309,7 +307,6 @@ public class MedicationService {
                               bundle.getAlarmTime() != null
                                   ? bundle
                                       .getAlarmTime()
-                                      .toLocalTime()
                                       .format(DateTimeFormatter.ofPattern("HH:mm"))
                                   : null)
                           .build();
@@ -317,16 +314,17 @@ public class MedicationService {
                   return TodayMedicationResponseDto.builder()
                       .medicationId(bundle.getId())
                       .name(bundle.getBundleName())
+                      .date(searchDate)
                       .takeTime(bundle.getScheduledTime())
                       .typeTags(typeTags)
                       .takeDays(takeDays)
                       .notification(notificationDto)
-                      .todayHistory(todayHistory)
+                      .todayHistory(history)
                       .build();
                 })
             .collect(Collectors.toList());
 
-    log.info("오늘의 복약 계획 조회 완료 - 사용자 ID: {}, 계획 수: {}", userId, responses.size());
+    log.info("복약 계획 조회 완료 - 사용자 ID: {}, 날짜: {}, 계획 수: {}", userId, searchDate, responses.size());
 
     return responses;
   }
@@ -364,35 +362,7 @@ public class MedicationService {
         .orElseThrow(
             () -> {
               log.error("사용자를 찾을 수 없습니다 - ID: {}", userId);
-              return new GeneralException(ErrorStatus.MEDICATION_USER_NOT_FOUND);
+              return new GeneralException(ErrorStatus.USER_NOT_FOUND);
             });
-  }
-
-  private Time parseAlarmTime(NotificationDto notification) {
-    if (Boolean.TRUE.equals(notification.getIsOn())
-        && notification.getTime() != null
-        && !notification.getTime().trim().isEmpty()) {
-      return parseTime(notification.getTime());
-    }
-    return null;
-  }
-
-  private Time parseTime(String timeStr) {
-    try {
-      LocalTime localTime = LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("HH:mm"));
-      return Time.valueOf(localTime);
-    } catch (DateTimeParseException e) {
-      log.error("시간 파싱 실패 - 입력값: {}", timeStr, e);
-      throw new GeneralException(ErrorStatus.MEDICATION_INVALID_TIME_FORMAT);
-    }
-  }
-
-  private Date parseDate(String dateStr) {
-    try {
-      return Date.valueOf(LocalDate.parse(dateStr));
-    } catch (DateTimeParseException e) {
-      log.error("날짜 파싱 실패 - 입력값: {}", dateStr, e);
-      throw new GeneralException(ErrorStatus.MEDICATION_INVALID_DATE_FORMAT);
-    }
   }
 }

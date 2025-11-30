@@ -2,6 +2,7 @@ package com.forA.chatbot.report.service;
 
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
 import com.forA.chatbot.apiPayload.exception.handler.NotificationHandler;
+import com.forA.chatbot.apiPayload.exception.handler.UserHandler;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.chat.domain.ChatMessage;
 import com.forA.chatbot.chat.domain.ChatSession;
@@ -51,7 +52,7 @@ public class ReportService {
     User user =
         userRepository
             .findById(userId)
-            .orElseThrow(() -> new NotificationHandler(ErrorStatus.USER_NOT_FOUND));
+            .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
 
     LocalDate today = LocalDate.now();
     LocalDate startDate = today.minusDays(6);
@@ -69,7 +70,7 @@ public class ReportService {
       User user =
           userRepository
               .findById(userId)
-              .orElseThrow(() -> new NotificationHandler(ErrorStatus.USER_NOT_FOUND));
+              .orElseThrow(() -> new UserHandler(ErrorStatus.USER_NOT_FOUND));
 
       // 1. monthOffset을 기준으로 대상 월의 시작일과 종료일 계산
       YearMonth targetMonth = YearMonth.now().plusMonths(monthOffset);
@@ -95,26 +96,44 @@ public class ReportService {
     List<MedicationBundle> bundles = medicationBundleRepository.findByUserAndIsDeletedFalseOrderByScheduledTimeAsc(user);
 
     // 기간 내의 모든 복용 기록 조회 (DB 쿼리 최적화)
-    List<MedicationLog> logs = medicationLogRepository.findByMedicationBundle_UserAndDateBetween(user, java.sql.Date.valueOf(startDate), java.sql.Date.valueOf(endDate));
+    List<MedicationLog> logs = medicationLogRepository.findByMedicationBundle_UserAndDateBetween(user, startDate, endDate);
 
     // 복용 기록을 날짜와 복용 계획 ID 기준으로 빠르게 찾을 수 있도록 Map으로 변환
     Map<LocalDate, Map<Long, MedicationLog>> logMap = logs.stream()
         .collect(Collectors.groupingBy(
-            log -> new java.sql.Date(log.getDate().getTime()).toLocalDate(),
-            Collectors.toMap(log -> log.getMedicationBundle().getId(), log -> log)
+            MedicationLog::getDate,
+            Collectors.toMap(log -> log.getMedicationBundle().getId(), log -> log, (existing, replacement) -> existing)
         ));
 
+    // 요일별 번들 맵 미리 생성 (루프 밖에서 한 번만 실행)
+    Map<DayOfWeek, List<MedicationBundle>> bundlesByDay = new EnumMap<>(DayOfWeek.class);
+    for (DayOfWeek day : DayOfWeek.values()) {
+      bundlesByDay.put(day, new ArrayList<>());
+    }
+
+    // isScheduledForDay 로직을 여기서 미리 처리
+    for (MedicationBundle bundle : bundles) {
+      if (bundle.getDayOfWeek() == null || bundle.getDayOfWeek().isEmpty()) continue;
+
+      Arrays.stream(bundle.getDayOfWeek().split(","))
+          .map(String::trim)
+          .filter(dbDay -> !dbDay.isEmpty())
+          .forEach(dbDay -> {
+            // "MONDAY", "TUESDAY" 등과 일치하는 DayOfWeek enum 찾기
+            DayOfWeek dayEnum = DayOfWeek.valueOf(dbDay.toUpperCase());
+            bundlesByDay.get(dayEnum).add(bundle);
+          });
+    }
+
     List<ReportResponseDto.DailyMedicationReportDto> dailyReports = new ArrayList<>();
-    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
 
     // 시작일부터 종료일까지 하루씩 반복
     for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
       DayOfWeek dayOfWeekEnum = date.getDayOfWeek();
 
-      // 요일별로 예정된 복용 계획 필터링 (애플리케이션 레벨)
-      List<MedicationBundle> scheduledBundles = bundles.stream()
-          .filter(bundle -> isScheduledForDay(bundle, dayOfWeekEnum))
-          .toList();
+      List<MedicationBundle> scheduledBundles = bundlesByDay.get(dayOfWeekEnum);
 
       Map<Long, MedicationLog> dailyLogs = logMap.getOrDefault(date, Collections.emptyMap());
 
@@ -123,10 +142,15 @@ public class ReportService {
             MedicationLog log = dailyLogs.get(bundle.getId());
             boolean isTaken = (log != null && log.getIsTaken());
 
+            String scheduledTimeStr = null;
+            if (bundle.getAlarmTime() != null) {
+              scheduledTimeStr = bundle.getAlarmTime().format(timeFormatter);
+            }
+
             return ReportResponseDto.MedicationStatusDto.builder()
                 .bundleId(bundle.getId())
                 .bundleName(bundle.getBundleName())
-                .scheduledTime(bundle.getAlarmTime() != null ? bundle.getAlarmTime().toLocalTime().format(timeFormatter) : null)
+                .scheduledTime(scheduledTimeStr)
                 .isTaken(isTaken)
                 .build();
           })
@@ -139,22 +163,6 @@ public class ReportService {
           .build());
     }
     return dailyReports;
-  }
-
-  // MedicationBundle의 dayOfWeek 문자열에 해당 요일이 포함되어 있는지 확인
-  private boolean isScheduledForDay(MedicationBundle bundle, DayOfWeek dayOfWeek) {
-    if (bundle.getDayOfWeek() == null || bundle.getDayOfWeek().isEmpty()) {
-      return false;
-    }
-
-    // DayOfWeek enum의 이름(e.g., "MONDAY")을 가져옵니다.
-    String englishDayName = dayOfWeek.name();
-
-    // DB에서 가져온 문자열(e.g., "MONDAY,TUESDAY")을 쉼표로 분리하고,
-    // 공백 제거 및 대소문자 무시 비교를 통해 현재 요일이 포함되어 있는지 확인합니다.
-    return Arrays.stream(bundle.getDayOfWeek().split(","))
-        .map(String::trim)
-        .anyMatch(dbDay -> dbDay.equalsIgnoreCase(englishDayName));
   }
 
   /**
@@ -219,7 +227,7 @@ public class ReportService {
     // 2. 복약 시 수집한 감정 점수 계산
     List<Integer> medicationEmotionScores = getMedicationEmotionScores(userId, date);
     for(Integer emotionScore : medicationEmotionScores) {
-      log.info("복약 감정 점수: {}",String.valueOf(emotionScore));
+      log.info("복약 감정 점수: {}",emotionScore);
     }
     emotionScores.addAll(medicationEmotionScores);
 
@@ -229,7 +237,7 @@ public class ReportService {
     }
 
     int totalScore = emotionScores.stream().mapToInt(Integer::intValue).sum();
-    log.info("최종 감정 점수 계산: {} 나누기 {}",String.valueOf(totalScore), String.valueOf(emotionScores.size()));
+    log.info("최종 감정 점수 계산: {} 나누기 {}",totalScore, emotionScores.size());
     return (double) totalScore / emotionScores.size();
   }
 
@@ -239,7 +247,7 @@ public class ReportService {
     List<Integer> scores = new ArrayList<>();
 
     try {
-      log.info("챗봇 감정 조회 시작 날짜: {}",String.valueOf(date));
+      log.info("챗봇 감정 조회 시작 날짜: {}",date);
       // LocalDate를 LocalDateTime 범위로 변환 (00:00:00 ~ 23:59:59)
       java.time.LocalDateTime startOfDay = date.atStartOfDay();
       java.time.LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
@@ -262,7 +270,7 @@ public class ReportService {
             // 감정 코드 파싱 (예: "EXCITED,JOY")
             List<Integer> emotionScoresFromMessage = parseEmotionCodes(responseCode);
             for (Integer emotionScore : emotionScoresFromMessage) {
-              log.info("챗봇 감정 점수: {}",String.valueOf(emotionScore));
+              log.info("챗봇 감정 점수: {}",emotionScore);
             }
 
             scores.addAll(emotionScoresFromMessage);
