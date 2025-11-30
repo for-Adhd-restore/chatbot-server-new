@@ -52,8 +52,11 @@ public class MedicationService {
     User user = findUserById(userId);
 
     // 2. 시간 파싱
-    Time scheduledTime = parseTime(requestDto.getTakeTime());
-    Time alarmTime = parseAlarmTime(requestDto.getNotification());
+    LocalTime scheduledTime = LocalTime.parse(requestDto.getTakeTime());
+    LocalTime alarmTime = null;
+    if (requestDto.getNotification().getIsOn() && requestDto.getNotification().getTime() != null) {
+      alarmTime = LocalTime.parse(requestDto.getNotification().getTime());
+    }
 
     // 3. 요일 문자열 생성
     String dayOfWeekStr = String.join(",", requestDto.getTakeDays());
@@ -122,9 +125,9 @@ public class MedicationService {
             ? String.join(",", requestDto.getTakeDays())
             : existingBundle.getDayOfWeek();
 
-    Time updatedScheduledTime =
+    LocalTime updatedScheduledTime =
         requestDto.getTakeTime() != null
-            ? parseTime(requestDto.getTakeTime())
+            ? LocalTime.parse(requestDto.getTakeTime())
             : existingBundle.getScheduledTime();
 
     Boolean updatedAlarmEnabled =
@@ -132,9 +135,9 @@ public class MedicationService {
             ? requestDto.getNotification().getIsOn()
             : existingBundle.getAlarmEnabled();
 
-    Time updatedAlarmTime =
+    LocalTime updatedAlarmTime =
         (requestDto.getNotification() != null && requestDto.getNotification().getTime() != null)
-            ? parseTime(requestDto.getNotification().getTime())
+            ? LocalTime.parse(requestDto.getNotification().getTime())
             : existingBundle.getAlarmTime();
 
     // 4. MedicationBundle 업데이트
@@ -274,13 +277,12 @@ public class MedicationService {
     String targetDayOfWeek = searchDate.getDayOfWeek().name();
     log.info("조회 요일: {}", targetDayOfWeek);
 
-
     // 해당 요일의 복약 계획들 조회
     List<MedicationBundle> bundles =
         medicationBundleRepository.findByUserIdAndDayOfWeek(userId, targetDayOfWeek);
 
     log.info("조회된 복약 계획 수: {}", bundles.size());
-
+    // TODO: N+1 문제 발생 지점, 추후 In절 조회나 Batch Fetch로 최적화 예정
     // 각 복약 계획에 대해 해당 날짜의 기록 조회 및 응답 생성
     List<TodayMedicationResponseDto> responses =
         bundles.stream()
@@ -309,7 +311,6 @@ public class MedicationService {
                               bundle.getAlarmTime() != null
                                   ? bundle
                                       .getAlarmTime()
-                                      .toLocalTime()
                                       .format(DateTimeFormatter.ofPattern("HH:mm"))
                                   : null)
                           .build();
@@ -366,24 +367,5 @@ public class MedicationService {
               log.error("사용자를 찾을 수 없습니다 - ID: {}", userId);
               return new GeneralException(ErrorStatus.USER_NOT_FOUND);
             });
-  }
-
-  private Time parseAlarmTime(NotificationDto notification) {
-    if (Boolean.TRUE.equals(notification.getIsOn())
-        && notification.getTime() != null
-        && !notification.getTime().trim().isEmpty()) {
-      return parseTime(notification.getTime());
-    }
-    return null;
-  }
-
-  private Time parseTime(String timeStr) {
-    try {
-      LocalTime localTime = LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("HH:mm"));
-      return Time.valueOf(localTime);
-    } catch (DateTimeParseException e) {
-      log.error("시간 파싱 실패 - 입력값: {}", timeStr, e);
-      throw new GeneralException(ErrorStatus.MEDICATION_INVALID_TIME_FORMAT);
-    }
   }
 }
