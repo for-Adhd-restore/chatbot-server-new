@@ -101,10 +101,11 @@ public class User extends BaseTimeEntity {
    * 이미 설정된 경우 예외 발생
    * */
   public void updateGender(Gender gender) {
-    // Gender가 UNKNOWN이 아니고 null도 아닌 경우 수정 불가
-    if (this.gender != null && this.gender != Gender.UNKNOWN) {
+    // 기존 값이 있고(UNKNOWN 아님), 입력된 값과 '다를 경우'에만 에러 발생
+    if (this.gender != null && this.gender != Gender.UNKNOWN && !this.gender.equals(gender)) {
       throw new UserHandler(ErrorStatus.USER_GENDER_ALREADY_EXIST);
     }
+    // 값이 같거나 초기 상태면 업데이트(덮어쓰기) 허용 -> 멱등성 보장
     this.gender = gender;
   }
 
