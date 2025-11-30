@@ -265,32 +265,36 @@ public class MedicationService {
     medicationBundleRepository.save(existingBundle);
   }
 
-  public List<TodayMedicationResponseDto> getTodayMedications(Long userId) {
-    log.info("오늘의 복약 계획 조회 요청 - 사용자 ID: {}", userId);
+  public List<TodayMedicationResponseDto> getDailyMedications(Long userId, LocalDate date) {
+    // 파라미터가 없으면 오늘 날짜로 설정
+    if (date == null) {
+      date = LocalDate.now();
+    }
+    log.info("복약 계획 조회 요청 - 사용자 ID: {}, 날짜: {}", userId, date);
 
-    // 오늘 요일 계산 (영어)
-    DayOfWeek today = LocalDate.now().getDayOfWeek();
-    String todayDayOfWeek = today.name(); // "MONDAY", "TUESDAY" 등
-    log.info("오늘 요일: " + todayDayOfWeek);
-    // 오늘 날짜
-    Date todayDate = Date.valueOf(LocalDate.now());
+    // 요일 계산
+    String targetDayOfWeek = date.getDayOfWeek().name();
+    log.info("조회 요일: {}", targetDayOfWeek);
 
-    // 오늘 요일에 해당하는 복약 계획들 조회
-    List<MedicationBundle> todayBundles =
-        medicationBundleRepository.findByUserIdAndDayOfWeek(userId, todayDayOfWeek);
+    // DB 조회용 Date 객체
+    Date targetDate = Date.valueOf(date);
 
-    log.info("조회된 복약 계획 수: {}", todayBundles.size());
+    // 해당 요일의 복약 계획들 조회
+    List<MedicationBundle> bundles =
+        medicationBundleRepository.findByUserIdAndDayOfWeek(userId, targetDayOfWeek);
 
-    // 각 복약 계획에 대해 오늘의 기록 조회 및 응답 생성
+    log.info("조회된 복약 계획 수: {}", bundles.size());
+
+    // 각 복약 계획에 대해 해당 날짜의 기록 조회 및 응답 생성
     List<TodayMedicationResponseDto> responses =
-        todayBundles.stream()
+        bundles.stream()
             .map(
                 bundle -> {
-                  Optional<MedicationLog> todayLog =
-                      medicationLogRepository.findByMedicationBundleAndDate(bundle, todayDate);
+                  Optional<MedicationLog> historyLog =
+                      medicationLogRepository.findByMedicationBundleAndDate(bundle, targetDate);
 
-                  TodayMedicationResponseDto.TodayHistory todayHistory =
-                      createTodayHistory(todayLog);
+                  TodayMedicationResponseDto.TodayHistory history =
+                      createTodayHistory(historyLog);
 
                   // typeTags 조회
                   List<String> typeTags =
@@ -321,12 +325,12 @@ public class MedicationService {
                       .typeTags(typeTags)
                       .takeDays(takeDays)
                       .notification(notificationDto)
-                      .todayHistory(todayHistory)
+                      .todayHistory(history)
                       .build();
                 })
             .collect(Collectors.toList());
 
-    log.info("오늘의 복약 계획 조회 완료 - 사용자 ID: {}, 계획 수: {}", userId, responses.size());
+    log.info("복약 계획 조회 완료 - 사용자 ID: {}, 날짜: {}, 계획 수: {}", userId, date, responses.size());
 
     return responses;
   }
