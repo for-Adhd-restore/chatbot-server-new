@@ -4,6 +4,7 @@ import com.forA.chatbot.global.BaseTimeEntity;
 import com.forA.chatbot.user.domain.User;
 import jakarta.persistence.*;
 import java.sql.Time;
+import java.time.LocalTime;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,13 +30,13 @@ public class MedicationBundle extends BaseTimeEntity {
   private String dayOfWeek;
 
   @Column(name = "scheduled_time")
-  private Time scheduledTime;
+  private LocalTime scheduledTime;
 
   @Column(name = "alarm_enabled", nullable = false)
   private Boolean alarmEnabled;
 
   @Column(name = "alarm_time")
-  private Time alarmTime;
+  private LocalTime alarmTime;
 
   @Column(name = "is_deleted")
   private Boolean isDeleted = false;
@@ -45,9 +46,9 @@ public class MedicationBundle extends BaseTimeEntity {
       User user,
       String bundleName,
       String dayOfWeek,
-      Time scheduledTime,
+      LocalTime scheduledTime,
       Boolean alarmEnabled,
-      Time alarmTime) {
+      LocalTime alarmTime) {
     this.user = user;
     this.bundleName = bundleName;
     this.dayOfWeek = dayOfWeek;
@@ -61,9 +62,9 @@ public class MedicationBundle extends BaseTimeEntity {
   public void updateMedicationPlan(
       String bundleName,
       String dayOfWeek,
-      Time scheduledTime,
+      LocalTime scheduledTime,
       Boolean alarmEnabled,
-      Time alarmTime) {
+      LocalTime alarmTime) {
     this.bundleName = bundleName;
     this.dayOfWeek = dayOfWeek;
     this.scheduledTime = scheduledTime;

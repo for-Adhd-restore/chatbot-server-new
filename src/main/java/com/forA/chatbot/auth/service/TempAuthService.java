@@ -8,6 +8,7 @@ import com.forA.chatbot.auth.jwt.JwtUtil;
 import com.forA.chatbot.auth.repository.RefreshTokenRepository;
 import com.forA.chatbot.auth.repository.UserRepository;
 import com.forA.chatbot.enums.Gender;
+import com.forA.chatbot.enums.ProviderType;
 import com.forA.chatbot.user.domain.User;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -51,6 +52,7 @@ public class TempAuthService {
               .gender(Gender.UNKNOWN)
               .isDeleted(false)
               .isNotificationEnabled(false)
+              .providerType(ProviderType.APPLE)
               .build();
 
       user = userRepository.save(user);

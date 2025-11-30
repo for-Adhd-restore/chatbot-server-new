@@ -11,9 +11,11 @@ import com.forA.chatbot.medications.dto.MedicationUpdateRequestDto;
 import com.forA.chatbot.medications.dto.TodayMedicationResponseDto;
 import com.forA.chatbot.medications.service.MedicationService;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -89,15 +91,17 @@ public class MedicationController {
     return ApiResponse.of(SuccessStatus.MEDICATION_LOG_CREATED, responseDto);
   }
 
-  /** 오늘의 복약 계획 조회 */
+  /** 일별 복약 계획 조회 */
   @GetMapping
-  public ApiResponse<List<TodayMedicationResponseDto>> getTodayMedications(
+  public ApiResponse<List<TodayMedicationResponseDto>> getDailyMedications(
+      @RequestParam(value = "date", required = false) // 날짜를 보내지 않으면 date: null 오늘 날짜로 처리
+      @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
       @AuthenticationPrincipal CustomUserDetails userDetails) {
 
     Long userId = userDetails.getUserId();
     log.info("오늘의 복약 계획 조회 요청 - 사용자 ID: {}", userId);
 
-    List<TodayMedicationResponseDto> medications = medicationService.getTodayMedications(userId);
+    List<TodayMedicationResponseDto> medications = medicationService.getDailyMedications(userId, date);
 
     log.info("오늘의 복약 계획 조회 완료 - 사용자 ID: {}, 계획 수: {}", userId, medications.size());
 

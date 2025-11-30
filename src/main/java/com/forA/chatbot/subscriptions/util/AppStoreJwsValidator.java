@@ -16,7 +16,7 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import io.jsonwebtoken.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.forA.chatbot.apiPayload.code.status.ErrorStatus;
@@ -29,7 +29,7 @@ public class AppStoreJwsValidator {
   private final ObjectMapper objectMapper;
   private final Set<TrustAnchor> appleRootCAs; // 애플 루트 인증서 저장소
   public AppStoreJwsValidator(ObjectMapper objectMapper,
-      @Value("classpath:certs/AppleRootCA-G3.cer") ClassPathResource appleRootCaG3) {
+      @Value("classpath:certs/AppleRootCA-G3.cer") Resource appleRootCaG3) {
     this.objectMapper = objectMapper;
     this.appleRootCAs = new HashSet<>();
     try (InputStream is = appleRootCaG3.getInputStream()) {

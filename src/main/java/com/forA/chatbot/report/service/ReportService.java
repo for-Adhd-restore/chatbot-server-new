@@ -96,13 +96,13 @@ public class ReportService {
     List<MedicationBundle> bundles = medicationBundleRepository.findByUserAndIsDeletedFalseOrderByScheduledTimeAsc(user);
 
     // 기간 내의 모든 복용 기록 조회 (DB 쿼리 최적화)
-    List<MedicationLog> logs = medicationLogRepository.findByMedicationBundle_UserAndDateBetween(user, java.sql.Date.valueOf(startDate), java.sql.Date.valueOf(endDate));
+    List<MedicationLog> logs = medicationLogRepository.findByMedicationBundle_UserAndDateBetween(user, startDate, endDate);
 
     // 복용 기록을 날짜와 복용 계획 ID 기준으로 빠르게 찾을 수 있도록 Map으로 변환
     Map<LocalDate, Map<Long, MedicationLog>> logMap = logs.stream()
         .collect(Collectors.groupingBy(
-            log -> new java.sql.Date(log.getDate().getTime()).toLocalDate(),
-            Collectors.toMap(log -> log.getMedicationBundle().getId(), log -> log)
+            MedicationLog::getDate,
+            Collectors.toMap(log -> log.getMedicationBundle().getId(), log -> log, (existing, replacement) -> existing)
         ));
 
     // 요일별 번들 맵 미리 생성 (루프 밖에서 한 번만 실행)
@@ -120,13 +120,13 @@ public class ReportService {
           .filter(dbDay -> !dbDay.isEmpty())
           .forEach(dbDay -> {
             // "MONDAY", "TUESDAY" 등과 일치하는 DayOfWeek enum 찾기
-            DayOfWeek dayEnum = DayOfWeek.valueOf(dbDay.toUpperCase()); // DB 형식이 영어 대문자라 가정
+            DayOfWeek dayEnum = DayOfWeek.valueOf(dbDay.toUpperCase());
             bundlesByDay.get(dayEnum).add(bundle);
           });
     }
 
     List<ReportResponseDto.DailyMedicationReportDto> dailyReports = new ArrayList<>();
-    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
 
     // 시작일부터 종료일까지 하루씩 반복
@@ -142,10 +142,15 @@ public class ReportService {
             MedicationLog log = dailyLogs.get(bundle.getId());
             boolean isTaken = (log != null && log.getIsTaken());
 
+            String scheduledTimeStr = null;
+            if (bundle.getAlarmTime() != null) {
+              scheduledTimeStr = bundle.getAlarmTime().format(timeFormatter);
+            }
+
             return ReportResponseDto.MedicationStatusDto.builder()
                 .bundleId(bundle.getId())
                 .bundleName(bundle.getBundleName())
-                .scheduledTime(bundle.getAlarmTime() != null ? bundle.getAlarmTime().toLocalTime().format(timeFormatter) : null)
+                .scheduledTime(scheduledTimeStr)
                 .isTaken(isTaken)
                 .build();
           })
@@ -222,7 +227,7 @@ public class ReportService {
     // 2. 복약 시 수집한 감정 점수 계산
     List<Integer> medicationEmotionScores = getMedicationEmotionScores(userId, date);
     for(Integer emotionScore : medicationEmotionScores) {
-      log.info("복약 감정 점수: {}",String.valueOf(emotionScore));
+      log.info("복약 감정 점수: {}",emotionScore);
     }
     emotionScores.addAll(medicationEmotionScores);
 
@@ -232,7 +237,7 @@ public class ReportService {
     }
 
     int totalScore = emotionScores.stream().mapToInt(Integer::intValue).sum();
-    log.info("최종 감정 점수 계산: {} 나누기 {}",String.valueOf(totalScore), String.valueOf(emotionScores.size()));
+    log.info("최종 감정 점수 계산: {} 나누기 {}",totalScore, emotionScores.size());
     return (double) totalScore / emotionScores.size();
   }
 
@@ -242,7 +247,7 @@ public class ReportService {
     List<Integer> scores = new ArrayList<>();
 
     try {
-      log.info("챗봇 감정 조회 시작 날짜: {}",String.valueOf(date));
+      log.info("챗봇 감정 조회 시작 날짜: {}",date);
       // LocalDate를 LocalDateTime 범위로 변환 (00:00:00 ~ 23:59:59)
       java.time.LocalDateTime startOfDay = date.atStartOfDay();
       java.time.LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
@@ -265,7 +270,7 @@ public class ReportService {
             // 감정 코드 파싱 (예: "EXCITED,JOY")
             List<Integer> emotionScoresFromMessage = parseEmotionCodes(responseCode);
             for (Integer emotionScore : emotionScoresFromMessage) {
-              log.info("챗봇 감정 점수: {}",String.valueOf(emotionScore));
+              log.info("챗봇 감정 점수: {}",emotionScore);
             }
 
             scores.addAll(emotionScoresFromMessage);
