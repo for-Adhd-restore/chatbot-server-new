@@ -226,13 +226,13 @@ public class MedicationService {
     }
 
     // 3. 날짜 변환
-    Date sqlDate = parseDate(requestDto.getDate());
+    LocalDate date = LocalDate.parse(requestDto.getDate());
 
     // 5. MedicationLog 생성 및 저장
     MedicationLog logEntity =
         MedicationLog.builder()
             .medicationBundle(bundle)
-            .date(sqlDate)
+            .date(date)
             .isTaken(isTaken)
             .medCondition(requestDto.getConditionLevel())
             .build();
@@ -267,17 +267,13 @@ public class MedicationService {
 
   public List<TodayMedicationResponseDto> getDailyMedications(Long userId, LocalDate date) {
     // 파라미터가 없으면 오늘 날짜로 설정
-    if (date == null) {
-      date = LocalDate.now();
-    }
-    log.info("복약 계획 조회 요청 - 사용자 ID: {}, 날짜: {}", userId, date);
+    LocalDate searchDate = (date == null) ? LocalDate.now() : date;
+    log.info("복약 계획 조회 요청 - 사용자 ID: {}, 날짜: {}", userId, searchDate);
 
     // 요일 계산
-    String targetDayOfWeek = date.getDayOfWeek().name();
+    String targetDayOfWeek = searchDate.getDayOfWeek().name();
     log.info("조회 요일: {}", targetDayOfWeek);
 
-    // DB 조회용 Date 객체
-    Date targetDate = Date.valueOf(date);
 
     // 해당 요일의 복약 계획들 조회
     List<MedicationBundle> bundles =
@@ -291,7 +287,7 @@ public class MedicationService {
             .map(
                 bundle -> {
                   Optional<MedicationLog> historyLog =
-                      medicationLogRepository.findByMedicationBundleAndDate(bundle, targetDate);
+                      medicationLogRepository.findByMedicationBundleAndDate(bundle, searchDate);
 
                   TodayMedicationResponseDto.TodayHistory history =
                       createTodayHistory(historyLog);
@@ -330,7 +326,7 @@ public class MedicationService {
                 })
             .collect(Collectors.toList());
 
-    log.info("복약 계획 조회 완료 - 사용자 ID: {}, 날짜: {}, 계획 수: {}", userId, date, responses.size());
+    log.info("복약 계획 조회 완료 - 사용자 ID: {}, 날짜: {}, 계획 수: {}", userId, searchDate, responses.size());
 
     return responses;
   }
@@ -388,15 +384,6 @@ public class MedicationService {
     } catch (DateTimeParseException e) {
       log.error("시간 파싱 실패 - 입력값: {}", timeStr, e);
       throw new GeneralException(ErrorStatus.MEDICATION_INVALID_TIME_FORMAT);
-    }
-  }
-
-  private Date parseDate(String dateStr) {
-    try {
-      return Date.valueOf(LocalDate.parse(dateStr));
-    } catch (DateTimeParseException e) {
-      log.error("날짜 파싱 실패 - 입력값: {}", dateStr, e);
-      throw new GeneralException(ErrorStatus.MEDICATION_INVALID_DATE_FORMAT);
     }
   }
 }

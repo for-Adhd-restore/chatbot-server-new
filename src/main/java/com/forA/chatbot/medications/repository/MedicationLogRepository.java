@@ -3,6 +3,7 @@ package com.forA.chatbot.medications.repository;
 import com.forA.chatbot.medications.domain.MedicationBundle;
 import com.forA.chatbot.medications.domain.MedicationLog;
 import com.forA.chatbot.user.domain.User;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +23,7 @@ public interface MedicationLogRepository extends JpaRepository<MedicationLog, Lo
   void deleteByUserId(@Param("userId") Long userId);
 
   Optional<MedicationLog> findByMedicationBundleAndDate(
-      MedicationBundle medicationBundle, Date date);
+      MedicationBundle medicationBundle, LocalDate date);
 
   @Query(
       "SELECT ml FROM MedicationLog ml WHERE ml.medicationBundle.user.id = :userId AND ml.date ="
