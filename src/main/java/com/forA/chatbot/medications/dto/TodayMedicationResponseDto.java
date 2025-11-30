@@ -1,6 +1,7 @@
 package com.forA.chatbot.medications.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import lombok.Builder;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class TodayMedicationResponseDto {
   private Long medicationId;
   private String name;
-
+  private LocalDate date;
   @JsonFormat(pattern = "HH:mm")
   private LocalTime takeTime;
 
@@ -28,6 +29,7 @@ public class TodayMedicationResponseDto {
   public TodayMedicationResponseDto(
       Long medicationId,
       String name,
+      LocalDate date,
       LocalTime takeTime,
       List<String> typeTags,
       List<String> takeDays,
@@ -35,6 +37,7 @@ public class TodayMedicationResponseDto {
       TodayHistory todayHistory) {
     this.medicationId = medicationId;
     this.name = name;
+    this.date = date;
     this.takeTime = takeTime;
     this.typeTags = typeTags;
     this.takeDays = takeDays;

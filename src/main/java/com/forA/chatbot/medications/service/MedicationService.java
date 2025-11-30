@@ -314,6 +314,7 @@ public class MedicationService {
                   return TodayMedicationResponseDto.builder()
                       .medicationId(bundle.getId())
                       .name(bundle.getBundleName())
+                      .date(searchDate)
                       .takeTime(bundle.getScheduledTime())
                       .typeTags(typeTags)
                       .takeDays(takeDays)
