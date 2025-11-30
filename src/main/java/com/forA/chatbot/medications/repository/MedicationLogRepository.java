@@ -25,11 +25,6 @@ public interface MedicationLogRepository extends JpaRepository<MedicationLog, Lo
   Optional<MedicationLog> findByMedicationBundleAndDate(
       MedicationBundle medicationBundle, LocalDate date);
 
-  @Query(
-      "SELECT ml FROM MedicationLog ml WHERE ml.medicationBundle.user.id = :userId AND ml.date ="
-          + " :date")
-  List<MedicationLog> findByUserIdAndDate(@Param("userId") Long userId, @Param("date") Date date);
-
   // 특정 사용자의 특정 기간 동안의 모든 복용 기록을 조회
   @Query("SELECT ml FROM MedicationLog ml JOIN ml.medicationBundle mb WHERE mb.user = :user AND ml.date BETWEEN :startDate AND :endDate")
   List<MedicationLog> findByMedicationBundle_UserAndDateBetween(@Param("user") User user, @Param("startDate") Date startDate, @Param("endDate") Date endDate);

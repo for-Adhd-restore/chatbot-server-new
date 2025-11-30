@@ -1,7 +1,6 @@
 package com.forA.chatbot.medications.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import java.sql.Time;
 import java.time.LocalTime;
 import java.util.List;
 import lombok.Builder;
